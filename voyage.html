@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Agence de Voyage</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #0a0e17;
+    color: #ffffff;
+  }
+  header {
+    background-color: #0d1220;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #d62828;
+  }
+  header h1 { color: #1e6fd9; font-size: 24px; }
+  .back {
+    display: inline-block;
+    margin: 15px;
+    color: #b0b8c5;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .content {
+    padding: 20px 15px;
+  }
+  .content h2 {
+    color: #ffffff;
+    margin-bottom: 10px;
+  }
+  .content p {
+    color: #b0b8c5;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  form {
+    background-color: #121826;
+    border: 1px solid #1e6fd9;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  label { font-size: 14px; color: #b0b8c5; }
+  input, select {
+    background-color: #0a0e17;
+    border: 1px solid #2a3040;
+    border-radius: 6px;
+    padding: 10px;
+    color: #ffffff;
+    font-size: 14px;
+  }
+  button {
+    background-color: #1e6fd9;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  footer {
+    text-align: center;
+    padding: 20px;
+    color: #b0b8c5;
+    font-size: 12px;
+    border-top: 1px solid #d62828;
+    margin-top: 30px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AW SERVICES — Agence de Voyage</h1>
+</header>
+
+<a href="index.html" class="back">&#8592; Retour à l'accueil</a>
+
+<div class="content">
+  <h2>Réservez votre voyage</h2>
+  <p>Remplissez le formulaire ci-dessous, nous vous contacterons rapidement pour confirmer votre réservation.</p>
+
+  <form action="https://wa.me/221XXXXXXXXX" method="get" target="_blank">
+    <label>Nom complet</label>
+    <input type="text" name="nom" placeholder="Votre nom" required>
+
+    <label>Numéro de téléphone</label>
+    <input type="tel" name="telephone" placeholder="Votre numéro" required>
+
+    <label>Destination</label>
+    <input type="text" name="destination" placeholder="Ville ou pays" required>
+
+    <label>Date de départ souhaitée</label>
+    <input type="date" name="date" required>
+
+    <label>Nombre de personnes</label>
+    <input type="number" name="personnes" min="1" value="1" required>
+
+    <button type="submit">Envoyer la demande</button>
+  </form>
+</div>
+
+<footer>
+  &copy; 2026 AW SERVICES — Tous droits réservés
+</footer>
+
+</body>
+</html>
