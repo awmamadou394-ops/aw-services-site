@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Immobilier</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #0a0e17;
+    color: #ffffff;
+  }
+  header {
+    background-color: #0d1220;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #d62828;
+  }
+  header h1 { color: #1e6fd9; font-size: 24px; }
+  .back {
+    display: inline-block;
+    margin: 15px;
+    color: #b0b8c5;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .content { padding: 20px 15px; }
+  .content h2 { color: #ffffff; margin-bottom: 10px; }
+  .content p {
+    color: #b0b8c5;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .onglets {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .onglets a {
+    flex: 1;
+    text-align: center;
+    background-color: #121826;
+    border: 1px solid #1e6fd9;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  form {
+    background-color: #121826;
+    border: 1px solid #1e6fd9;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  label { font-size: 14px; color: #b0b8c5; }
+  input, select, textarea {
+    background-color: #0a0e17;
+    border: 1px solid #2a3040;
+    border-radius: 6px;
+    padding: 10px;
+    color: #ffffff;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+  }
+  button {
+    background-color: #1e6fd9;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  footer {
+    text-align: center;
+    padding: 20px;
+    color: #b0b8c5;
+    font-size: 12px;
+    border-top: 1px solid #d62828;
+    margin-top: 30px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AW SERVICES — Immobilier</h1>
+</header>
+
+<a href="index.html" class="back">&#8592; Retour à l'accueil</a>
+
+<div class="content">
+  <h2>Trouvez ou vendez un bien</h2>
+  <p>Que vous cherchiez un bien ou souhaitiez vendre/louer le vôtre, remplissez ce formulaire et nous vous recontacterons rapidement.</p>
+
+  <form action="https://wa.me/221777589444" method="get" target="_blank">
+    <label>Nom complet</label>
+    <input type="text" name="nom" placeholder="Votre nom" required>
+
+    <label>Numéro de téléphone</label>
+    <input type="tel" name="telephone" placeholder="Votre numéro" required>
+
+    <label>Type de demande</label>
+    <select name="type_demande" required>
+      <option value="">Choisir...</option>
+      <option value="Je cherche un bien">Je cherche un bien</option>
+      <option value="Je veux vendre un bien">Je veux vendre un bien</option>
+      <option value="Je veux louer un bien">Je veux louer un bien</option>
+    </select>
+
+    <label>Type de bien</label>
+    <select name="type_bien" required>
+      <option value="">Choisir...</option>
+      <option value="Terrain">Terrain</option>
+      <option value="Maison">Maison</option>
+      <option value="Appartement">Appartement</option>
+      <option value="Local commercial">Local commercial</option>
+    </select>
+
+    <label>Localisation</label>
+    <input type="text" name="localisation" placeholder="Ville / quartier" required>
+
+    <label>Détails supplémentaires</label>
+    <textarea name="details" rows="3" placeholder="Budget, superficie, etc."></textarea>
+
+    <button type="submit">Envoyer la demande</button>
+  </form>
+</div>
+
+<footer>
+  &copy; 2026 AW SERVICES — Tous droits réservés
+</footer>
+
+</body>
+</html>
