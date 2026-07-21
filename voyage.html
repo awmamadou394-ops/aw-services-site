@@ -17,7 +17,7 @@
     text-align: center;
     border-bottom: 2px solid #d62828;
   }
-  header h1 { color: #1e6fd9; font-size: 24px; }
+  header h1 { color: #1e6fd9; font-size: 22px; }
   .back {
     display: inline-block;
     margin: 15px;
@@ -25,18 +25,40 @@
     text-decoration: none;
     font-size: 14px;
   }
-  .content {
-    padding: 20px 15px;
-  }
-  .content h2 {
-    color: #ffffff;
-    margin-bottom: 10px;
-  }
-  .content p {
+  .content { padding: 20px 15px; }
+  .content h2 { color: #ffffff; margin-bottom: 10px; font-size: 20px; }
+  .content > p {
     color: #b0b8c5;
     margin-bottom: 20px;
     line-height: 1.5;
   }
+  details {
+    background-color: #121826;
+    border: 1px solid #1e6fd9;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 12px;
+  }
+  summary {
+    font-size: 17px;
+    font-weight: bold;
+    color: #ffffff;
+    cursor: pointer;
+  }
+  details p, details li {
+    color: #b0b8c5;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  details ul { margin: 10px 0 10px 20px; }
+  .prix-box {
+    background-color: #0a0e17;
+    border-left: 3px solid #d62828;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+  .prix-box strong { color: #ffffff; }
   form {
     background-color: #121826;
     border: 1px solid #1e6fd9;
@@ -45,6 +67,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    margin-top: 20px;
   }
   label { font-size: 14px; color: #b0b8c5; }
   input, select {
@@ -65,6 +88,10 @@
     font-weight: bold;
     margin-top: 10px;
   }
+  .separateur {
+    border-top: 1px solid #2a3040;
+    margin: 35px 0;
+  }
   footer {
     text-align: center;
     padding: 20px;
@@ -84,8 +111,126 @@
 <a href="index.html" class="back">&#8592; Retour à l'accueil</a>
 
 <div class="content">
-  <h2>Réservez votre voyage</h2>
-  <p>Remplissez le formulaire ci-dessous, nous vous contacterons rapidement pour confirmer votre réservation.</p>
+  <h2>Pré-inscription études à l'étranger</h2>
+  <p>Choisissez votre pays de destination pour connaître la procédure et les frais, puis remplissez le formulaire pour lancer votre pré-inscription.</p>
+
+  <details>
+    <summary>🇫🇷 France</summary>
+    <p style="margin-top:10px;">Procédure Campus France 2025/2026. Pour élèves en terminale, bacheliers, étudiants en Licence jusqu'au Master 1, et doctorants souhaitant poursuivre leurs études en France (université publique ou privée).</p>
+    <p style="margin-top:10px;"><strong style="color:#fff;">Services offerts :</strong></p>
+    <ul>
+      <li>Création du compte Pastel</li>
+      <li>Remplissage du panier de formation</li>
+      <li>Rédaction des lettres de motivation</li>
+      <li>Choix des universités</li>
+      <li>Soumission du dossier</li>
+      <li>Prise de rendez-vous entretien</li>
+      <li>Coaching entretien</li>
+      <li>Suivi du dossier jusqu'à la phase de visa</li>
+    </ul>
+    <div class="prix-box">
+      <strong>Frais dossier :</strong> 75 000 FCFA (public) / 100 000 FCFA (privé)<br>
+      <strong>Frais Campus France :</strong> 85 000 FCFA (à payer à la banque BICIS)
+    </div>
+    <p style="margin-top:10px;"><strong style="color:#fff;">Documents à fournir :</strong></p>
+    <ul>
+      <li>Trois derniers bulletins de notes</li>
+      <li>CV</li>
+      <li>Photocopie pièce d'identité</li>
+      <li>Diplôme du Bac</li>
+      <li>Relevé de notes du Bac</li>
+      <li>Photo vue de face</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>🇨🇦 Canada</summary>
+    <p style="margin-top:10px;"><strong style="color:#fff;">Les étapes :</strong></p>
+    <ul>
+      <li>Étape 1 : École de formation professionnelle</li>
+      <li>Étape 2 : Choix d'une formation adéquate à votre projet</li>
+      <li>Étape 3 : Demande d'admission</li>
+      <li>Étape 4 : Paiement des frais d'admission</li>
+      <li>Étape 5 : Réponse de l'établissement</li>
+      <li>Étape 6 : Demande d'acceptation du Québec (CAQ) ou Lettre d'Attestation Provinciale</li>
+      <li>Étape 7 : Procédure consulaire (Visa)</li>
+    </ul>
+    <div class="prix-box">
+      <strong>Frais d'admission et de dossier :</strong> 175 000 FCFA<br>
+      <strong>CAQ :</strong> 85 000 FCFA<br>
+      <strong>Demande de permis d'études :</strong> 130 000 FCFA<br>
+      <strong>Garant financier (si besoin) :</strong> 300 000 FCFA
+    </div>
+  </details>
+
+  <details>
+    <summary>🇺🇸 USA</summary>
+    <p style="margin-top:10px;"><strong style="color:#fff;">Les étapes :</strong></p>
+    <ul>
+      <li>Étape 1 : École de formation professionnelle</li>
+      <li>Étape 2 : Choix d'une formation adéquate à votre projet</li>
+      <li>Étape 3 : Demande d'admission</li>
+      <li>Étape 4 : Paiement des frais d'admission</li>
+      <li>Étape 5 : Réponse de l'établissement</li>
+      <li>Étape 6 : Procédure consulaire (Visa)</li>
+    </ul>
+    <div class="prix-box">
+      <strong>Frais d'admission et de dossier :</strong> 400 000 FCFA
+    </div>
+  </details>
+
+  <details>
+    <summary>🇲🇦 Maroc</summary>
+    <p style="margin-top:10px;">Informations à venir. Contactez-nous dès maintenant sur WhatsApp pour connaître la procédure et les frais.</p>
+  </details>
+
+  <details>
+    <summary>🇷🇺 Russie</summary>
+    <p style="margin-top:10px;">Informations à venir. Contactez-nous dès maintenant sur WhatsApp pour connaître la procédure et les frais.</p>
+  </details>
+
+  <details>
+    <summary>🇧🇪 Belgique</summary>
+    <p style="margin-top:10px;">Informations à venir. Contactez-nous dès maintenant sur WhatsApp pour connaître la procédure et les frais.</p>
+  </details>
+
+  <form id="formPreinscription" onsubmit="envoyerPreinscription(event)">
+    <label>Nom complet</label>
+    <input type="text" id="p_nom" placeholder="Votre nom" required>
+
+    <label>Numéro de téléphone</label>
+    <input type="tel" id="p_tel" placeholder="Votre numéro" required>
+
+    <label>Pays de destination</label>
+    <select id="p_pays" required>
+      <option value="">Choisir...</option>
+      <option value="France">France</option>
+      <option value="Canada">Canada</option>
+      <option value="USA">USA</option>
+      <option value="Maroc">Maroc</option>
+      <option value="Russie">Russie</option>
+      <option value="Belgique">Belgique</option>
+    </select>
+
+    <label>Niveau d'étude actuel</label>
+    <select id="p_niveau" required>
+      <option value="">Choisir...</option>
+      <option value="Terminale">Terminale</option>
+      <option value="Bachelier">Bachelier</option>
+      <option value="Licence">Licence</option>
+      <option value="Master 1">Master 1</option>
+      <option value="Doctorat">Doctorat</option>
+    </select>
+
+    <button type="submit">Envoyer ma pré-inscription</button>
+  </form>
+</div>
+
+<div class="separateur"></div>
+
+<div class="content">
+  <h2>Réservation de billets & voyages</h2>
+  <p>Pour un simple billet d'avion, un séjour ou un hébergement, remplissez ce formulaire.</p>
 
   <form action="https://wa.me/221777589444" method="get" target="_blank">
     <label>Nom complet</label>
@@ -110,6 +255,19 @@
 <footer>
   &copy; 2026 AW SERVICES — Tous droits réservés
 </footer>
+
+<script>
+function envoyerPreinscription(event) {
+  event.preventDefault();
+  var nom = document.getElementById('p_nom').value;
+  var tel = document.getElementById('p_tel').value;
+  var pays = document.getElementById('p_pays').value;
+  var niveau = document.getElementById('p_niveau').value;
+  var message = "Bonjour, je souhaite une pré-inscription.\nNom : " + nom + "\nTéléphone : " + tel + "\nPays de destination : " + pays + "\nNiveau d'étude : " + niveau;
+  var url = "https://wa.me/221777589444?text=" + encodeURIComponent(message);
+  window.open(url, '_blank');
+}
+</script>
 
 </body>
 </html>
