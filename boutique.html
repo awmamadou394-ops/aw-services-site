@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Boutique</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #0a0e17;
+    color: #ffffff;
+  }
+  header {
+    background-color: #0d1220;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #d62828;
+  }
+  header h1 { color: #1e6fd9; font-size: 22px; }
+  .back {
+    display: inline-block;
+    margin: 15px;
+    color: #b0b8c5;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .content { padding: 20px 15px; }
+  .content h2 { color: #ffffff; margin-bottom: 10px; font-size: 20px; }
+  .content > p {
+    color: #b0b8c5;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  form {
+    background-color: #121826;
+    border: 1px solid #1e6fd9;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  label { font-size: 14px; color: #b0b8c5; }
+  input, select {
+    background-color: #0a0e17;
+    border: 1px solid #2a3040;
+    border-radius: 6px;
+    padding: 10px;
+    color: #ffffff;
+    font-size: 14px;
+  }
+  button {
+    background-color: #1e6fd9;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  .separateur {
+    border-top: 1px solid #2a3040;
+    margin: 35px 0;
+  }
+  footer {
+    text-align: center;
+    padding: 20px;
+    color: #b0b8c5;
+    font-size: 12px;
+    border-top: 1px solid #d62828;
+    margin-top: 30px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AW SERVICES — Boutique</h1>
+</header>
+
+<a href="index.html" class="back">&#8592; Retour à l'accueil</a>
+
+<div class="content">
+  <h2>Nos produits divers</h2>
+  <p>Électronique, parfums, vêtements et bien plus. Choisissez votre mode de paiement et passez commande, nous vous répondons rapidement sur WhatsApp.</p>
+
+  <form action="https://wa.me/221777589444" method="get" target="_blank">
+    <label>Nom complet</label>
+    <input type="text" name="nom" placeholder="Votre nom" required>
+
+    <label>Numéro de téléphone</label>
+    <input type="tel" name="telephone" placeholder="Votre numéro" required>
+
+    <label>Catégorie de produit</label>
+    <select name="categorie" required>
+      <option value="">Choisir...</option>
+      <option value="Électronique">Électronique</option>
+      <option value="Parfums">Parfums</option>
+      <option value="Vêtements">Vêtements</option>
+      <option value="Autre">Autre</option>
+    </select>
+
+    <label>Produit recherché</label>
+    <input type="text" name="produit" placeholder="Ex : Casque Bluetooth" required>
+
+    <label>Mode de paiement</label>
+    <select name="paiement" required>
+      <option value="">Choisir...</option>
+      <option value="Paiement en ligne (Wave/Orange Money)">Paiement en ligne (Wave/Orange Money)</option>
+      <option value="Paiement en espèces à la livraison">Paiement en espèces à la livraison</option>
+    </select>
+
+    <label>Adresse de livraison</label>
+    <input type="text" name="adresse" placeholder="Quartier, ville" required>
+
+    <button type="submit">Passer commande</button>
+  </form>
+</div>
+
+<div class="separateur"></div>
+
+<div class="content">
+  <h2>Devenir livreur partenaire</h2>
+  <p>Vous avez un véhicule ou une moto ? Rejoignez-nous pour effectuer des livraisons.</p>
+
+  <form action="https://wa.me/221777589444" method="get" target="_blank">
+    <label>Nom complet</label>
+    <input type="text" name="nom" placeholder="Votre nom" required>
+
+    <label>Numéro de téléphone</label>
+    <input type="tel" name="telephone" placeholder="Votre numéro" required>
+
+    <label>Type de véhicule</label>
+    <select name="vehicule" required>
+      <option value="">Choisir...</option>
+      <option value="Moto">Moto</option>
+      <option value="Voiture">Voiture</option>
+      <option value="Tricycle">Tricycle</option>
+    </select>
+
+    <label>Zone de couverture</label>
+    <input type="text" name="zone" placeholder="Quartier(s) où vous livrez" required>
+
+    <button type="submit">Envoyer ma candidature</button>
+  </form>
+</div>
+
+<div class="separateur"></div>
+
+<div class="content">
+  <h2>Devenir vendeur partenaire</h2>
+  <p>Vous avez des produits à vendre ? Obtenez votre espace dans notre boutique et vendez via AW SERVICES.</p>
+
+  <form action="https://wa.me/221777589444" method="get" target="_blank">
+    <label>Nom complet / Entreprise</label>
+    <input type="text" name="nom" placeholder="Votre nom ou nom de l'entreprise" required>
+
+    <label>Numéro de téléphone</label>
+    <input type="tel" name="telephone" placeholder="Votre numéro" required>
+
+    <label>Type de produits à vendre</label>
+    <input type="text" name="produits" placeholder="Ex : Parfums, électronique..." required>
+
+    <button type="submit">Demander un partenariat</button>
+  </form>
+</div>
+
+<footer>
+  &copy; 2026 AW SERVICES — Tous droits réservés
+</footer>
+
+</body>
+</html>
