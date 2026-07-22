@@ -41,8 +41,8 @@
   }
   .modules {
     padding: 30px 15px;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 15px;
   }
   .module {
@@ -75,12 +75,12 @@
 <img src="Imap.png" alt="AW SERVICES" style="width:100%; display:block; position:relative; z-index:1;">
 
 <div class="modules" style="position:relative; z-index:1;">
-<a href="voyage.html" style="text-decoration:none;">
+  <a href="voyage.html" style="text-decoration:none;">
   <div class="module">
     <h2>Agence de Voyage</h2>
     <p>Réservez vos billets et voyages en toute simplicité.</p>
   </div>
-</a>
+  </a>
   <a href="iptv.html" style="text-decoration:none;">
   <div class="module">
     <h2>IPTV</h2>
