@@ -29,6 +29,8 @@
     padding: 20px;
     text-align: center;
     border-bottom: 2px solid #d62828;
+    position: relative;
+    z-index: 1;
   }
   header h1 {
     color: #1e6fd9;
@@ -44,6 +46,8 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
+    position: relative;
+    z-index: 1;
   }
   .module {
     background-color: #121826;
@@ -72,9 +76,12 @@
 </head>
 <body>
 
-<img src="Imap.png" alt="AW SERVICES" style="width:100%; display:block; position:relative; z-index:1;">
+<header>
+  <h1>AW SERVICES</h1>
+  <p>Doumga Ouro Alpha, Sénégal</p>
+</header>
 
-<div class="modules" style="position:relative; z-index:1;">
+<div class="modules">
   <a href="voyage.html" style="text-decoration:none;">
   <div class="module">
     <h2>Agence de Voyage</h2>
@@ -112,6 +119,7 @@
   </div>
   </a>
 </div>
+
 <footer>
   &copy; 2026 AW SERVICES — Tous droits réservés
 </footer>
