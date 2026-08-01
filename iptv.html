@@ -43,23 +43,46 @@
     border-radius: 10px;
     padding: 20px;
     text-align: center;
+    position: relative;
   }
-  .offre h3 { color: #ffffff; font-size: 18px; }
+  .offre.populaire { border-color: #d62828; border-width: 2px; }
+  .badge-populaire {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #d62828;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 12px;
+  }
+  .offre h3 { color: #ffffff; font-size: 18px; margin-top: 5px; }
   .offre .prix {
     color: #d62828;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: bold;
-    margin: 8px 0;
+    margin: 10px 0;
   }
-  .offre p { color: #b0b8c5; font-size: 14px; margin-bottom: 15px; }
+  .offre .parmois { color: #b0b8c5; font-size: 12px; }
+  .offre p.desc { color: #b0b8c5; font-size: 14px; margin: 10px 0 15px; }
   .offre a {
     display: inline-block;
     background-color: #1e6fd9;
     color: #ffffff;
     text-decoration: none;
-    padding: 10px 20px;
+    padding: 12px 24px;
     border-radius: 6px;
     font-weight: bold;
+    width: 100%;
+  }
+  .note-paiement {
+    text-align: center;
+    color: #b0b8c5;
+    font-size: 12px;
+    margin-top: 20px;
+    font-style: italic;
   }
   footer {
     text-align: center;
@@ -80,31 +103,41 @@
 <a href="index.html" class="back">&#8592; Retour à l'accueil</a>
 
 <div class="content">
-  <h2>Nos offres IPTV</h2>
-  <p>Profitez de centaines de chaînes en streaming, à prix accessible. Choisissez votre formule et contactez-nous directement sur WhatsApp.</p>
+  <h2>Nos formules IPTV</h2>
+  <p>Des centaines de chaînes en streaming. Choisissez votre durée et commandez directement sur WhatsApp.</p>
 
   <div class="offres">
     <div class="offre">
-      <h3>Formule 1 mois</h3>
-      <div class="prix">3 000 FCFA</div>
-      <p>Accès complet pendant 30 jours</p>
-      <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20intéressé%20par%20la%20formule%20IPTV%201%20mois" target="_blank">Commander sur WhatsApp</a>
+      <h3>1 mois</h3>
+      <div class="prix">4 000 FCFA</div>
+      <p class="desc">Accès complet pendant 30 jours</p>
+      <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%201%20mois" target="_blank">Commander sur WhatsApp</a>
     </div>
 
     <div class="offre">
-      <h3>Formule 3 mois</h3>
-      <div class="prix">8 000 FCFA</div>
-      <p>Accès complet pendant 90 jours</p>
-      <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20intéressé%20par%20la%20formule%20IPTV%203%20mois" target="_blank">Commander sur WhatsApp</a>
+      <h3>3 mois</h3>
+      <div class="prix">10 000 FCFA</div>
+      <p class="desc">Accès complet pendant 90 jours</p>
+      <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%203%20mois" target="_blank">Commander sur WhatsApp</a>
+    </div>
+
+    <div class="offre populaire">
+      <div class="badge-populaire">LE PLUS CHOISI</div>
+      <h3>6 mois</h3>
+      <div class="prix">16 000 FCFA</div>
+      <p class="desc">Accès complet pendant 180 jours</p>
+      <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%206%20mois" target="_blank">Commander sur WhatsApp</a>
     </div>
 
     <div class="offre">
-      <h3>Formule 12 mois</h3>
-      <div class="prix">25 000 FCFA</div>
-      <p>Accès complet pendant 1 an</p>
-      <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20intéressé%20par%20la%20formule%20IPTV%2012%20mois" target="_blank">Commander sur WhatsApp</a>
+      <h3>12 mois</h3>
+      <div class="prix">28 000 FCFA</div>
+      <p class="desc">Accès complet pendant 1 an</p>
+      <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%2012%20mois" target="_blank">Commander sur WhatsApp</a>
     </div>
   </div>
+
+  <p class="note-paiement">Paiement en ligne (Wave, Orange Money, carte) bientôt disponible directement sur cette page.</p>
 </div>
 
 <footer>
