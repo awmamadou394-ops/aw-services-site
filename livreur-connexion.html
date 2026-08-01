@@ -155,7 +155,7 @@ async function inscrire(event) {
   btn.textContent = 'Créer mon compte livreur';
 
   if (erreurLivreur) {
-    afficherMessage("Compte créé, mais erreur lors de l'enregistrement du profil. Contactez-nous.", 'erreur');
+    afficherMessage("Erreur profil : " + erreurLivreur.message, 'erreur');
     return;
   }
 
