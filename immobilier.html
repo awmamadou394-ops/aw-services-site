@@ -4,88 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Immobilier</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #0a0e17;
-    color: #ffffff;
-  }
-  header {
-    background-color: #0d1220;
-    padding: 20px;
-    text-align: center;
-    border-bottom: 2px solid #d62828;
-  }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
+  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
   header h1 { color: #1e6fd9; font-size: 24px; }
-  .back {
-    display: inline-block;
-    margin: 15px;
-    color: #b0b8c5;
-    text-decoration: none;
-    font-size: 14px;
-  }
+  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
   .content { padding: 20px 15px; }
   .content h2 { color: #ffffff; margin-bottom: 10px; }
-  .content p {
-    color: #b0b8c5;
-    margin-bottom: 20px;
-    line-height: 1.5;
-  }
-  .onglets {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  .onglets a {
-    flex: 1;
-    text-align: center;
-    background-color: #121826;
-    border: 1px solid #1e6fd9;
-    color: #ffffff;
-    text-decoration: none;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: bold;
-  }
-  form {
-    background-color: #121826;
-    border: 1px solid #1e6fd9;
-    border-radius: 10px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  label { font-size: 14px; color: #b0b8c5; }
-  input, select, textarea {
-    background-color: #0a0e17;
-    border: 1px solid #2a3040;
-    border-radius: 6px;
-    padding: 10px;
-    color: #ffffff;
-    font-size: 14px;
-    font-family: Arial, sans-serif;
-  }
-  button {
-    background-color: #1e6fd9;
-    color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: bold;
-    margin-top: 10px;
-  }
-  footer {
-    text-align: center;
-    padding: 20px;
-    color: #b0b8c5;
-    font-size: 12px;
-    border-top: 1px solid #d62828;
-    margin-top: 30px;
-  }
+  .content > p { color: #b0b8c5; margin-bottom: 20px; line-height: 1.5; }
+  .grille { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .bien-carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; overflow: hidden; position: relative; }
+  .bien-carte img { width: 100%; height: 110px; object-fit: cover; background-color: #0a0e17; }
+  .bien-carte .infos { padding: 10px; }
+  .bien-carte h3 { font-size: 13px; margin-bottom: 4px; }
+  .bien-carte .prix { color: #d62828; font-weight: bold; font-size: 14px; }
+  .bien-carte .loc { color: #b0b8c5; font-size: 11px; margin-top: 3px; }
+  .badge-vendu { position: absolute; top: 8px; right: 8px; background-color: #3a1414; color: #ff8080; font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 10px; }
+  .bien-carte a.btn-detail { display: block; text-align: center; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 7px; font-size: 12px; font-weight: bold; margin-top: 8px; border-radius: 6px; }
+  .vide { text-align: center; color: #b0b8c5; padding: 20px; grid-column: 1 / -1; }
+  footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
 </style>
 </head>
 <body>
@@ -97,46 +36,38 @@
 <a href="index.html" class="back">&#8592; Retour à l'accueil</a>
 
 <div class="content">
-  <h2>Trouvez ou vendez un bien</h2>
-  <p>Que vous cherchiez un bien ou souhaitiez vendre/louer le vôtre, remplissez ce formulaire et nous vous recontacterons rapidement.</p>
+  <h2>Biens disponibles</h2>
+  <p>Découvrez nos biens immobiliers proposés par AW SERVICES.</p>
 
-  <form action="https://wa.me/221777589444" method="get" target="_blank">
-    <label>Nom complet</label>
-    <input type="text" name="nom" placeholder="Votre nom" required>
-
-    <label>Numéro de téléphone</label>
-    <input type="tel" name="telephone" placeholder="Votre numéro" required>
-
-    <label>Type de demande</label>
-    <select name="type_demande" required>
-      <option value="">Choisir...</option>
-      <option value="Je cherche un bien">Je cherche un bien</option>
-      <option value="Je veux vendre un bien">Je veux vendre un bien</option>
-      <option value="Je veux louer un bien">Je veux louer un bien</option>
-    </select>
-
-    <label>Type de bien</label>
-    <select name="type_bien" required>
-      <option value="">Choisir...</option>
-      <option value="Terrain">Terrain</option>
-      <option value="Maison">Maison</option>
-      <option value="Appartement">Appartement</option>
-      <option value="Local commercial">Local commercial</option>
-    </select>
-
-    <label>Localisation</label>
-    <input type="text" name="localisation" placeholder="Ville / quartier" required>
-
-    <label>Détails supplémentaires</label>
-    <textarea name="details" rows="3" placeholder="Budget, superficie, etc."></textarea>
-
-    <button type="submit">Envoyer la demande</button>
-  </form>
+  <div class="grille" id="grilleBiens">
+    <p class="vide">Chargement...</p>
+  </div>
 </div>
 
 <footer>
   &copy; 2026 AW SERVICES — Tous droits réservés
 </footer>
 
-</body>
-</html>
+<script>
+const sb = supabase.createClient(
+  'https://vnceunqygoiwglnwpgcr.supabase.co',
+  'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
+);
+
+async function chargerBiens() {
+  const { data, error } = await sb.from('biens_immobiliers').select('*').order('date_ajout', { ascending: false });
+  var grille = document.getElementById('grilleBiens');
+
+  if (error || !data || data.length === 0) {
+    grille.innerHTML = '<p class="vide">Aucun bien disponible pour le moment.</p>';
+    return;
+  }
+
+  grille.innerHTML = data.map(b => `
+    <div class="bien-carte">
+      ${b.statut === 'vendu' ? '<span class="badge-vendu">Déjà vendu</span>' : ''}
+      <img src="${(b.images && b.images[0]) || ''}" alt="${b.titre}">
+      <div class="infos">
+        <h3>${b.titre}</h3>
+        <div class="prix">${Number(b.prix).toLocaleString('fr-FR')} FCFA</div>
+        <div class="loc
