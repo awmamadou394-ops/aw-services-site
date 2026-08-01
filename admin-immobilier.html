@@ -43,158 +43,200 @@
   <h1>Gestion Immobilier</h1>
 </header>
 
-<a href="admin-espace.html" class="back">&#8592; Retour à l'administration</a>
+<a href="admin-espace.html" class="back">&#8592; Retour a l administration</a>
 
 <div class="content">
-  <div id="zoneContenu" class="chargement">Vérification des droits...</div>
+  <div id="zoneContenu" class="chargement">Verification des droits...</div>
 </div>
 
 <script>
-const sb = supabase.createClient(
-  'https://vnceunqygoiwglnwpgcr.supabase.co',
-  'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
-async function verifierEtCharger() {
-  const reponseUser = await sb.auth.getUser();
-  const user = reponseUser.data.user;
-  if (!user) { window.location.href = 'admin-connexion.html'; return; }
-
-  const reponseAdmin = await sb.from('admins').select('*').eq('user_id', user.id).single();
-  const admin = reponseAdmin.data;
-  const zone = document.getElementById('zoneContenu');
-
-  if (!admin) {
-    zone.innerHTML = '<div class="carte"><p>Acces refuse.</p></div>';
-    return;
-  }
-
-  zone.innerHTML =
-    '<div class="stat-carte">' +
-      '<div class="chiffre" id="compteurVendus">...</div>' +
-      '<div class="label">biens vendus sur la plateforme</div>' +
-    '</div>' +
-    '<div class="carte">' +
-      '<h2>Ajouter un bien</h2>' +
-      '<div id="zoneMessage"></div>' +
-      '<form id="formBien" onsubmit="ajouterBien(event)">' +
-        '<label>Titre</label>' +
-        '<input type="text" id="b_titre" placeholder="Ex : Terrain 300m2 Doumga" required>' +
-        '<label>Description</label>' +
-        '<textarea id="b_description" rows="3" placeholder="Decrivez le bien"></textarea>' +
-        '<label>Prix (FCFA)</label>' +
-        '<input type="number" id="b_prix" placeholder="Ex : 5000000" required>' +
-        '<label>Type de bien</label>' +
-        '<select id="b_type" required>' +
-          '<option value="">Choisir...</option>' +
-          '<option value="Terrain">Terrain</option>' +
-          '<option value="Maison">Maison</option>' +
-          '<option value="Appartement">Appartement</option>' +
-          '<option value="Local commercial">Local commercial</option>' +
-        '</select>' +
-        '<label>Localisation</label>' +
-        '<input type="text" id="b_localisation" placeholder="Ville / quartier" required>' +
-        '<label>Photos (plusieurs possibles)</label>' +
-        '<input type="file" id="b_images" accept="image/*" multiple required>' +
-        '<button type="submit" id="btn_bien">Publier le bien</button>' +
-      '</form>' +
-    '</div>' +
-    '<div class="carte">' +
-      '<h2>Biens publies</h2>' +
-      '<div id="listeBiens"><p class="label">Chargement...</p></div>' +
-    '</div>';
-
-  chargerCompteur();
-  chargerBiens();
-}
-
-async function chargerCompteur() {
-  const reponse = await sb.from('biens_immobiliers').select('*', { count: 'exact', head: true }).eq('statut', 'vendu');
-  document.getElementById('compteurVendus').textContent = reponse.count || 0;
-}
-
-async function chargerBiens() {
-  const reponse = await sb.from('biens_immobiliers').select('*').order('date_ajout', { ascending: false });
-  const data = reponse.data;
-  const zone = document.getElementById('listeBiens');
-  if (!data || data.length === 0) { zone.innerHTML = '<p class="label">Aucun bien pour le moment.</p>'; return; }
-
-  let html = '';
-  for (let i = 0; i < data.length; i++) {
-    const b = data[i];
-    const image = (b.images && b.images[0]) ? b.images[0] : '';
-    const actionVente = (b.statut === 'vendu')
-      ? '<span class="badge-vendu">Deja vendu</span>'
-      : '<button class="btn-action" onclick="marquerVendu(\'' + b.id + '\')">Marquer vendu</button>';
-    html += '<div class="bien-carte">' +
-              '<img src="' + image + '" alt="' + b.titre + '">' +
-              '<div class="bien-info">' +
-                '<h3>' + b.titre + '</h3>' +
-                '<p>' + Number(b.prix).toLocaleString('fr-FR') + ' FCFA - ' + b.localisation + '</p>' +
-                '<div class="boutons-bien">' +
-                  actionVente +
-                  '<button class="btn-action btn-suppr" onclick="supprimerBien(\'' + b.id + '\')">Supprimer</button>' +
-                '</div>' +
-              '</div>' +
-            '</div>';
-  }
-  zone.innerHTML = html;
-}
-
-async function marquerVendu(id) {
-  await sb.from('biens_immobiliers').update({ statut: 'vendu', date_vente: new Date().toISOString() }).eq('id', id);
-  chargerCompteur();
-  chargerBiens();
-}
-
-async function supprimerBien(id) {
-  if (!confirm('Supprimer definitivement ce bien ?')) return;
-  await sb.from('biens_immobiliers').delete().eq('id', id);
-  chargerCompteur();
-  chargerBiens();
-}
-
-async function ajouterBien(event) {
-  event.preventDefault();
-  const btn = document.getElementById('btn_bien');
-  const zoneMsg = document.getElementById('zoneMessage');
-  btn.disabled = true;
-  btn.textContent = 'Publication en cours...';
-  zoneMsg.innerHTML = '';
-
-  const titre = document.getElementById('b_titre').value;
-  const description = document.getElementById('b_description').value;
-  const prix = document.getElementById('b_prix').value;
-  const type_bien = document.getElementById('b_type').value;
-  const localisation = document.getElementById('b_localisation').value;
-  const fichiers = document.getElementById('b_images').files;
-
-  const urls = [];
-  for (let i = 0; i < fichiers.length; i++) {
-    const nomFichier = 'bien_' + Date.now() + '_' + i + '_' + fichiers[i].name;
-    const reponseUpload = await sb.storage.from('immobilier').upload(nomFichier, fichiers[i]);
-    if (!reponseUpload.error) {
-      const urlData = sb.storage.from('immobilier').getPublicUrl(nomFichier);
-      urls.push(urlData.data.publicUrl);
+function verifierEtCharger() {
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) {
+      window.location.href = "admin-connexion.html";
+      return;
     }
-  }
+    sb.from("admins").select("*").eq("user_id", user.id).single().then(function(reponseAdmin) {
+      var admin = reponseAdmin.data;
+      var zone = document.getElementById("zoneContenu");
+      if (!admin) {
+        zone.innerHTML = "<div class=\"carte\"><p>Acces refuse.</p></div>";
+        return;
+      }
+      zone.innerHTML =
+        "<div class=\"stat-carte\">" +
+          "<div class=\"chiffre\" id=\"compteurVendus\">...</div>" +
+          "<div class=\"label\">biens vendus sur la plateforme</div>" +
+        "</div>" +
+        "<div class=\"carte\">" +
+          "<h2>Ajouter un bien</h2>" +
+          "<div id=\"zoneMessage\"></div>" +
+          "<form id=\"formBien\">" +
+            "<label>Titre</label>" +
+            "<input type=\"text\" id=\"b_titre\" placeholder=\"Ex : Terrain 300m2 Doumga\" required>" +
+            "<label>Description</label>" +
+            "<textarea id=\"b_description\" rows=\"3\" placeholder=\"Decrivez le bien\"></textarea>" +
+            "<label>Prix (FCFA)</label>" +
+            "<input type=\"number\" id=\"b_prix\" placeholder=\"Ex : 5000000\" required>" +
+            "<label>Type de bien</label>" +
+            "<select id=\"b_type\" required>" +
+              "<option value=\"\">Choisir...</option>" +
+              "<option value=\"Terrain\">Terrain</option>" +
+              "<option value=\"Maison\">Maison</option>" +
+              "<option value=\"Appartement\">Appartement</option>" +
+              "<option value=\"Local commercial\">Local commercial</option>" +
+            "</select>" +
+            "<label>Localisation</label>" +
+            "<input type=\"text\" id=\"b_localisation\" placeholder=\"Ville / quartier\" required>" +
+            "<label>Photos (plusieurs possibles)</label>" +
+            "<input type=\"file\" id=\"b_images\" accept=\"image/*\" multiple required>" +
+            "<button type=\"submit\" id=\"btn_bien\">Publier le bien</button>" +
+          "</form>" +
+        "</div>" +
+        "<div class=\"carte\">" +
+          "<h2>Biens publies</h2>" +
+          "<div id=\"listeBiens\"><p class=\"label\">Chargement...</p></div>" +
+        "</div>";
 
-  const reponse = await sb.from('biens_immobiliers').insert([{
-    titre: titre,
-    description: description,
-    prix: prix,
-    type_bien: type_bien,
-    localisation: localisation,
-    images: urls
-  }]);
+      document.getElementById("formBien").addEventListener("submit", ajouterBien);
+      chargerCompteur();
+      chargerBiens();
+    });
+  });
+}
 
-  btn.disabled = false;
-  btn.textContent = 'Publier le bien';
+function chargerCompteur() {
+  sb.from("biens_immobiliers").select("*", { count: "exact", head: true }).eq("statut", "vendu").then(function(reponse) {
+    document.getElementById("compteurVendus").textContent = reponse.count || 0;
+  });
+}
 
-  if (reponse.error) {
-    zoneMsg.innerHTML = '<div class="msg erreur">Erreur : ' + reponse.error.message + '</div>';
+function chargerBiens() {
+  sb.from("biens_immobiliers").select("*").order("date_ajout", { ascending: false }).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeBiens");
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p class=\"label\">Aucun bien pour le moment.</p>";
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var b = data[i];
+      var image = (b.images && b.images[0]) ? b.images[0] : "";
+      var actionVente = (b.statut === "vendu")
+        ? "<span class=\"badge-vendu\">Deja vendu</span>"
+        : "<button class=\"btn-action btn-vendu-action\" data-id=\"" + b.id + "\">Marquer vendu</button>";
+      html += "<div class=\"bien-carte\">" +
+                "<img src=\"" + image + "\" alt=\"\">" +
+                "<div class=\"bien-info\">" +
+                  "<h3>" + b.titre + "</h3>" +
+                  "<p>" + Number(b.prix).toLocaleString("fr-FR") + " FCFA - " + b.localisation + "</p>" +
+                  "<div class=\"boutons-bien\">" +
+                    actionVente +
+                    "<button class=\"btn-action btn-suppr btn-suppr-action\" data-id=\"" + b.id + "\">Supprimer</button>" +
+                  "</div>" +
+                "</div>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+
+    var boutonsVendu = document.getElementsByClassName("btn-vendu-action");
+    for (var j = 0; j < boutonsVendu.length; j++) {
+      boutonsVendu[j].addEventListener("click", function(e) {
+        marquerVendu(e.target.getAttribute("data-id"));
+      });
+    }
+    var boutonsSuppr = document.getElementsByClassName("btn-suppr-action");
+    for (var k = 0; k < boutonsSuppr.length; k++) {
+      boutonsSuppr[k].addEventListener("click", function(e) {
+        supprimerBien(e.target.getAttribute("data-id"));
+      });
+    }
+  });
+}
+
+function marquerVendu(id) {
+  sb.from("biens_immobiliers").update({ statut: "vendu", date_vente: new Date().toISOString() }).eq("id", id).then(function() {
+    chargerCompteur();
+    chargerBiens();
+  });
+}
+
+function supprimerBien(id) {
+  if (!confirm("Supprimer definitivement ce bien ?")) return;
+  sb.from("biens_immobiliers").delete().eq("id", id).then(function() {
+    chargerCompteur();
+    chargerBiens();
+  });
+}
+
+function ajouterBien(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btn_bien");
+  var zoneMsg = document.getElementById("zoneMessage");
+  btn.disabled = true;
+  btn.textContent = "Publication en cours...";
+  zoneMsg.innerHTML = "";
+
+  var titre = document.getElementById("b_titre").value;
+  var description = document.getElementById("b_description").value;
+  var prix = document.getElementById("b_prix").value;
+  var type_bien = document.getElementById("b_type").value;
+  var localisation = document.getElementById("b_localisation").value;
+  var fichiers = document.getElementById("b_images").files;
+  var urls = [];
+  var compteur = 0;
+  var total = fichiers.length;
+
+  if (total === 0) {
+    finaliserAjout();
     return;
   }
 
-  zoneMsg.innerHTML = '<div class="msg succes">Bien publie avec succes !</div>';
-  document.getElementById('formBien').
+  for (var i = 0; i < total; i++) {
+    (function(fichier, index) {
+      var nomFichier = "bien_" + Date.now() + "_" + index + "_" + fichier.name;
+      sb.storage.from("immobilier").upload(nomFichier, fichier).then(function(reponseUpload) {
+        if (!reponseUpload.error) {
+          var urlData = sb.storage.from("immobilier").getPublicUrl(nomFichier);
+          urls.push(urlData.data.publicUrl);
+        }
+        compteur++;
+        if (compteur === total) finaliserAjout();
+      });
+    })(fichiers[i], i);
+  }
+
+  function finaliserAjout() {
+    sb.from("biens_immobiliers").insert([{
+      titre: titre,
+      description: description,
+      prix: prix,
+      type_bien: type_bien,
+      localisation: localisation,
+      images: urls
+    }]).then(function(reponse) {
+      btn.disabled = false;
+      btn.textContent = "Publier le bien";
+      if (reponse.error) {
+        zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
+        return;
+      }
+      zoneMsg.innerHTML = "<div class=\"msg succes\">Bien publie avec succes !</div>";
+      document.getElementById("formBien").reset();
+      chargerBiens();
+    });
+  }
+}
+
+verifierEtCharger();
+</script>
+
+</body>
+</html>
