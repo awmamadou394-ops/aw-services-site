@@ -33,11 +33,11 @@
   <h1>AW SERVICES — Immobilier</h1>
 </header>
 
-<a href="index.html" class="back">&#8592; Retour à l'accueil</a>
+<a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
 <div class="content">
   <h2>Biens disponibles</h2>
-  <p>Découvrez nos biens immobiliers proposés par AW SERVICES.</p>
+  <p>Decouvrez nos biens immobiliers proposes par AW SERVICES.</p>
 
   <div class="grille" id="grilleBiens">
     <p class="vide">Chargement...</p>
@@ -45,7 +45,7 @@
 </div>
 
 <footer>
-  &copy; 2026 AW SERVICES — Tous droits réservés
+  &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
 <script>
@@ -55,26 +55,32 @@ const sb = supabase.createClient(
 );
 
 async function chargerBiens() {
-  const { data, error } = await sb.from('biens_immobiliers').select('*').order('date_ajout', { ascending: false });
-  var grille = document.getElementById('grilleBiens');
+  const reponse = await sb.from('biens_immobiliers').select('*').order('date_ajout', { ascending: false });
+  const data = reponse.data;
+  const grille = document.getElementById('grilleBiens');
 
-  if (error || !data || data.length === 0) {
+  if (!data || data.length === 0) {
     grille.innerHTML = '<p class="vide">Aucun bien disponible pour le moment.</p>';
     return;
   }
 
-  grille.innerHTML = data.map(b => `
-    <div class="bien-carte">
-      ${b.statut === 'vendu' ? '<span class="badge-vendu">Déjà vendu</span>' : ''}
-      <img src="${(b.images && b.images[0]) || ''}" alt="${b.titre}">
-      <div class="infos">
-        <h3>${b.titre}</h3>
-        <div class="prix">${Number(b.prix).toLocaleString('fr-FR')} FCFA</div>
-        <div class="loc">${b.localisation}</div>
-        <a class="btn-detail" href="https://wa.me/221777589444?text=${encodeURIComponent('Bonjour, je suis intéressé par : ' + b.titre)}" target="_blank">Contacter</a>
-      </div>
-    </div>
-  `).join('');
+  let html = '';
+  for (let i = 0; i < data.length; i++) {
+    const b = data[i];
+    const image = (b.images && b.images[0]) ? b.images[0] : '';
+    const prix = Number(b.prix).toLocaleString('fr-FR');
+    const badge = (b.statut === 'vendu') ? '<span class="badge-vendu">Deja vendu</span>' : '';
+    const lien = 'https://wa.me/221777589444?text=' + encodeURIComponent('Bonjour, je suis interesse par : ' + b.titre);
+    html += '<div class="bien-carte">' + badge +
+            '<img src="' + image + '" alt="' + b.titre + '">' +
+            '<div class="infos">' +
+            '<h3>' + b.titre + '</h3>' +
+            '<div class="prix">' + prix + ' FCFA</div>' +
+            '<div class="loc">' + b.localisation + '</div>' +
+            '<a class="btn-detail" href="' + lien + '" target="_blank">Contacter</a>' +
+            '</div></div>';
+  }
+  grille.innerHTML = html;
 }
 
 chargerBiens();
