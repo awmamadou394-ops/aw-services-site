@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Espace Livreur</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
+  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
+  header h1 { color: #1e6fd9; font-size: 22px; }
+  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
+  .content { padding: 20px 15px; max-width: 500px; margin: 0 auto; }
+  .onglets { display: flex; gap: 10px; margin-bottom: 20px; }
+  .onglet { flex: 1; text-align: center; background-color: #121826; border: 1px solid #2a3040; color: #b0b8c5; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; }
+  .onglet.actif { border-color: #1e6fd9; color: #ffffff; }
+  form { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  label { font-size: 14px; color: #b0b8c5; }
+  input, select { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
+  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; margin-top: 10px; }
+  button:disabled { opacity: 0.6; }
+  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
+  .msg.erreur { background-color: #3a1414; color: #ff8080; }
+  .msg.succes { background-color: #143a1e; color: #80ff9e; }
+  footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AW SERVICES — Espace Livreur</h1>
+</header>
+
+<a href="boutique.html" class="back">&#8592; Retour à la boutique</a>
+
+<div class="content">
+  <div class="onglets">
+    <div class="onglet actif" id="ongletInscription" onclick="afficherInscription()">Créer un compte</div>
+    <div class="onglet" id="ongletConnexion" onclick="afficherConnexion()">Se connecter</div>
+  </div>
+
+  <div id="zoneMessage"></div>
+
+  <form id="formInscription" onsubmit="inscrire(event)">
+    <label>Nom complet</label>
+    <input type="text" id="i_nom" placeholder="Votre nom" required>
+
+    <label>Numéro de téléphone</label>
+    <input type="tel" id="i_tel" placeholder="Votre numéro" required>
+
+    <label>Type de véhicule</label>
+    <select id="i_vehicule" required>
+      <option value="">Choisir...</option>
+      <option value="Moto">Moto</option>
+      <option value="Voiture">Voiture</option>
+      <option value="Tricycle">Tricycle</option>
+    </select>
+
+    <label>Zone de couverture</label>
+    <input type="text" id="i_zone" placeholder="Quartier(s) où vous livrez" required>
+
+    <label>Adresse email</label>
+    <input type="email" id="i_email" placeholder="votre@email.com" required>
+
+    <label>Mot de passe</label>
+    <input type="password" id="i_password" placeholder="6 caractères minimum" minlength="6" required>
+
+    <button type="submit" id="btn_inscription">Créer mon compte livreur</button>
+  </form>
+
+  <form id="formConnexion" style="display:none;" onsubmit="connecter(event)">
+    <label>Adresse email</label>
+    <input type="email" id="c_email" placeholder="votre@email.com" required>
+
+    <label>Mot de passe</label>
+    <input type="password" id="c_password" placeholder="Votre mot de passe" required>
+
+    <button type="submit" id="btn_connexion">Se connecter</button>
+  </form>
+</div>
+
+<footer>
+  &copy; 2026 AW SERVICES — Tous droits réservés
+</footer>
+
+<script>
+const sb = supabase.createClient(
+  'https://vnceunqygoiwglnwpgcr.supabase.co',
+  'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
+);
+
+function afficherInscription() {
+  document.getElementById('formInscription').style.display = 'flex';
+  document.getElementById('formConnexion').style.display = 'none';
+  document.getElementById('ongletInscription').classList.add('actif');
+  document.getElementById('ongletConnexion').classList.remove('actif');
+}
+
+function afficherConnexion() {
+  document.getElementById('formInscription').style.display = 'none';
+  document.getElementById('formConnexion').style.display = 'flex';
+  document.getElementById('ongletInscription').classList.remove('actif');
+  document.getElementById('ongletConnexion').classList.add('actif');
+}
+
+function afficherMessage(texte, type) {
+  document.getElementById('zoneMessage').innerHTML = '<div class="msg ' + type + '">' + texte + '</div>';
+}
+
+async function inscrire(event) {
+  event.preventDefault();
+  var btn = document.getElementById('btn_inscription');
+  btn.disabled = true;
+  btn.textContent = 'Création en cours...';
+
+  var nom = document.getElementById('i_nom').value;
+  var tel = document.getElementById('i_tel').value;
+  var vehicule = document.getElementById('i_vehicule').value;
+  var zone = document.getElementById('i_zone').value;
+  var email = document.getElementById('i_email').value;
+  var password = document.getElementById('i_password').value;
+
+  const { data, error } = await sb.auth.signUp({ email: email, password: password });
+
+  if (error) {
+    afficherMessage('Erreur : ' + error.message, 'erreur');
+    btn.disabled = false;
+    btn.textContent = 'Créer mon compte livreur';
+    return;
+  }
+
+  const userId = data.user.id;
+
+  const { error: erreurLivreur } = await sb.from('livreurs').insert([{
+    nom: nom,
+    telephone: tel,
+    vehicule: vehicule,
+    zone: zone,
+    user_id: userId
+  }]);
+
+  btn.disabled = false;
+  btn.textContent = 'Créer mon compte livreur';
+
+  if (erreurLivreur) {
+    afficherMessage("Compte créé, mais erreur lors de l'enregistrement du profil. Contactez-nous.", 'erreur');
+    return;
+  }
+
+  afficherMessage('Compte créé avec succès ! Votre candidature est en attente de validation par AW SERVICES.', 'succes');
+  document.getElementById('formInscription').reset();
+}
+
+async function connecter(event) {
+  event.preventDefault();
+  var btn = document.getElementById('btn_connexion');
+  btn.disabled = true;
+  btn.textContent = 'Connexion en cours...';
+
+  var email = document.getElementById('c_email').value;
+  var password = document.getElementById('c_password').value;
+
+  const { error } = await sb.auth.signInWithPassword({ email: email, password: password });
+
+  btn.disabled = false;
+  btn.textContent = 'Se connecter';
+
+  if (error) {
+    afficherMessage('Erreur : ' + error.message, 'erreur');
+    return;
+  }
+
+  window.location.href = 'livreur-espace.html';
+}
+</script>
+
+</body>
+</html>
