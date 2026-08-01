@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Catalogue</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
+  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
+  header h1 { color: #1e6fd9; font-size: 22px; }
+  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
+  .content { padding: 15px; max-width: 700px; margin: 0 auto; }
+  .grille { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .produit-carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; overflow: hidden; }
+  .produit-carte img { width: 100%; height: 120px; object-fit: cover; background-color: #0a0e17; }
+  .produit-carte .infos { padding: 10px; }
+  .produit-carte h3 { font-size: 14px; margin-bottom: 4px; }
+  .produit-carte .prix { color: #d62828; font-weight: bold; font-size: 15px; }
+  .produit-carte .stock { color: #b0b8c5; font-size: 12px; margin-top: 3px; }
+  .produit-carte button { width: 100%; background-color: #1e6fd9; color: #ffffff; border: none; padding: 8px; font-size: 13px; font-weight: bold; margin-top: 8px; border-radius: 6px; }
+  .vide { text-align: center; color: #b0b8c5; padding: 40px; grid-column: 1 / -1; }
+  #zoneCommande { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-top: 25px; display: none; }
+  #zoneCommande h2 { font-size: 16px; margin-bottom: 12px; }
+  #zoneCommande form { display: flex; flex-direction: column; gap: 12px; }
+  label { font-size: 14px; color: #b0b8c5; }
+  input, select { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
+  #zoneCommande button[type="submit"] { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; }
+  footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AW SERVICES — Catalogue</h1>
+</header>
+
+<a href="index.html" class="back">&#8592; Retour à l'accueil</a>
+
+<div class="content">
+  <div class="grille" id="grilleProduits">
+    <p class="vide">Chargement des produits...</p>
+  </div>
+
+  <div id="zoneCommande">
+    <h2 id="titreCommande">Commander</h2>
+    <form onsubmit="envoyerCommande(event)">
+      <label>Nom complet</label>
+      <input type="text" id="cmd_nom" required>
+
+      <label>Numéro de téléphone</label>
+      <input type="tel" id="cmd_tel" required>
+
+      <label>Mode de paiement</label>
+      <select id="cmd_paiement" required>
+        <option value="">Choisir...</option>
+        <option value="Paiement en ligne (Wave/Orange Money)">Paiement en ligne (Wave/Orange Money)</option>
+        <option value="Paiement en espèces à la livraison">Paiement en espèces à la livraison</option>
+      </select>
+
+      <label>Adresse de livraison</label>
+      <input type="text" id="cmd_adresse" required>
+
+      <button type="submit" id="btn_commande">Confirmer la commande</button>
+    </form>
+  </div>
+</div>
+
+<footer>
+  &copy; 2026 AW SERVICES — Tous droits réservés
+</footer>
+
+<script>
+const sb = supabase.createClient(
+  'https://vnceunqygoiwglnwpgcr.supabase.co',
+  'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
+);
+
+let produitSelectionne = null;
+
+async function chargerProduits() {
+  const { data: produits, error } = await sb.from('produits').select('*').eq('statut', 'approuve').gt('stock', 0);
+  var grille = document.getElementById('grilleProduits');
+
+  if (error || !produits || produits.length === 0) {
+    grille.innerHTML = '<p class="vide">Aucun produit disponible pour le moment.</p>';
+    return;
+  }
+
+  grille.innerHTML = produits.map(p => `
+    <div class="produit-carte">
+      <img src="${p.image_url || ''}" alt="${p.nom}">
+      <div class="infos">
+        <h3>${p.nom}</h3>
+        <div class="prix">${p.prix} FCFA</div>
+        <div class="stock">${p.stock} en stock</div>
+        <button onclick='selectionnerProduit(${JSON.stringify(p.nom)}, ${JSON.stringify(p.id)})'>Commander</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectionnerProduit(nom, id) {
+  produitSelectionne = { nom: nom, id: id };
+  document.getElementById('titreCommande').textContent = 'Commander : ' + nom;
+  document.getElementById('zoneCommande').style.display = 'block';
+  document.getElementById('zoneCommande').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function envoyerCommande(event) {
+  event.preventDefault();
+  var btn = document.getElementById('btn_commande');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+
+  var nom = document.getElementById('cmd_nom').value;
+  var tel = document.getElementById('cmd_tel').value;
+  var paiement = document.getElementById('cmd_paiement').value;
+  var adresse = document.getElementById('cmd_adresse').value;
+
+  const { error } = await sb.from('commandes').insert([{
+    client_nom: nom,
+    client_telephone: tel,
+    produit: produitSelectionne.nom,
+    mode_paiement: paiement,
+    adresse_livraison: adresse
+  }]);
+
+  btn.disabled = false;
+  btn.textContent = 'Confirmer la commande';
+
+  if (error) {
+    alert("Erreur : la commande n'a pas pu être enregistrée. Réessayez.");
+    return;
+  }
+
+  var message = "Bonjour, je commande : " + produitSelectionne.nom + "\nNom : " + nom + "\nTéléphone : " + tel + "\nPaiement : " + paiement + "\nAdresse : " + adresse;
+  window.open('https://wa.me/221777589444?text=' + encodeURIComponent(message), '_blank');
+  document.getElementById('zoneCommande').style.display = 'none';
+  event.target.reset();
+}
+
+chargerProduits();
+</script>
+
+</body>
+</html>
