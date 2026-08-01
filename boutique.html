@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Boutique</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -61,6 +62,7 @@
     font-weight: bold;
     margin-top: 10px;
   }
+  button:disabled { opacity: 0.6; }
   .separateur {
     border-top: 1px solid #2a3040;
     margin: 35px 0;
@@ -85,17 +87,17 @@
 
 <div class="content">
   <h2>Nos produits divers</h2>
-  <p>Électronique, parfums, vêtements et bien plus. Choisissez votre mode de paiement et passez commande, nous vous répondons rapidement sur WhatsApp.</p>
+  <p>Électronique, parfums, vêtements et bien plus. Choisissez votre mode de paiement et passez commande.</p>
 
-  <form action="https://wa.me/221777589444" method="get" target="_blank">
+  <form id="formCommande" onsubmit="envoyerCommande(event)">
     <label>Nom complet</label>
-    <input type="text" name="nom" placeholder="Votre nom" required>
+    <input type="text" id="c_nom" placeholder="Votre nom" required>
 
     <label>Numéro de téléphone</label>
-    <input type="tel" name="telephone" placeholder="Votre numéro" required>
+    <input type="tel" id="c_tel" placeholder="Votre numéro" required>
 
     <label>Catégorie de produit</label>
-    <select name="categorie" required>
+    <select id="c_categorie" required>
       <option value="">Choisir...</option>
       <option value="Électronique">Électronique</option>
       <option value="Parfums">Parfums</option>
@@ -104,19 +106,19 @@
     </select>
 
     <label>Produit recherché</label>
-    <input type="text" name="produit" placeholder="Ex : Casque Bluetooth" required>
+    <input type="text" id="c_produit" placeholder="Ex : Casque Bluetooth" required>
 
     <label>Mode de paiement</label>
-    <select name="paiement" required>
+    <select id="c_paiement" required>
       <option value="">Choisir...</option>
       <option value="Paiement en ligne (Wave/Orange Money)">Paiement en ligne (Wave/Orange Money)</option>
       <option value="Paiement en espèces à la livraison">Paiement en espèces à la livraison</option>
     </select>
 
     <label>Adresse de livraison</label>
-    <input type="text" name="adresse" placeholder="Quartier, ville" required>
+    <input type="text" id="c_adresse" placeholder="Quartier, ville" required>
 
-    <button type="submit">Passer commande</button>
+    <button type="submit" id="btn_commande">Passer commande</button>
   </form>
 </div>
 
@@ -126,15 +128,15 @@
   <h2>Devenir livreur partenaire</h2>
   <p>Vous avez un véhicule ou une moto ? Rejoignez-nous pour effectuer des livraisons.</p>
 
-  <form action="https://wa.me/221777589444" method="get" target="_blank">
+  <form id="formLivreur" onsubmit="envoyerLivreur(event)">
     <label>Nom complet</label>
-    <input type="text" name="nom" placeholder="Votre nom" required>
+    <input type="text" id="l_nom" placeholder="Votre nom" required>
 
     <label>Numéro de téléphone</label>
-    <input type="tel" name="telephone" placeholder="Votre numéro" required>
+    <input type="tel" id="l_tel" placeholder="Votre numéro" required>
 
     <label>Type de véhicule</label>
-    <select name="vehicule" required>
+    <select id="l_vehicule" required>
       <option value="">Choisir...</option>
       <option value="Moto">Moto</option>
       <option value="Voiture">Voiture</option>
@@ -142,9 +144,9 @@
     </select>
 
     <label>Zone de couverture</label>
-    <input type="text" name="zone" placeholder="Quartier(s) où vous livrez" required>
+    <input type="text" id="l_zone" placeholder="Quartier(s) où vous livrez" required>
 
-    <button type="submit">Envoyer ma candidature</button>
+    <button type="submit" id="btn_livreur">Envoyer ma candidature</button>
   </form>
 </div>
 
@@ -154,23 +156,124 @@
   <h2>Devenir vendeur partenaire</h2>
   <p>Vous avez des produits à vendre ? Obtenez votre espace dans notre boutique et vendez via AW SERVICES.</p>
 
-  <form action="https://wa.me/221777589444" method="get" target="_blank">
+  <form id="formVendeur" onsubmit="envoyerVendeur(event)">
     <label>Nom complet / Entreprise</label>
-    <input type="text" name="nom" placeholder="Votre nom ou nom de l'entreprise" required>
+    <input type="text" id="v_nom" placeholder="Votre nom ou nom de l'entreprise" required>
 
     <label>Numéro de téléphone</label>
-    <input type="tel" name="telephone" placeholder="Votre numéro" required>
+    <input type="tel" id="v_tel" placeholder="Votre numéro" required>
 
     <label>Type de produits à vendre</label>
-    <input type="text" name="produits" placeholder="Ex : Parfums, électronique..." required>
+    <input type="text" id="v_produits" placeholder="Ex : Parfums, électronique..." required>
 
-    <button type="submit">Demander un partenariat</button>
+    <button type="submit" id="btn_vendeur">Demander un partenariat</button>
   </form>
 </div>
 
 <footer>
   &copy; 2026 AW SERVICES — Tous droits réservés
 </footer>
+
+<script>
+const sb = supabase.createClient(
+  'https://vnceunqygoiwglnwpgcr.supabase.co',
+  'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
+);
+
+async function envoyerCommande(event) {
+  event.preventDefault();
+  var btn = document.getElementById('btn_commande');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+
+  var nom = document.getElementById('c_nom').value;
+  var tel = document.getElementById('c_tel').value;
+  var categorie = document.getElementById('c_categorie').value;
+  var produit = document.getElementById('c_produit').value;
+  var paiement = document.getElementById('c_paiement').value;
+  var adresse = document.getElementById('c_adresse').value;
+
+  const { error } = await sb.from('commandes').insert([{
+    client_nom: nom,
+    client_telephone: tel,
+    produit: categorie + ' - ' + produit,
+    mode_paiement: paiement,
+    adresse_livraison: adresse
+  }]);
+
+  btn.disabled = false;
+  btn.textContent = 'Passer commande';
+
+  if (error) {
+    alert("Erreur : la commande n'a pas pu être enregistrée. Réessayez.");
+    return;
+  }
+
+  var message = "Bonjour, je passe commande.\nNom : " + nom + "\nTéléphone : " + tel + "\nProduit : " + categorie + " - " + produit + "\nPaiement : " + paiement + "\nAdresse : " + adresse;
+  window.open('https://wa.me/221777589444?text=' + encodeURIComponent(message), '_blank');
+  document.getElementById('formCommande').reset();
+}
+
+async function envoyerLivreur(event) {
+  event.preventDefault();
+  var btn = document.getElementById('btn_livreur');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+
+  var nom = document.getElementById('l_nom').value;
+  var tel = document.getElementById('l_tel').value;
+  var vehicule = document.getElementById('l_vehicule').value;
+  var zone = document.getElementById('l_zone').value;
+
+  const { error } = await sb.from('livreurs').insert([{
+    nom: nom,
+    telephone: tel,
+    vehicule: vehicule,
+    zone: zone
+  }]);
+
+  btn.disabled = false;
+  btn.textContent = 'Envoyer ma candidature';
+
+  if (error) {
+    alert("Erreur : la candidature n'a pas pu être enregistrée. Réessayez.");
+    return;
+  }
+
+  var message = "Bonjour, je souhaite devenir livreur partenaire.\nNom : " + nom + "\nTéléphone : " + tel + "\nVéhicule : " + vehicule + "\nZone : " + zone;
+  window.open('https://wa.me/221777589444?text=' + encodeURIComponent(message), '_blank');
+  document.getElementById('formLivreur').reset();
+}
+
+async function envoyerVendeur(event) {
+  event.preventDefault();
+  var btn = document.getElementById('btn_vendeur');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+
+  var nom = document.getElementById('v_nom').value;
+  var tel = document.getElementById('v_tel').value;
+  var produits = document.getElementById('v_produits').value;
+
+  const { error } = await sb.from('vendeurs').insert([{
+    nom: nom,
+    telephone: tel,
+    produits_categorie: produits
+  }]);
+
+  btn.disabled = false;
+  btn.textContent = 'Demander un partenariat';
+
+  if (error) {
+    alert("Erreur : la demande n'a pas pu être enregistrée. Réessayez.");
+    return;
+  }
+
+  var message = "Bonjour, je souhaite devenir vendeur partenaire.\nNom : " + nom + "\nTéléphone : " + tel + "\nProduits : " + produits;
+  window.open('https://wa.me/221777589444?text=' + encodeURIComponent(message), '_blank');
+  document.getElementById('formVendeur').reset();
+}
+</script>
 
 </body>
 </html>
