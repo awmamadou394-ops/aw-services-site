@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Administration</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
+  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { color: #1e6fd9; font-size: 18px; }
+  .deconnexion { background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
+  .content { padding: 20px 15px; max-width: 600px; margin: 0 auto; }
+  .section { margin-bottom: 25px; }
+  .section h2 { font-size: 17px; margin-bottom: 12px; color: #1e6fd9; }
+  .carte { background-color: #121826; border: 1px solid #2a3040; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
+  .carte h3 { font-size: 15px; margin-bottom: 5px; }
+  .carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
+  .boutons { display: flex; gap: 8px; margin-top: 12px; }
+  .btn-approuver { flex: 1; background-color: #1e6fd9; color: #ffffff; border: none; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
+  .btn-refuser { flex: 1; background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
+  .vide { color: #b0b8c5; font-size: 14px; padding: 15px; text-align: center; }
+  .chargement { text-align: center; padding: 40px; color: #b0b8c5; }
+  .refus { text-align: center; padding: 40px; color: #ff8080; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AW SERVICES — Administration</h1>
+  <button class="deconnexion" onclick="deconnecter()">Déconnexion</button>
+</header>
+
+<div class="content">
+  <div id="zoneContenu" class="chargement">Vérification des droits...</div>
+</div>
+
+<script>
+const sb = supabase.createClient(
+  'https://vnceunqygoiwglnwpgcr.supabase.co',
+  'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
+);
+
+async function verifierEtCharger() {
+  const { data: { user } } = await sb.auth.getUser();
+
+  if (!user) {
+    window.location.href = 'admin-connexion.html';
+    return;
+  }
+
+  const { data: admin } = await sb.from('admins').select('*').eq('user_id', user.id).single();
+
+  var zone = document.getElementById('zoneContenu');
+
+  if (!admin) {
+    zone.innerHTML = '<div class="refus">Accès refusé. Ce compte n\'a pas les droits administrateur.</div>';
+    return;
+  }
+
+  zone.innerHTML = `
+    <div class="section">
+      <h2>Vendeurs en attente</h2>
+      <div id="listeVendeurs"><p class="vide">Chargement...</p></div>
+    </div>
+    <div class="section">
+      <h2>Produits en attente</h2>
+      <div id="listeProduits"><p class="vide">Chargement...</p></div>
+    </div>
+    <div class="section">
+      <h2>Livreurs en attente</h2>
+      <div id="listeLivreurs"><p class="vide">Chargement...</p></div>
+    </div>
+    <div class="section">
+      <h2>Commandes récentes</h2>
+      <div id="listeCommandes"><p class="vide">Chargement...</p></div>
+    </div>
+  `;
+
+  chargerVendeurs();
+  chargerProduits();
+  chargerLivreurs();
+  chargerCommandes();
+}
+
+async function chargerVendeurs() {
+  const { data } = await sb.from('vendeurs').select('*').eq('statut', 'en_attente');
+  var zone = document.getElementById('listeVendeurs');
+  if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucun vendeur en attente.</p>'; return; }
+  zone.innerHTML = data.map(v => `
+    <div class="carte">
+      <h3>${v.nom}</h3>
+      <p>Téléphone : ${v.telephone}</p>
+      <p>Produits : ${v.produits_categorie}</p>
+      <div class="boutons">
+        <button class="btn-approuver" onclick="majStatut('vendeurs', '${v.id}', 'approuve', 'listeVendeurs')">Approuver</button>
+        <button class="btn-refuser" onclick="majStatut('vendeurs', '${v.id}', 'refuse', 'listeVendeurs')">Refuser</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function chargerProduits() {
+  const { data } = await sb.from('produits').select('*').eq('statut', 'en_attente');
+  var zone = document.getElementById('listeProduits');
+  if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucun produit en attente.</p>'; return; }
+  zone.innerHTML = data.map(p => `
+    <div class="carte">
+      <h3>${p.nom}</h3>
+      <p>${p.prix} FCFA — Stock : ${p.stock}</p>
+      <p>${p.description || ''}</p>
+      <div class="boutons">
+        <button class="btn-approuver" onclick="majStatut('produits', '${p.id}', 'approuve', 'listeProduits')">Approuver</button>
+        <button class="btn-refuser" onclick="majStatut('produits', '${p.id}', 'refuse', 'listeProduits')">Refuser</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function chargerLivreurs() {
+  const { data } = await sb.from('livreurs').select('*').eq('statut', 'en_attente');
+  var zone = document.getElementById('listeLivreurs');
+  if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucun livreur en attente.</p>'; return; }
+  zone.innerHTML = data.map(l => `
+    <div class="carte">
+      <h3>${l.nom}</h3>
+      <p>Téléphone : ${l.telephone}</p>
+      <p>${l.vehicule} — ${l.zone}</p>
+      <div class="boutons">
+        <button class="btn-approuver" onclick="majStatut('livreurs', '${l.id}', 'approuve', 'listeLivreurs')">Approuver</button>
+        <button class="btn-refuser" onclick="majStatut('livreurs', '${l.id}', 'refuse', 'listeLivreurs')">Refuser</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function chargerCommandes() {
+  const { data } = await sb.from('commandes').select('*').order('date_commande', { ascending: false }).limit(20);
+  var zone = document.getElementById('listeCommandes');
+  if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucune commande pour le moment.</p>'; return; }
+  zone.innerHTML = data.map(c => `
+    <div class="carte">
+      <h3>${c.client_nom}</h3>
+      <p>Téléphone : ${c.client_telephone}</p>
+      <p>Produit : ${c.produit}</p>
+      <p>Paiement : ${c.mode_paiement}</p>
+      <p>Adresse : ${c.adresse_livraison}</p>
+      <p>Statut : ${c.statut}</p>
+    </div>
+  `).join('');
+}
+
+async function majStatut(table, id, nouveauStatut, zoneId) {
+  await sb.from(table).update({ statut: nouveauStatut }).eq('id', id);
+  if (table === 'vendeurs') chargerVendeurs();
+  if (table === 'produits') chargerProduits();
+  if (table === 'livreurs') chargerLivreurs();
+}
+
+async function deconnecter() {
+  await sb.auth.signOut();
+  window.location.href = 'admin-connexion.html';
+}
+
+verifierEtCharger();
+</script>
+
+</body>
+</html>
