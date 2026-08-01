@@ -70,4 +70,15 @@ async function chargerBiens() {
       <div class="infos">
         <h3>${b.titre}</h3>
         <div class="prix">${Number(b.prix).toLocaleString('fr-FR')} FCFA</div>
-        <div class="loc
+        <div class="loc">${b.localisation}</div>
+        <a class="btn-detail" href="https://wa.me/221777589444?text=${encodeURIComponent('Bonjour, je suis intéressé par : ' + b.titre)}" target="_blank">Contacter</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+chargerBiens();
+</script>
+
+</body>
+</html>
