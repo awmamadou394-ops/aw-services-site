@@ -32,15 +32,21 @@
     position: relative;
     z-index: 1;
   }
-  header h1 {
-    color: #1e6fd9;
-    font-size: 28px;
+  header h1 { color: #1e6fd9; font-size: 28px; }
+  header p { color: #d62828; font-size: 14px; margin-top: 5px; }
+  .stats-bar {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 18px 15px;
+    background-color: #0d1220;
+    position: relative;
+    z-index: 1;
   }
-  header p {
-    color: #d62828;
-    font-size: 14px;
-    margin-top: 5px;
-  }
+  .stat { text-align: center; }
+  .stat .chiffre { color: #1e6fd9; font-size: 16px; font-weight: bold; }
+  .stat .label { color: #b0b8c5; font-size: 11px; margin-top: 2px; }
   .modules {
     padding: 30px 15px;
     display: grid;
@@ -56,21 +62,56 @@
     padding: 20px;
     text-align: center;
   }
-  .module h2 {
-    color: #ffffff;
-    font-size: 18px;
-    margin-bottom: 8px;
+  .module h2 { color: #ffffff; font-size: 18px; margin-bottom: 8px; }
+  .module p { color: #b0b8c5; font-size: 14px; }
+  section.info {
+    padding: 25px 15px;
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
   }
-  .module p {
+  section.info h2 {
+    color: #1e6fd9;
+    font-size: 19px;
+    margin-bottom: 12px;
+    border-left: 3px solid #d62828;
+    padding-left: 10px;
+  }
+  section.info p {
     color: #b0b8c5;
     font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 10px;
   }
+  .contact-boutons { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+  .contact-boutons a {
+    display: block;
+    text-align: center;
+    padding: 13px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .btn-whatsapp { background-color: #1e6fd9; color: #ffffff; }
+  .btn-tel { background-color: #121826; border: 1px solid #1e6fd9; color: #ffffff; }
+  .carte-map {
+    width: 100%;
+    height: 220px;
+    border: 0;
+    border-radius: 10px;
+    margin-top: 10px;
+  }
+  .separateur-section { border-top: 1px solid #2a3040; max-width: 600px; margin: 0 auto; }
   footer {
     text-align: center;
     padding: 20px;
     color: #b0b8c5;
     font-size: 12px;
     border-top: 1px solid #d62828;
+    position: relative;
+    z-index: 1;
   }
 </style>
 </head>
@@ -80,6 +121,12 @@
   <h1>AW SERVICES</h1>
   <p>Doumga Ouro Alpha, Sénégal</p>
 </header>
+
+<div class="stats-bar">
+  <div class="stat"><div class="chiffre">6 services</div><div class="label">réunis en un seul endroit</div></div>
+  <div class="stat"><div class="chiffre">100%</div><div class="label">paiement sécurisé</div></div>
+  <div class="stat"><div class="chiffre">Local</div><div class="label">livraison de proximité</div></div>
+</div>
 
 <div class="modules">
   <a href="voyage.html" style="text-decoration:none;">
@@ -119,6 +166,33 @@
   </div>
   </a>
 </div>
+
+<div class="separateur-section"></div>
+
+<section class="info">
+  <h2>À propos de nous</h2>
+  <p>AW SERVICES est une entreprise sénégalaise basée à Doumga Ouro Alpha, réunissant plusieurs services du quotidien en une seule plateforme : voyages, streaming, assurance, volaille fraîche, immobilier et boutique en ligne.</p>
+  <p>Notre objectif est simple : vous simplifier la vie en centralisant des services fiables, accessibles depuis votre téléphone.</p>
+</section>
+
+<div class="separateur-section"></div>
+
+<section class="info">
+  <h2>Localisation</h2>
+  <p>Doumga Ouro Alpha, Sénégal</p>
+  <iframe class="carte-map" src="https://www.google.com/maps?q=Doumga+Ouro+Alpha+Senegal&output=embed" loading="lazy"></iframe>
+</section>
+
+<div class="separateur-section"></div>
+
+<section class="info">
+  <h2>Contactez-nous</h2>
+  <p>Une question, une commande, un partenariat ? Écrivez-nous directement.</p>
+  <div class="contact-boutons">
+    <a href="https://wa.me/221777589444" class="btn-whatsapp" target="_blank">Nous écrire sur WhatsApp</a>
+    <a href="tel:+221777589444" class="btn-tel">Appeler : 77 758 94 44</a>
+  </div>
+</section>
 
 <footer>
   &copy; 2026 AW SERVICES — Tous droits réservés
