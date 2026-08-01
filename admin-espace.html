@@ -14,6 +14,7 @@
   .content { padding: 20px 15px; max-width: 600px; margin: 0 auto; }
   .section { margin-bottom: 25px; }
   .section h2 { font-size: 17px; margin-bottom: 12px; color: #1e6fd9; }
+  .lien-gestion { display: block; background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 15px; margin-bottom: 10px; color: #ffffff; text-decoration: none; font-weight: bold; }
   .carte { background-color: #121826; border: 1px solid #2a3040; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
   .carte h3 { font-size: 15px; margin-bottom: 5px; }
   .carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
@@ -43,40 +44,44 @@ const sb = supabase.createClient(
 );
 
 async function verifierEtCharger() {
-  const { data: { user } } = await sb.auth.getUser();
+  const reponseUser = await sb.auth.getUser();
+  const user = reponseUser.data.user;
 
   if (!user) {
     window.location.href = 'admin-connexion.html';
     return;
   }
 
-  const { data: admin } = await sb.from('admins').select('*').eq('user_id', user.id).single();
-
-  var zone = document.getElementById('zoneContenu');
+  const reponseAdmin = await sb.from('admins').select('*').eq('user_id', user.id).single();
+  const admin = reponseAdmin.data;
+  const zone = document.getElementById('zoneContenu');
 
   if (!admin) {
-    zone.innerHTML = '<div class="refus">Accès refusé. Ce compte n\'a pas les droits administrateur.</div>';
+    zone.innerHTML = '<div class="refus">Acces refuse. Ce compte n\'a pas les droits administrateur.</div>';
     return;
   }
 
-  zone.innerHTML = `
-    <div class="section">
-      <h2>Vendeurs en attente</h2>
-      <div id="listeVendeurs"><p class="vide">Chargement...</p></div>
-    </div>
-    <div class="section">
-      <h2>Produits en attente</h2>
-      <div id="listeProduits"><p class="vide">Chargement...</p></div>
-    </div>
-    <div class="section">
-      <h2>Livreurs en attente</h2>
-      <div id="listeLivreurs"><p class="vide">Chargement...</p></div>
-    </div>
-    <div class="section">
-      <h2>Commandes récentes</h2>
-      <div id="listeCommandes"><p class="vide">Chargement...</p></div>
-    </div>
-  `;
+  zone.innerHTML =
+    '<div class="section">' +
+      '<h2>Gestion des catalogues</h2>' +
+      '<a href="admin-immobilier.html" class="lien-gestion">Gerer l\'Immobilier</a>' +
+    '</div>' +
+    '<div class="section">' +
+      '<h2>Vendeurs en attente</h2>' +
+      '<div id="listeVendeurs"><p class="vide">Chargement...</p></div>' +
+    '</div>' +
+    '<div class="section">' +
+      '<h2>Produits en attente</h2>' +
+      '<div id="listeProduits"><p class="vide">Chargement...</p></div>' +
+    '</div>' +
+    '<div class="section">' +
+      '<h2>Livreurs en attente</h2>' +
+      '<div id="listeLivreurs"><p class="vide">Chargement...</p></div>' +
+    '</div>' +
+    '<div class="section">' +
+      '<h2>Commandes recentes</h2>' +
+      '<div id="listeCommandes"><p class="vide">Chargement...</p></div>' +
+    '</div>';
 
   chargerVendeurs();
   chargerProduits();
@@ -85,73 +90,89 @@ async function verifierEtCharger() {
 }
 
 async function chargerVendeurs() {
-  const { data } = await sb.from('vendeurs').select('*').eq('statut', 'en_attente');
-  var zone = document.getElementById('listeVendeurs');
+  const reponse = await sb.from('vendeurs').select('*').eq('statut', 'en_attente');
+  const data = reponse.data;
+  const zone = document.getElementById('listeVendeurs');
   if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucun vendeur en attente.</p>'; return; }
-  zone.innerHTML = data.map(v => `
-    <div class="carte">
-      <h3>${v.nom}</h3>
-      <p>Téléphone : ${v.telephone}</p>
-      <p>Produits : ${v.produits_categorie}</p>
-      <div class="boutons">
-        <button class="btn-approuver" onclick="majStatut('vendeurs', '${v.id}', 'approuve', 'listeVendeurs')">Approuver</button>
-        <button class="btn-refuser" onclick="majStatut('vendeurs', '${v.id}', 'refuse', 'listeVendeurs')">Refuser</button>
-      </div>
-    </div>
-  `).join('');
+  let html = '';
+  for (let i = 0; i < data.length; i++) {
+    const v = data[i];
+    html += '<div class="carte">' +
+              '<h3>' + v.nom + '</h3>' +
+              '<p>Telephone : ' + v.telephone + '</p>' +
+              '<p>Produits : ' + v.produits_categorie + '</p>' +
+              '<div class="boutons">' +
+                '<button class="btn-approuver" onclick="majStatut(\'vendeurs\', \'' + v.id + '\', \'approuve\')">Approuver</button>' +
+                '<button class="btn-refuser" onclick="majStatut(\'vendeurs\', \'' + v.id + '\', \'refuse\')">Refuser</button>' +
+              '</div>' +
+            '</div>';
+  }
+  zone.innerHTML = html;
 }
 
 async function chargerProduits() {
-  const { data } = await sb.from('produits').select('*').eq('statut', 'en_attente');
-  var zone = document.getElementById('listeProduits');
+  const reponse = await sb.from('produits').select('*').eq('statut', 'en_attente');
+  const data = reponse.data;
+  const zone = document.getElementById('listeProduits');
   if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucun produit en attente.</p>'; return; }
-  zone.innerHTML = data.map(p => `
-    <div class="carte">
-      <h3>${p.nom}</h3>
-      <p>${p.prix} FCFA — Stock : ${p.stock}</p>
-      <p>${p.description || ''}</p>
-      <div class="boutons">
-        <button class="btn-approuver" onclick="majStatut('produits', '${p.id}', 'approuve', 'listeProduits')">Approuver</button>
-        <button class="btn-refuser" onclick="majStatut('produits', '${p.id}', 'refuse', 'listeProduits')">Refuser</button>
-      </div>
-    </div>
-  `).join('');
+  let html = '';
+  for (let i = 0; i < data.length; i++) {
+    const p = data[i];
+    html += '<div class="carte">' +
+              '<h3>' + p.nom + '</h3>' +
+              '<p>' + p.prix + ' FCFA - Stock : ' + p.stock + '</p>' +
+              '<p>' + (p.description || '') + '</p>' +
+              '<div class="boutons">' +
+                '<button class="btn-approuver" onclick="majStatut(\'produits\', \'' + p.id + '\', \'approuve\')">Approuver</button>' +
+                '<button class="btn-refuser" onclick="majStatut(\'produits\', \'' + p.id + '\', \'refuse\')">Refuser</button>' +
+              '</div>' +
+            '</div>';
+  }
+  zone.innerHTML = html;
 }
 
 async function chargerLivreurs() {
-  const { data } = await sb.from('livreurs').select('*').eq('statut', 'en_attente');
-  var zone = document.getElementById('listeLivreurs');
+  const reponse = await sb.from('livreurs').select('*').eq('statut', 'en_attente');
+  const data = reponse.data;
+  const zone = document.getElementById('listeLivreurs');
   if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucun livreur en attente.</p>'; return; }
-  zone.innerHTML = data.map(l => `
-    <div class="carte">
-      <h3>${l.nom}</h3>
-      <p>Téléphone : ${l.telephone}</p>
-      <p>${l.vehicule} — ${l.zone}</p>
-      <div class="boutons">
-        <button class="btn-approuver" onclick="majStatut('livreurs', '${l.id}', 'approuve', 'listeLivreurs')">Approuver</button>
-        <button class="btn-refuser" onclick="majStatut('livreurs', '${l.id}', 'refuse', 'listeLivreurs')">Refuser</button>
-      </div>
-    </div>
-  `).join('');
+  let html = '';
+  for (let i = 0; i < data.length; i++) {
+    const l = data[i];
+    html += '<div class="carte">' +
+              '<h3>' + l.nom + '</h3>' +
+              '<p>Telephone : ' + l.telephone + '</p>' +
+              '<p>' + l.vehicule + ' - ' + l.zone + '</p>' +
+              '<div class="boutons">' +
+                '<button class="btn-approuver" onclick="majStatut(\'livreurs\', \'' + l.id + '\', \'approuve\')">Approuver</button>' +
+                '<button class="btn-refuser" onclick="majStatut(\'livreurs\', \'' + l.id + '\', \'refuse\')">Refuser</button>' +
+              '</div>' +
+            '</div>';
+  }
+  zone.innerHTML = html;
 }
 
 async function chargerCommandes() {
-  const { data } = await sb.from('commandes').select('*').order('date_commande', { ascending: false }).limit(20);
-  var zone = document.getElementById('listeCommandes');
+  const reponse = await sb.from('commandes').select('*').order('date_commande', { ascending: false }).limit(20);
+  const data = reponse.data;
+  const zone = document.getElementById('listeCommandes');
   if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucune commande pour le moment.</p>'; return; }
-  zone.innerHTML = data.map(c => `
-    <div class="carte">
-      <h3>${c.client_nom}</h3>
-      <p>Téléphone : ${c.client_telephone}</p>
-      <p>Produit : ${c.produit}</p>
-      <p>Paiement : ${c.mode_paiement}</p>
-      <p>Adresse : ${c.adresse_livraison}</p>
-      <p>Statut : ${c.statut}</p>
-    </div>
-  `).join('');
+  let html = '';
+  for (let i = 0; i < data.length; i++) {
+    const c = data[i];
+    html += '<div class="carte">' +
+              '<h3>' + c.client_nom + '</h3>' +
+              '<p>Telephone : ' + c.client_telephone + '</p>' +
+              '<p>Produit : ' + c.produit + '</p>' +
+              '<p>Paiement : ' + c.mode_paiement + '</p>' +
+              '<p>Adresse : ' + c.adresse_livraison + '</p>' +
+              '<p>Statut : ' + c.statut + '</p>' +
+            '</div>';
+  }
+  zone.innerHTML = html;
 }
 
-async function majStatut(table, id, nouveauStatut, zoneId) {
+async function majStatut(table, id, nouveauStatut) {
   await sb.from(table).update({ statut: nouveauStatut }).eq('id', id);
   if (table === 'vendeurs') chargerVendeurs();
   if (table === 'produits') chargerProduits();
