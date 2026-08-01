@@ -3,81 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AW SERVICES - Espace Vendeur</title>
+<title>AW SERVICES - Mon Espace Vendeur</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
-  header h1 { color: #1e6fd9; font-size: 22px; }
-  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
+  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { color: #1e6fd9; font-size: 18px; }
+  .deconnexion { background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
   .content { padding: 20px 15px; max-width: 500px; margin: 0 auto; }
-  .onglets { display: flex; gap: 10px; margin-bottom: 20px; }
-  .onglet { flex: 1; text-align: center; background-color: #121826; border: 1px solid #2a3040; color: #b0b8c5; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; }
-  .onglet.actif { border-color: #1e6fd9; color: #ffffff; }
-  form { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 15px; }
+  .carte h2 { font-size: 16px; margin-bottom: 10px; }
+  .statut { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+  .statut.en_attente { background-color: #3a2e14; color: #ffb84d; }
+  .statut.approuve { background-color: #143a1e; color: #80ff9e; }
+  .info { color: #b0b8c5; font-size: 14px; margin-top: 6px; }
+  .chargement { text-align: center; padding: 40px; color: #b0b8c5; }
+  form { display: flex; flex-direction: column; gap: 12px; }
   label { font-size: 14px; color: #b0b8c5; }
-  input { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
+  input, textarea { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; font-family: Arial, sans-serif; }
   button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; margin-top: 10px; }
   button:disabled { opacity: 0.6; }
   .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
   .msg.erreur { background-color: #3a1414; color: #ff8080; }
   .msg.succes { background-color: #143a1e; color: #80ff9e; }
-  footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
+  .produit-carte { display: flex; gap: 12px; background-color: #121826; border: 1px solid #2a3040; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+  .produit-carte img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background-color: #0a0e17; }
+  .produit-info h3 { font-size: 15px; }
+  .produit-info p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>AW SERVICES — Espace Vendeur</h1>
+  <h1>Mon Espace Vendeur</h1>
+  <button class="deconnexion" onclick="deconnecter()">Déconnexion</button>
 </header>
 
-<a href="boutique.html" class="back">&#8592; Retour à la boutique</a>
-
 <div class="content">
-  <div class="onglets">
-    <div class="onglet actif" id="ongletInscription" onclick="afficherInscription()">Créer un compte</div>
-    <div class="onglet" id="ongletConnexion" onclick="afficherConnexion()">Se connecter</div>
-  </div>
-
-  <div id="zoneMessage"></div>
-
-  <form id="formInscription" onsubmit="inscrire(event)">
-    <label>Nom complet / Entreprise</label>
-    <input type="text" id="i_nom" placeholder="Votre nom ou nom de l'entreprise" required>
-
-    <label>Numéro de téléphone</label>
-    <input type="tel" id="i_tel" placeholder="Votre numéro" required>
-
-    <label>Type de produits à vendre</label>
-    <input type="text" id="i_produits" placeholder="Ex : Parfums, électronique..." required>
-
-    <label>Adresse email</label>
-    <input type="email" id="i_email" placeholder="votre@email.com" required>
-
-    <label>Mot de passe</label>
-    <input type="password" id="i_password" placeholder="6 caractères minimum" minlength="6" required>
-
-    <label>Confirmer le mot de passe</label>
-    <input type="password" id="i_password_confirm" placeholder="Retapez le mot de passe" minlength="6" required>
-
-    <button type="submit" id="btn_inscription">Créer mon compte vendeur</button>
-  </form>
-
-  <form id="formConnexion" style="display:none;" onsubmit="connecter(event)">
-    <label>Adresse email</label>
-    <input type="email" id="c_email" placeholder="votre@email.com" required>
-
-    <label>Mot de passe</label>
-    <input type="password" id="c_password" placeholder="Votre mot de passe" required>
-
-    <button type="submit" id="btn_connexion">Se connecter</button>
-  </form>
+  <div id="zoneContenu" class="chargement">Chargement...</div>
 </div>
-
-<footer>
-  &copy; 2026 AW SERVICES — Tous droits réservés
-</footer>
 
 <script>
 const sb = supabase.createClient(
@@ -85,95 +50,150 @@ const sb = supabase.createClient(
   'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
 );
 
-function afficherInscription() {
-  document.getElementById('formInscription').style.display = 'flex';
-  document.getElementById('formConnexion').style.display = 'none';
-  document.getElementById('ongletInscription').classList.add('actif');
-  document.getElementById('ongletConnexion').classList.remove('actif');
+let vendeurCourant = null;
+
+async function chargerEspace() {
+  const { data: { user } } = await sb.auth.getUser();
+
+  if (!user) {
+    window.location.href = 'vendeur-connexion.html';
+    return;
+  }
+
+  const { data: vendeur, error } = await sb.from('vendeurs').select('*').eq('user_id', user.id).single();
+
+  var zone = document.getElementById('zoneContenu');
+
+  if (error || !vendeur) {
+    zone.innerHTML = '<div class="carte"><p class="info">Profil introuvable. Contactez AW SERVICES.</p></div>';
+    return;
+  }
+
+  vendeurCourant = vendeur;
+  var statutLabel = vendeur.statut === 'approuve' ? 'Approuvé' : 'En attente de validation';
+
+  zone.innerHTML = `
+    <div class="carte">
+      <h2>Bienvenue, ${vendeur.nom}</h2>
+      <span class="statut ${vendeur.statut}">${statutLabel}</span>
+      <p class="info">Téléphone : ${vendeur.telephone}</p>
+      <p class="info">Produits : ${vendeur.produits_categorie}</p>
+    </div>
+
+    <div class="carte">
+      <h2>Ajouter un produit</h2>
+      <div id="zoneMessageProduit"></div>
+      <form id="formProduit" onsubmit="ajouterProduit(event)">
+        <label>Nom du produit</label>
+        <input type="text" id="p_nom" placeholder="Ex : Casque Bluetooth" required>
+
+        <label>Description</label>
+        <textarea id="p_description" rows="3" placeholder="Décrivez votre produit"></textarea>
+
+        <label>Prix (FCFA)</label>
+        <input type="number" id="p_prix" placeholder="Ex : 15000" required>
+
+        <label>Catégorie</label>
+        <input type="text" id="p_categorie" placeholder="Ex : Électronique" required>
+
+        <label>Quantité en stock</label>
+        <input type="number" id="p_stock" placeholder="Ex : 10" required>
+
+        <label>Photo du produit</label>
+        <input type="file" id="p_photo" accept="image/*" required>
+
+        <button type="submit" id="btn_produit">Publier le produit</button>
+      </form>
+    </div>
+
+    <div class="carte">
+      <h2>Mes produits</h2>
+      <div id="listeProduits"><p class="info">Chargement...</p></div>
+    </div>
+  `;
+
+  chargerProduits();
 }
 
-function afficherConnexion() {
-  document.getElementById('formInscription').style.display = 'none';
-  document.getElementById('formConnexion').style.display = 'flex';
-  document.getElementById('ongletInscription').classList.remove('actif');
-  document.getElementById('ongletConnexion').classList.add('actif');
+async function chargerProduits() {
+  const { data: produits, error } = await sb.from('produits').select('*').eq('vendeur_id', vendeurCourant.id).order('date_ajout', { ascending: false });
+
+  var zone = document.getElementById('listeProduits');
+
+  if (error || !produits || produits.length === 0) {
+    zone.innerHTML = '<p class="info">Aucun produit publié pour le moment.</p>';
+    return;
+  }
+
+  zone.innerHTML = produits.map(p => `
+    <div class="produit-carte">
+      <img src="${p.image_url || ''}" alt="${p.nom}">
+      <div class="produit-info">
+        <h3>${p.nom}</h3>
+        <p>${p.prix} FCFA — Stock : ${p.stock}</p>
+        <p>${p.statut === 'approuve' ? 'Visible sur le site' : 'En attente de validation'}</p>
+      </div>
+    </div>
+  `).join('');
 }
 
-function afficherMessage(texte, type) {
-  document.getElementById('zoneMessage').innerHTML = '<div class="msg ' + type + '">' + texte + '</div>';
-}
-
-async function inscrire(event) {
+async function ajouterProduit(event) {
   event.preventDefault();
-
-  var password = document.getElementById('i_password').value;
-  var passwordConfirm = document.getElementById('i_password_confirm').value;
-
-  if (password !== passwordConfirm) {
-    afficherMessage('Les mots de passe ne correspondent pas.', 'erreur');
-    return;
-  }
-
-  var btn = document.getElementById('btn_inscription');
+  var btn = document.getElementById('btn_produit');
+  var zoneMsg = document.getElementById('zoneMessageProduit');
   btn.disabled = true;
-  btn.textContent = 'Création en cours...';
+  btn.textContent = 'Publication en cours...';
+  zoneMsg.innerHTML = '';
 
-  var nom = document.getElementById('i_nom').value;
-  var tel = document.getElementById('i_tel').value;
-  var produits = document.getElementById('i_produits').value;
-  var email = document.getElementById('i_email').value;
+  var nom = document.getElementById('p_nom').value;
+  var description = document.getElementById('p_description').value;
+  var prix = document.getElementById('p_prix').value;
+  var categorie = document.getElementById('p_categorie').value;
+  var stock = document.getElementById('p_stock').value;
+  var fichier = document.getElementById('p_photo').files[0];
 
-  const { data, error } = await sb.auth.signUp({ email: email, password: password });
+  var nomFichier = vendeurCourant.id + '_' + Date.now() + '_' + fichier.name;
 
-  if (error) {
-    afficherMessage('Erreur : ' + error.message, 'erreur');
+  const { error: erreurUpload } = await sb.storage.from('produits').upload(nomFichier, fichier);
+
+  if (erreurUpload) {
+    zoneMsg.innerHTML = '<div class="msg erreur">Erreur photo : ' + erreurUpload.message + '</div>';
     btn.disabled = false;
-    btn.textContent = 'Créer mon compte vendeur';
+    btn.textContent = 'Publier le produit';
     return;
   }
 
-  const userId = data.user.id;
+  const { data: urlData } = sb.storage.from('produits').getPublicUrl(nomFichier);
 
-  const { error: erreurVendeur } = await sb.from('vendeurs').insert([{
+  const { error: erreurProduit } = await sb.from('produits').insert([{
+    vendeur_id: vendeurCourant.id,
     nom: nom,
-    telephone: tel,
-    produits_categorie: produits,
-    user_id: userId
+    description: description,
+    prix: prix,
+    categorie: categorie,
+    stock: stock,
+    image_url: urlData.publicUrl
   }]);
 
   btn.disabled = false;
-  btn.textContent = 'Créer mon compte vendeur';
+  btn.textContent = 'Publier le produit';
 
-  if (erreurVendeur) {
-    afficherMessage("Compte créé, mais erreur lors de l'enregistrement du profil. Contactez-nous.", 'erreur');
+  if (erreurProduit) {
+    zoneMsg.innerHTML = '<div class="msg erreur">Erreur : ' + erreurProduit.message + '</div>';
     return;
   }
 
-  afficherMessage('Compte créé avec succès ! Votre demande est en attente de validation par AW SERVICES.', 'succes');
-  document.getElementById('formInscription').reset();
+  zoneMsg.innerHTML = '<div class="msg succes">Produit publié ! En attente de validation par AW SERVICES.</div>';
+  document.getElementById('formProduit').reset();
+  chargerProduits();
 }
 
-async function connecter(event) {
-  event.preventDefault();
-  var btn = document.getElementById('btn_connexion');
-  btn.disabled = true;
-  btn.textContent = 'Connexion en cours...';
-
-  var email = document.getElementById('c_email').value;
-  var password = document.getElementById('c_password').value;
-
-  const { error } = await sb.auth.signInWithPassword({ email: email, password: password });
-
-  btn.disabled = false;
-  btn.textContent = 'Se connecter';
-
-  if (error) {
-    afficherMessage('Erreur : ' + error.message, 'erreur');
-    return;
-  }
-
-  window.location.href = 'vendeur-espace.html';
+async function deconnecter() {
+  await sb.auth.signOut();
+  window.location.href = 'vendeur-connexion.html';
 }
+
+chargerEspace();
 </script>
 
 </body>
