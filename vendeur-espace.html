@@ -37,7 +37,7 @@
 
 <header>
   <h1>Mon Espace Vendeur</h1>
-  <button class="deconnexion" onclick="deconnecter()">Déconnexion</button>
+  <button class="deconnexion" id="btnDeconnexion">Deconnexion</button>
 </header>
 
 <div class="content">
@@ -45,152 +45,186 @@
 </div>
 
 <script>
-const sb = supabase.createClient(
-  'https://vnceunqygoiwglnwpgcr.supabase.co',
-  'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
-let vendeurCourant = null;
+var vendeurCourant = null;
 
-async function chargerEspace() {
-  const { data: { user } } = await sb.auth.getUser();
+document.getElementById("btnDeconnexion").addEventListener("click", function() {
+  sb.auth.signOut().then(function() {
+    window.location.href = "vendeur-connexion.html";
+  });
+});
 
-  if (!user) {
-    window.location.href = 'vendeur-connexion.html';
-    return;
-  }
+function chargerEspace() {
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) {
+      window.location.href = "vendeur-connexion.html";
+      return;
+    }
+    sb.from("vendeurs").select("*").eq("user_id", user.id).single().then(function(reponse) {
+      var vendeur = reponse.data;
+      var zone = document.getElementById("zoneContenu");
+      if (reponse.error || !vendeur) {
+        zone.innerHTML = "<div class=\"carte\"><p class=\"info\">Profil introuvable. Contactez AW SERVICES.</p></div>";
+        return;
+      }
+      vendeurCourant = vendeur;
+      var statutLabel = vendeur.statut === "approuve" ? "Approuve" : "En attente de validation";
+      var positionLabel = (vendeur.latitude && vendeur.longitude) ? "Position enregistree" : "Position non enregistree";
 
-  const { data: vendeur, error } = await sb.from('vendeurs').select('*').eq('user_id', user.id).single();
+      zone.innerHTML =
+        "<div class=\"carte\">" +
+          "<h2>Bienvenue, " + vendeur.nom + "</h2>" +
+          "<span class=\"statut " + vendeur.statut + "\">" + statutLabel + "</span>" +
+          "<p class=\"info\">Telephone : " + vendeur.telephone + "</p>" +
+          "<p class=\"info\">Produits : " + vendeur.produits_categorie + "</p>" +
+        "</div>" +
 
-  var zone = document.getElementById('zoneContenu');
+        "<div class=\"carte\">" +
+          "<h2>Localisation de ma boutique</h2>" +
+          "<p class=\"info\" id=\"statutPosition\">" + positionLabel + "</p>" +
+          "<div id=\"zoneMessagePosition\"></div>" +
+          "<button id=\"btnPosition\">Enregistrer ma position actuelle</button>" +
+        "</div>" +
 
-  if (error || !vendeur) {
-    zone.innerHTML = '<div class="carte"><p class="info">Profil introuvable. Contactez AW SERVICES.</p></div>';
-    return;
-  }
+        "<div class=\"carte\">" +
+          "<h2>Ajouter un produit</h2>" +
+          "<div id=\"zoneMessageProduit\"></div>" +
+          "<form id=\"formProduit\">" +
+            "<label>Nom du produit</label>" +
+            "<input type=\"text\" id=\"p_nom\" placeholder=\"Ex : Casque Bluetooth\" required>" +
+            "<label>Description</label>" +
+            "<textarea id=\"p_description\" rows=\"3\" placeholder=\"Decrivez votre produit\"></textarea>" +
+            "<label>Prix (FCFA)</label>" +
+            "<input type=\"number\" id=\"p_prix\" placeholder=\"Ex : 15000\" required>" +
+            "<label>Categorie</label>" +
+            "<input type=\"text\" id=\"p_categorie\" placeholder=\"Ex : Electronique\" required>" +
+            "<label>Quantite en stock</label>" +
+            "<input type=\"number\" id=\"p_stock\" placeholder=\"Ex : 10\" required>" +
+            "<label>Photo du produit</label>" +
+            "<input type=\"file\" id=\"p_photo\" accept=\"image/*\" required>" +
+            "<button type=\"submit\" id=\"btn_produit\">Publier le produit</button>" +
+          "</form>" +
+        "</div>" +
 
-  vendeurCourant = vendeur;
-  var statutLabel = vendeur.statut === 'approuve' ? 'Approuvé' : 'En attente de validation';
+        "<div class=\"carte\">" +
+          "<h2>Mes produits</h2>" +
+          "<div id=\"listeProduits\"><p class=\"info\">Chargement...</p></div>" +
+        "</div>";
 
-  zone.innerHTML = `
-    <div class="carte">
-      <h2>Bienvenue, ${vendeur.nom}</h2>
-      <span class="statut ${vendeur.statut}">${statutLabel}</span>
-      <p class="info">Téléphone : ${vendeur.telephone}</p>
-      <p class="info">Produits : ${vendeur.produits_categorie}</p>
-    </div>
-
-    <div class="carte">
-      <h2>Ajouter un produit</h2>
-      <div id="zoneMessageProduit"></div>
-      <form id="formProduit" onsubmit="ajouterProduit(event)">
-        <label>Nom du produit</label>
-        <input type="text" id="p_nom" placeholder="Ex : Casque Bluetooth" required>
-
-        <label>Description</label>
-        <textarea id="p_description" rows="3" placeholder="Décrivez votre produit"></textarea>
-
-        <label>Prix (FCFA)</label>
-        <input type="number" id="p_prix" placeholder="Ex : 15000" required>
-
-        <label>Catégorie</label>
-        <input type="text" id="p_categorie" placeholder="Ex : Électronique" required>
-
-        <label>Quantité en stock</label>
-        <input type="number" id="p_stock" placeholder="Ex : 10" required>
-
-        <label>Photo du produit</label>
-        <input type="file" id="p_photo" accept="image/*" required>
-
-        <button type="submit" id="btn_produit">Publier le produit</button>
-      </form>
-    </div>
-
-    <div class="carte">
-      <h2>Mes produits</h2>
-      <div id="listeProduits"><p class="info">Chargement...</p></div>
-    </div>
-  `;
-
-  chargerProduits();
+      document.getElementById("btnPosition").addEventListener("click", enregistrerPosition);
+      document.getElementById("formProduit").addEventListener("submit", ajouterProduit);
+      chargerProduits();
+    });
+  });
 }
 
-async function chargerProduits() {
-  const { data: produits, error } = await sb.from('produits').select('*').eq('vendeur_id', vendeurCourant.id).order('date_ajout', { ascending: false });
+function enregistrerPosition() {
+  var btn = document.getElementById("btnPosition");
+  var zoneMsg = document.getElementById("zoneMessagePosition");
 
-  var zone = document.getElementById('listeProduits');
-
-  if (error || !produits || produits.length === 0) {
-    zone.innerHTML = '<p class="info">Aucun produit publié pour le moment.</p>';
+  if (!navigator.geolocation) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">La geolocalisation n'est pas disponible sur cet appareil.</div>";
     return;
   }
 
-  zone.innerHTML = produits.map(p => `
-    <div class="produit-carte">
-      <img src="${p.image_url || ''}" alt="${p.nom}">
-      <div class="produit-info">
-        <h3>${p.nom}</h3>
-        <p>${p.prix} FCFA — Stock : ${p.stock}</p>
-        <p>${p.statut === 'approuve' ? 'Visible sur le site' : 'En attente de validation'}</p>
-      </div>
-    </div>
-  `).join('');
-}
-
-async function ajouterProduit(event) {
-  event.preventDefault();
-  var btn = document.getElementById('btn_produit');
-  var zoneMsg = document.getElementById('zoneMessageProduit');
   btn.disabled = true;
-  btn.textContent = 'Publication en cours...';
-  zoneMsg.innerHTML = '';
+  btn.textContent = "Localisation en cours...";
+  zoneMsg.innerHTML = "";
 
-  var nom = document.getElementById('p_nom').value;
-  var description = document.getElementById('p_description').value;
-  var prix = document.getElementById('p_prix').value;
-  var categorie = document.getElementById('p_categorie').value;
-  var stock = document.getElementById('p_stock').value;
-  var fichier = document.getElementById('p_photo').files[0];
+  navigator.geolocation.getCurrentPosition(function(position) {
+    var lat = position.coords.latitude;
+    var lng = position.coords.longitude;
 
-  var nomFichier = vendeurCourant.id + '_' + Date.now() + '_' + fichier.name;
-
-  const { error: erreurUpload } = await sb.storage.from('produits').upload(nomFichier, fichier);
-
-  if (erreurUpload) {
-    zoneMsg.innerHTML = '<div class="msg erreur">Erreur photo : ' + erreurUpload.message + '</div>';
+    sb.from("vendeurs").update({ latitude: lat, longitude: lng }).eq("id", vendeurCourant.id).then(function(reponse) {
+      btn.disabled = false;
+      btn.textContent = "Enregistrer ma position actuelle";
+      if (reponse.error) {
+        zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
+        return;
+      }
+      document.getElementById("statutPosition").textContent = "Position enregistree";
+      zoneMsg.innerHTML = "<div class=\"msg succes\">Position enregistree avec succes !</div>";
+    });
+  }, function(erreur) {
     btn.disabled = false;
-    btn.textContent = 'Publier le produit';
-    return;
-  }
-
-  const { data: urlData } = sb.storage.from('produits').getPublicUrl(nomFichier);
-
-  const { error: erreurProduit } = await sb.from('produits').insert([{
-    vendeur_id: vendeurCourant.id,
-    nom: nom,
-    description: description,
-    prix: prix,
-    categorie: categorie,
-    stock: stock,
-    image_url: urlData.publicUrl
-  }]);
-
-  btn.disabled = false;
-  btn.textContent = 'Publier le produit';
-
-  if (erreurProduit) {
-    zoneMsg.innerHTML = '<div class="msg erreur">Erreur : ' + erreurProduit.message + '</div>';
-    return;
-  }
-
-  zoneMsg.innerHTML = '<div class="msg succes">Produit publié ! En attente de validation par AW SERVICES.</div>';
-  document.getElementById('formProduit').reset();
-  chargerProduits();
+    btn.textContent = "Enregistrer ma position actuelle";
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Impossible d'obtenir votre position. Verifiez que la localisation est activee.</div>";
+  });
 }
 
-async function deconnecter() {
-  await sb.auth.signOut();
-  window.location.href = 'vendeur-connexion.html';
+function chargerProduits() {
+  sb.from("produits").select("*").eq("vendeur_id", vendeurCourant.id).order("date_ajout", { ascending: false }).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeProduits");
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p class=\"info\">Aucun produit publie pour le moment.</p>";
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var p = data[i];
+      html += "<div class=\"produit-carte\">" +
+                "<img src=\"" + (p.image_url || "") + "\" alt=\"\">" +
+                "<div class=\"produit-info\">" +
+                  "<h3>" + p.nom + "</h3>" +
+                  "<p>" + p.prix + " FCFA - Stock : " + p.stock + "</p>" +
+                  "<p>" + (p.statut === "approuve" ? "Visible sur le site" : "En attente de validation") + "</p>" +
+                "</div>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+  });
+}
+
+function ajouterProduit(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btn_produit");
+  var zoneMsg = document.getElementById("zoneMessageProduit");
+  btn.disabled = true;
+  btn.textContent = "Publication en cours...";
+  zoneMsg.innerHTML = "";
+
+  var nom = document.getElementById("p_nom").value;
+  var description = document.getElementById("p_description").value;
+  var prix = document.getElementById("p_prix").value;
+  var categorie = document.getElementById("p_categorie").value;
+  var stock = document.getElementById("p_stock").value;
+  var fichier = document.getElementById("p_photo").files[0];
+  var nomFichier = vendeurCourant.id + "_" + Date.now() + "_" + fichier.name;
+
+  sb.storage.from("produits").upload(nomFichier, fichier).then(function(reponseUpload) {
+    if (reponseUpload.error) {
+      zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur photo : " + reponseUpload.error.message + "</div>";
+      btn.disabled = false;
+      btn.textContent = "Publier le produit";
+      return;
+    }
+    var urlData = sb.storage.from("produits").getPublicUrl(nomFichier);
+    sb.from("produits").insert([{
+      vendeur_id: vendeurCourant.id,
+      nom: nom,
+      description: description,
+      prix: prix,
+      categorie: categorie,
+      stock: stock,
+      image_url: urlData.data.publicUrl
+    }]).then(function(reponse) {
+      btn.disabled = false;
+      btn.textContent = "Publier le produit";
+      if (reponse.error) {
+        zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
+        return;
+      }
+      zoneMsg.innerHTML = "<div class=\"msg succes\">Produit publie ! En attente de validation par AW SERVICES.</div>";
+      document.getElementById("formProduit").reset();
+      chargerProduits();
+    });
+  });
 }
 
 chargerEspace();
