@@ -30,158 +30,173 @@
 
 <header>
   <h1>AW SERVICES — Administration</h1>
-  <button class="deconnexion" onclick="deconnecter()">Déconnexion</button>
+  <button class="deconnexion" id="btnDeconnexion">Déconnexion</button>
 </header>
 
 <div class="content">
-  <div id="zoneContenu" class="chargement">Vérification des droits...</div>
+  <div id="zoneContenu" class="chargement">Verification des droits...</div>
 </div>
 
 <script>
-const sb = supabase.createClient(
-  'https://vnceunqygoiwglnwpgcr.supabase.co',
-  'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
-async function verifierEtCharger() {
-  const reponseUser = await sb.auth.getUser();
-  const user = reponseUser.data.user;
+document.getElementById("btnDeconnexion").addEventListener("click", function() {
+  sb.auth.signOut().then(function() {
+    window.location.href = "admin-connexion.html";
+  });
+});
 
-  if (!user) {
-    window.location.href = 'admin-connexion.html';
-    return;
-  }
+function verifierEtCharger() {
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) {
+      window.location.href = "admin-connexion.html";
+      return;
+    }
+    sb.from("admins").select("*").eq("user_id", user.id).single().then(function(reponseAdmin) {
+      var admin = reponseAdmin.data;
+      var zone = document.getElementById("zoneContenu");
+      if (!admin) {
+        zone.innerHTML = "<div class=\"refus\">Acces refuse. Ce compte n a pas les droits administrateur.</div>";
+        return;
+      }
+      zone.innerHTML =
+        "<div class=\"section\">" +
+          "<h2>Gestion des catalogues</h2>" +
+          "<a href=\"admin-immobilier.html\" class=\"lien-gestion\">Gerer l Immobilier</a>" +
+          "<a href=\"catalogue.html\" class=\"lien-gestion\">Voir la Boutique</a>" +
+        "</div>" +
+        "<div class=\"section\">" +
+          "<h2>Vendeurs en attente</h2>" +
+          "<div id=\"listeVendeurs\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"section\">" +
+          "<h2>Produits en attente (Boutique)</h2>" +
+          "<div id=\"listeProduits\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"section\">" +
+          "<h2>Livreurs en attente</h2>" +
+          "<div id=\"listeLivreurs\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"section\">" +
+          "<h2>Commandes recentes</h2>" +
+          "<div id=\"listeCommandes\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>";
 
-  const reponseAdmin = await sb.from('admins').select('*').eq('user_id', user.id).single();
-  const admin = reponseAdmin.data;
-  const zone = document.getElementById('zoneContenu');
-
-  if (!admin) {
-    zone.innerHTML = '<div class="refus">Acces refuse. Ce compte n\'a pas les droits administrateur.</div>';
-    return;
-  }
-
-  zone.innerHTML =
-    '<div class="section">' +
-      '<h2>Gestion des catalogues</h2>' +
-      '<a href="admin-immobilier.html" class="lien-gestion">Gerer l\'Immobilier</a>' +
-    '</div>' +
-    '<div class="section">' +
-      '<h2>Vendeurs en attente</h2>' +
-      '<div id="listeVendeurs"><p class="vide">Chargement...</p></div>' +
-    '</div>' +
-    '<div class="section">' +
-      '<h2>Produits en attente</h2>' +
-      '<div id="listeProduits"><p class="vide">Chargement...</p></div>' +
-    '</div>' +
-    '<div class="section">' +
-      '<h2>Livreurs en attente</h2>' +
-      '<div id="listeLivreurs"><p class="vide">Chargement...</p></div>' +
-    '</div>' +
-    '<div class="section">' +
-      '<h2>Commandes recentes</h2>' +
-      '<div id="listeCommandes"><p class="vide">Chargement...</p></div>' +
-    '</div>';
-
-  chargerVendeurs();
-  chargerProduits();
-  chargerLivreurs();
-  chargerCommandes();
+      chargerVendeurs();
+      chargerProduits();
+      chargerLivreurs();
+      chargerCommandes();
+    });
+  });
 }
 
-async function chargerVendeurs() {
-  const reponse = await sb.from('vendeurs').select('*').eq('statut', 'en_attente');
-  const data = reponse.data;
-  const zone = document.getElementById('listeVendeurs');
-  if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucun vendeur en attente.</p>'; return; }
-  let html = '';
-  for (let i = 0; i < data.length; i++) {
-    const v = data[i];
-    html += '<div class="carte">' +
-              '<h3>' + v.nom + '</h3>' +
-              '<p>Telephone : ' + v.telephone + '</p>' +
-              '<p>Produits : ' + v.produits_categorie + '</p>' +
-              '<div class="boutons">' +
-                '<button class="btn-approuver" onclick="majStatut(\'vendeurs\', \'' + v.id + '\', \'approuve\')">Approuver</button>' +
-                '<button class="btn-refuser" onclick="majStatut(\'vendeurs\', \'' + v.id + '\', \'refuse\')">Refuser</button>' +
-              '</div>' +
-            '</div>';
+function chargerVendeurs() {
+  sb.from("vendeurs").select("*").eq("statut", "en_attente").then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeVendeurs");
+    if (!data || data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucun vendeur en attente.</p>"; return; }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var v = data[i];
+      html += "<div class=\"carte\">" +
+                "<h3>" + v.nom + "</h3>" +
+                "<p>Telephone : " + v.telephone + "</p>" +
+                "<p>Produits : " + v.produits_categorie + "</p>" +
+                "<div class=\"boutons\">" +
+                  "<button class=\"btn-approuver btn-v-approuver\" data-id=\"" + v.id + "\">Approuver</button>" +
+                  "<button class=\"btn-refuser btn-v-refuser\" data-id=\"" + v.id + "\">Refuser</button>" +
+                "</div>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+    attacherBoutons("btn-v-approuver", "vendeurs", "approuve", chargerVendeurs);
+    attacherBoutons("btn-v-refuser", "vendeurs", "refuse", chargerVendeurs);
+  });
+}
+
+function chargerProduits() {
+  sb.from("produits").select("*").eq("statut", "en_attente").then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeProduits");
+    if (!data || data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucun produit en attente.</p>"; return; }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var p = data[i];
+      html += "<div class=\"carte\">" +
+                "<h3>" + p.nom + "</h3>" +
+                "<p>" + p.prix + " FCFA - Stock : " + p.stock + "</p>" +
+                "<p>" + (p.description || "") + "</p>" +
+                "<div class=\"boutons\">" +
+                  "<button class=\"btn-approuver btn-p-approuver\" data-id=\"" + p.id + "\">Approuver</button>" +
+                  "<button class=\"btn-refuser btn-p-refuser\" data-id=\"" + p.id + "\">Refuser</button>" +
+                "</div>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+    attacherBoutons("btn-p-approuver", "produits", "approuve", chargerProduits);
+    attacherBoutons("btn-p-refuser", "produits", "refuse", chargerProduits);
+  });
+}
+
+function chargerLivreurs() {
+  sb.from("livreurs").select("*").eq("statut", "en_attente").then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeLivreurs");
+    if (!data || data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucun livreur en attente.</p>"; return; }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var l = data[i];
+      html += "<div class=\"carte\">" +
+                "<h3>" + l.nom + "</h3>" +
+                "<p>Telephone : " + l.telephone + "</p>" +
+                "<p>" + l.vehicule + " - " + l.zone + "</p>" +
+                "<div class=\"boutons\">" +
+                  "<button class=\"btn-approuver btn-l-approuver\" data-id=\"" + l.id + "\">Approuver</button>" +
+                  "<button class=\"btn-refuser btn-l-refuser\" data-id=\"" + l.id + "\">Refuser</button>" +
+                "</div>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+    attacherBoutons("btn-l-approuver", "livreurs", "approuve", chargerLivreurs);
+    attacherBoutons("btn-l-refuser", "livreurs", "refuse", chargerLivreurs);
+  });
+}
+
+function chargerCommandes() {
+  sb.from("commandes").select("*").order("date_commande", { ascending: false }).limit(20).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeCommandes");
+    if (!data || data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucune commande pour le moment.</p>"; return; }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var c = data[i];
+      html += "<div class=\"carte\">" +
+                "<h3>" + c.client_nom + "</h3>" +
+                "<p>Telephone : " + c.client_telephone + "</p>" +
+                "<p>Produit : " + c.produit + "</p>" +
+                "<p>Paiement : " + c.mode_paiement + "</p>" +
+                "<p>Adresse : " + c.adresse_livraison + "</p>" +
+                "<p>Statut : " + c.statut + "</p>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+  });
+}
+
+function attacherBoutons(classeBouton, table, nouveauStatut, callbackRecharger) {
+  var boutons = document.getElementsByClassName(classeBouton);
+  for (var i = 0; i < boutons.length; i++) {
+    boutons[i].addEventListener("click", function(e) {
+      var id = e.target.getAttribute("data-id");
+      sb.from(table).update({ statut: nouveauStatut }).eq("id", id).then(function() {
+        callbackRecharger();
+      });
+    });
   }
-  zone.innerHTML = html;
-}
-
-async function chargerProduits() {
-  const reponse = await sb.from('produits').select('*').eq('statut', 'en_attente');
-  const data = reponse.data;
-  const zone = document.getElementById('listeProduits');
-  if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucun produit en attente.</p>'; return; }
-  let html = '';
-  for (let i = 0; i < data.length; i++) {
-    const p = data[i];
-    html += '<div class="carte">' +
-              '<h3>' + p.nom + '</h3>' +
-              '<p>' + p.prix + ' FCFA - Stock : ' + p.stock + '</p>' +
-              '<p>' + (p.description || '') + '</p>' +
-              '<div class="boutons">' +
-                '<button class="btn-approuver" onclick="majStatut(\'produits\', \'' + p.id + '\', \'approuve\')">Approuver</button>' +
-                '<button class="btn-refuser" onclick="majStatut(\'produits\', \'' + p.id + '\', \'refuse\')">Refuser</button>' +
-              '</div>' +
-            '</div>';
-  }
-  zone.innerHTML = html;
-}
-
-async function chargerLivreurs() {
-  const reponse = await sb.from('livreurs').select('*').eq('statut', 'en_attente');
-  const data = reponse.data;
-  const zone = document.getElementById('listeLivreurs');
-  if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucun livreur en attente.</p>'; return; }
-  let html = '';
-  for (let i = 0; i < data.length; i++) {
-    const l = data[i];
-    html += '<div class="carte">' +
-              '<h3>' + l.nom + '</h3>' +
-              '<p>Telephone : ' + l.telephone + '</p>' +
-              '<p>' + l.vehicule + ' - ' + l.zone + '</p>' +
-              '<div class="boutons">' +
-                '<button class="btn-approuver" onclick="majStatut(\'livreurs\', \'' + l.id + '\', \'approuve\')">Approuver</button>' +
-                '<button class="btn-refuser" onclick="majStatut(\'livreurs\', \'' + l.id + '\', \'refuse\')">Refuser</button>' +
-              '</div>' +
-            '</div>';
-  }
-  zone.innerHTML = html;
-}
-
-async function chargerCommandes() {
-  const reponse = await sb.from('commandes').select('*').order('date_commande', { ascending: false }).limit(20);
-  const data = reponse.data;
-  const zone = document.getElementById('listeCommandes');
-  if (!data || data.length === 0) { zone.innerHTML = '<p class="vide">Aucune commande pour le moment.</p>'; return; }
-  let html = '';
-  for (let i = 0; i < data.length; i++) {
-    const c = data[i];
-    html += '<div class="carte">' +
-              '<h3>' + c.client_nom + '</h3>' +
-              '<p>Telephone : ' + c.client_telephone + '</p>' +
-              '<p>Produit : ' + c.produit + '</p>' +
-              '<p>Paiement : ' + c.mode_paiement + '</p>' +
-              '<p>Adresse : ' + c.adresse_livraison + '</p>' +
-              '<p>Statut : ' + c.statut + '</p>' +
-            '</div>';
-  }
-  zone.innerHTML = html;
-}
-
-async function majStatut(table, id, nouveauStatut) {
-  await sb.from(table).update({ statut: nouveauStatut }).eq('id', id);
-  if (table === 'vendeurs') chargerVendeurs();
-  if (table === 'produits') chargerProduits();
-  if (table === 'livreurs') chargerLivreurs();
-}
-
-async function deconnecter() {
-  await sb.auth.signOut();
-  window.location.href = 'admin-connexion.html';
 }
 
 verifierEtCharger();
