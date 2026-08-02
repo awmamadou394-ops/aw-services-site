@@ -33,15 +33,16 @@
   .prix-box { background-color: #0a0e17; border-left: 3px solid #d62828; padding: 10px; margin-top: 10px; font-size: 13px; }
   .prix-box strong { color: #ffffff; }
 
-  form { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-  label { font-size: 14px; color: #b0b8c5; }
-  input, select { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
-  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; margin-top: 10px; }
+  form { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+  form h4 { color: #1e6fd9; font-size: 14px; }
+  label { font-size: 13px; color: #b0b8c5; }
+  input, select { background-color: #121826; border: 1px solid #2a3040; border-radius: 6px; padding: 9px; color: #ffffff; font-size: 14px; }
+  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 13px; font-size: 15px; font-weight: bold; margin-top: 8px; }
   button:disabled { opacity: 0.6; }
-  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
+  .msg { font-size: 13px; padding: 8px; border-radius: 6px; }
   .msg.erreur { background-color: #3a1414; color: #ff8080; }
   .msg.succes { background-color: #143a1e; color: #80ff9e; }
-  .note-paiement { text-align: center; color: #b0b8c5; font-size: 12px; margin-top: 15px; font-style: italic; }
+  .note-paiement { text-align: center; color: #b0b8c5; font-size: 11px; margin-top: 8px; font-style: italic; }
 
   footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
 </style>
@@ -56,7 +57,7 @@
 
 <div class="content">
   <h2>Pre-inscription etudes a l'etranger</h2>
-  <p>Choisissez votre pays de destination pour voir la procedure et les frais, puis remplissez le formulaire pour lancer votre pre-inscription.</p>
+  <p>Choisissez votre pays de destination pour voir la procedure, les frais, et postuler directement.</p>
 
   <div class="offres">
     <div class="offre">
@@ -111,6 +112,7 @@
 </div>
 
 <div class="content">
+
   <div class="detail-pays" id="france">
     <h3>&#127467;&#127479; France</h3>
     <p>Procedure Campus France. Pour eleves en terminale, bacheliers, etudiants en Licence jusqu'au Master 1, et doctorants souhaitant poursuivre leurs etudes en France (universite publique ou privee).</p>
@@ -138,6 +140,28 @@
       <li>Releve de notes du Bac</li>
       <li>Photo vue de face</li>
     </ul>
+
+    <form class="form-preinscription" data-pays="France">
+      <h4>Postuler pour la France</h4>
+      <div class="zoneMessagePre"></div>
+      <label>Nom complet</label>
+      <input type="text" class="p_nom" placeholder="Votre nom" required>
+      <label>Numero de telephone</label>
+      <input type="tel" class="p_tel" placeholder="Votre numero" required>
+      <label>Niveau d'etude actuel</label>
+      <select class="p_niveau" required>
+        <option value="">Choisir...</option>
+        <option value="Terminale">Terminale</option>
+        <option value="Bachelier">Bachelier</option>
+        <option value="Licence">Licence</option>
+        <option value="Master 1">Master 1</option>
+        <option value="Doctorat">Doctorat</option>
+      </select>
+      <label>Documents (releves, diplome, piece d'identite)</label>
+      <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
+      <button type="submit" class="btn_preinscription">Postuler pour la France</button>
+      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+    </form>
   </div>
 
   <div class="detail-pays" id="canada">
@@ -158,6 +182,28 @@
       <strong>Demande de permis d'etudes :</strong> 130 000 FCFA<br>
       <strong>Garant financier (si besoin) :</strong> 300 000 FCFA
     </div>
+
+    <form class="form-preinscription" data-pays="Canada">
+      <h4>Postuler pour le Canada</h4>
+      <div class="zoneMessagePre"></div>
+      <label>Nom complet</label>
+      <input type="text" class="p_nom" placeholder="Votre nom" required>
+      <label>Numero de telephone</label>
+      <input type="tel" class="p_tel" placeholder="Votre numero" required>
+      <label>Niveau d'etude actuel</label>
+      <select class="p_niveau" required>
+        <option value="">Choisir...</option>
+        <option value="Terminale">Terminale</option>
+        <option value="Bachelier">Bachelier</option>
+        <option value="Licence">Licence</option>
+        <option value="Master 1">Master 1</option>
+        <option value="Doctorat">Doctorat</option>
+      </select>
+      <label>Documents (releves, diplome, piece d'identite)</label>
+      <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
+      <button type="submit" class="btn_preinscription">Postuler pour le Canada</button>
+      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+    </form>
   </div>
 
   <div class="detail-pays" id="usa">
@@ -174,6 +220,28 @@
     <div class="prix-box">
       <strong>Frais d'admission et de dossier :</strong> 400 000 FCFA
     </div>
+
+    <form class="form-preinscription" data-pays="USA">
+      <h4>Postuler pour les USA</h4>
+      <div class="zoneMessagePre"></div>
+      <label>Nom complet</label>
+      <input type="text" class="p_nom" placeholder="Votre nom" required>
+      <label>Numero de telephone</label>
+      <input type="tel" class="p_tel" placeholder="Votre numero" required>
+      <label>Niveau d'etude actuel</label>
+      <select class="p_niveau" required>
+        <option value="">Choisir...</option>
+        <option value="Terminale">Terminale</option>
+        <option value="Bachelier">Bachelier</option>
+        <option value="Licence">Licence</option>
+        <option value="Master 1">Master 1</option>
+        <option value="Doctorat">Doctorat</option>
+      </select>
+      <label>Documents (releves, diplome, piece d'identite)</label>
+      <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
+      <button type="submit" class="btn_preinscription">Postuler pour les USA</button>
+      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+    </form>
   </div>
 
   <div class="detail-pays" id="maroc">
@@ -189,6 +257,28 @@
     <div class="prix-box">
       Accompagnement AW SERVICES pour la constitution et le suivi du dossier — contactez-nous pour le tarif selon votre profil.
     </div>
+
+    <form class="form-preinscription" data-pays="Maroc">
+      <h4>Postuler pour le Maroc</h4>
+      <div class="zoneMessagePre"></div>
+      <label>Nom complet</label>
+      <input type="text" class="p_nom" placeholder="Votre nom" required>
+      <label>Numero de telephone</label>
+      <input type="tel" class="p_tel" placeholder="Votre numero" required>
+      <label>Niveau d'etude actuel</label>
+      <select class="p_niveau" required>
+        <option value="">Choisir...</option>
+        <option value="Terminale">Terminale</option>
+        <option value="Bachelier">Bachelier</option>
+        <option value="Licence">Licence</option>
+        <option value="Master 1">Master 1</option>
+        <option value="Doctorat">Doctorat</option>
+      </select>
+      <label>Documents (releves, diplome, piece d'identite)</label>
+      <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
+      <button type="submit" class="btn_preinscription">Postuler pour le Maroc</button>
+      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+    </form>
   </div>
 
   <div class="detail-pays" id="russie">
@@ -204,6 +294,28 @@
     <div class="prix-box">
       Accompagnement AW SERVICES pour l'inscription et le dossier — contactez-nous pour le tarif selon votre profil.
     </div>
+
+    <form class="form-preinscription" data-pays="Russie">
+      <h4>Postuler pour la Russie</h4>
+      <div class="zoneMessagePre"></div>
+      <label>Nom complet</label>
+      <input type="text" class="p_nom" placeholder="Votre nom" required>
+      <label>Numero de telephone</label>
+      <input type="tel" class="p_tel" placeholder="Votre numero" required>
+      <label>Niveau d'etude actuel</label>
+      <select class="p_niveau" required>
+        <option value="">Choisir...</option>
+        <option value="Terminale">Terminale</option>
+        <option value="Bachelier">Bachelier</option>
+        <option value="Licence">Licence</option>
+        <option value="Master 1">Master 1</option>
+        <option value="Doctorat">Doctorat</option>
+      </select>
+      <label>Documents (releves, diplome, piece d'identite)</label>
+      <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
+      <button type="submit" class="btn_preinscription">Postuler pour la Russie</button>
+      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+    </form>
   </div>
 
   <div class="detail-pays" id="belgique">
@@ -219,45 +331,30 @@
     <div class="prix-box">
       Accompagnement AW SERVICES pour le dossier et l'equivalence — contactez-nous pour le tarif selon votre profil.
     </div>
+
+    <form class="form-preinscription" data-pays="Belgique">
+      <h4>Postuler pour la Belgique</h4>
+      <div class="zoneMessagePre"></div>
+      <label>Nom complet</label>
+      <input type="text" class="p_nom" placeholder="Votre nom" required>
+      <label>Numero de telephone</label>
+      <input type="tel" class="p_tel" placeholder="Votre numero" required>
+      <label>Niveau d'etude actuel</label>
+      <select class="p_niveau" required>
+        <option value="">Choisir...</option>
+        <option value="Terminale">Terminale</option>
+        <option value="Bachelier">Bachelier</option>
+        <option value="Licence">Licence</option>
+        <option value="Master 1">Master 1</option>
+        <option value="Doctorat">Doctorat</option>
+      </select>
+      <label>Documents (releves, diplome, piece d'identite)</label>
+      <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
+      <button type="submit" class="btn_preinscription">Postuler pour la Belgique</button>
+      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+    </form>
   </div>
-</div>
 
-<div class="content">
-  <div id="zoneMessagePre"></div>
-  <form id="formPreinscription">
-    <label>Nom complet</label>
-    <input type="text" id="p_nom" placeholder="Votre nom" required>
-
-    <label>Numero de telephone</label>
-    <input type="tel" id="p_tel" placeholder="Votre numero" required>
-
-    <label>Pays de destination</label>
-    <select id="p_pays" required>
-      <option value="">Choisir...</option>
-      <option value="France">France</option>
-      <option value="Canada">Canada</option>
-      <option value="USA">USA</option>
-      <option value="Maroc">Maroc</option>
-      <option value="Russie">Russie</option>
-      <option value="Belgique">Belgique</option>
-    </select>
-
-    <label>Niveau d'etude actuel</label>
-    <select id="p_niveau" required>
-      <option value="">Choisir...</option>
-      <option value="Terminale">Terminale</option>
-      <option value="Bachelier">Bachelier</option>
-      <option value="Licence">Licence</option>
-      <option value="Master 1">Master 1</option>
-      <option value="Doctorat">Doctorat</option>
-    </select>
-
-    <label>Documents (releves, diplome, piece d'identite... plusieurs possibles)</label>
-    <input type="file" id="p_documents" accept="image/*,.pdf" multiple>
-
-    <button type="submit" id="btn_preinscription">Envoyer ma pre-inscription</button>
-  </form>
-  <p class="note-paiement">Paiement des frais de dossier en ligne (Wave, Orange Money, carte) bientot disponible directement sur cette page.</p>
 </div>
 
 <div class="separateur"></div>
@@ -296,21 +393,25 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
-document.getElementById("formPreinscription").addEventListener("submit", envoyerPreinscription);
+var formulaires = document.getElementsByClassName("form-preinscription");
+for (var f = 0; f < formulaires.length; f++) {
+  formulaires[f].addEventListener("submit", envoyerPreinscription);
+}
 
 function envoyerPreinscription(event) {
   event.preventDefault();
-  var btn = document.getElementById("btn_preinscription");
-  var zoneMsg = document.getElementById("zoneMessagePre");
+  var form = event.target;
+  var pays = form.getAttribute("data-pays");
+  var btn = form.querySelector(".btn_preinscription");
+  var zoneMsg = form.querySelector(".zoneMessagePre");
   btn.disabled = true;
   btn.textContent = "Envoi en cours...";
   zoneMsg.innerHTML = "";
 
-  var nom = document.getElementById("p_nom").value;
-  var tel = document.getElementById("p_tel").value;
-  var pays = document.getElementById("p_pays").value;
-  var niveau = document.getElementById("p_niveau").value;
-  var fichiers = document.getElementById("p_documents").files;
+  var nom = form.querySelector(".p_nom").value;
+  var tel = form.querySelector(".p_tel").value;
+  var niveau = form.querySelector(".p_niveau").value;
+  var fichiers = form.querySelector(".p_documents").files;
 
   var urls = [];
   var total = fichiers.length;
@@ -325,15 +426,15 @@ function envoyerPreinscription(event) {
       documents: urls
     }]).then(function(reponse) {
       btn.disabled = false;
-      btn.textContent = "Envoyer ma pre-inscription";
+      btn.textContent = "Postuler pour " + pays;
       if (reponse.error) {
         zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
         return;
       }
-      var message = "Bonjour, je souhaite une pre-inscription.\nNom : " + nom + "\nTelephone : " + tel + "\nPays : " + pays + "\nNiveau : " + niveau + "\nDocuments envoyes : " + total;
+      var message = "Bonjour, je souhaite une pre-inscription.\nPays : " + pays + "\nNom : " + nom + "\nTelephone : " + tel + "\nNiveau : " + niveau + "\nDocuments envoyes : " + total;
       window.open("https://wa.me/221777589444?text=" + encodeURIComponent(message), "_blank");
       zoneMsg.innerHTML = "<div class=\"msg succes\">Pre-inscription envoyee avec succes !</div>";
-      document.getElementById("formPreinscription").reset();
+      form.reset();
     });
   }
 
