@@ -26,7 +26,10 @@
   #zoneCommande form { display: flex; flex-direction: column; gap: 12px; }
   label { font-size: 14px; color: #b0b8c5; }
   input, select { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
-  #zoneCommande button[type="submit"] { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; }
+  button[type="submit"] { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; }
+  .btn-position { background-color: transparent; border: 1px solid #1e6fd9; color: #1e6fd9; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
+  .msg-position { font-size: 12px; color: #b0b8c5; }
+  .msg-position.ok { color: #80ff9e; }
   footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
 </style>
 </head>
@@ -36,7 +39,7 @@
   <h1>AW SERVICES — Catalogue</h1>
 </header>
 
-<a href="index.html" class="back">&#8592; Retour à l'accueil</a>
+<a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
 <div class="content">
   <div class="grille" id="grilleProduits">
@@ -45,22 +48,25 @@
 
   <div id="zoneCommande">
     <h2 id="titreCommande">Commander</h2>
-    <form onsubmit="envoyerCommande(event)">
+    <form id="formCommande">
       <label>Nom complet</label>
       <input type="text" id="cmd_nom" required>
 
-      <label>Numéro de téléphone</label>
+      <label>Numero de telephone</label>
       <input type="tel" id="cmd_tel" required>
 
       <label>Mode de paiement</label>
       <select id="cmd_paiement" required>
         <option value="">Choisir...</option>
         <option value="Paiement en ligne (Wave/Orange Money)">Paiement en ligne (Wave/Orange Money)</option>
-        <option value="Paiement en espèces à la livraison">Paiement en espèces à la livraison</option>
+        <option value="Paiement en especes a la livraison">Paiement en especes a la livraison</option>
       </select>
 
       <label>Adresse de livraison</label>
       <input type="text" id="cmd_adresse" required>
+
+      <button type="button" class="btn-position" id="btnPositionCmd">Utiliser ma position actuelle (pour le livreur)</button>
+      <p class="msg-position" id="msgPositionCmd">Optionnel, mais aide le livreur a vous trouver facilement.</p>
 
       <button type="submit" id="btn_commande">Confirmer la commande</button>
     </form>
@@ -68,77 +74,127 @@
 </div>
 
 <footer>
-  &copy; 2026 AW SERVICES — Tous droits réservés
+  &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
 <script>
-const sb = supabase.createClient(
-  'https://vnceunqygoiwglnwpgcr.supabase.co',
-  'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
-let produitSelectionne = null;
+var produitSelectionne = null;
+var positionClient = null;
 
-async function chargerProduits() {
-  const { data: produits, error } = await sb.from('produits').select('*').eq('statut', 'approuve').gt('stock', 0);
-  var grille = document.getElementById('grilleProduits');
+function chargerProduits() {
+  sb.from("produits").select("*").eq("statut", "approuve").gt("stock", 0).then(function(reponse) {
+    var data = reponse.data;
+    var grille = document.getElementById("grilleProduits");
 
-  if (error || !produits || produits.length === 0) {
-    grille.innerHTML = '<p class="vide">Aucun produit disponible pour le moment.</p>';
-    return;
-  }
+    if (!data || data.length === 0) {
+      grille.innerHTML = "<p class=\"vide\">Aucun produit disponible pour le moment.</p>";
+      return;
+    }
 
-  grille.innerHTML = produits.map(p => `
-    <div class="produit-carte">
-      <img src="${p.image_url || ''}" alt="${p.nom}">
-      <div class="infos">
-        <h3>${p.nom}</h3>
-        <div class="prix">${p.prix} FCFA</div>
-        <div class="stock">${p.stock} en stock</div>
-        <button onclick='selectionnerProduit(${JSON.stringify(p.nom)}, ${JSON.stringify(p.id)})'>Commander</button>
-      </div>
-    </div>
-  `).join('');
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var p = data[i];
+      html += "<div class=\"produit-carte\">" +
+                "<img src=\"" + (p.image_url || "") + "\" alt=\"\">" +
+                "<div class=\"infos\">" +
+                  "<h3>" + p.nom + "</h3>" +
+                  "<div class=\"prix\">" + p.prix + " FCFA</div>" +
+                  "<div class=\"stock\">" + p.stock + " en stock</div>" +
+                  "<button class=\"btn-selectionner\" data-nom=\"" + p.nom + "\" data-id=\"" + p.id + "\">Commander</button>" +
+                "</div>" +
+              "</div>";
+    }
+    grille.innerHTML = html;
+
+    var boutons = document.getElementsByClassName("btn-selectionner");
+    for (var b = 0; b < boutons.length; b++) {
+      boutons[b].addEventListener("click", function(e) {
+        var nom = e.target.getAttribute("data-nom");
+        var id = e.target.getAttribute("data-id");
+        selectionnerProduit(nom, id);
+      });
+    }
+  });
 }
 
 function selectionnerProduit(nom, id) {
   produitSelectionne = { nom: nom, id: id };
-  document.getElementById('titreCommande').textContent = 'Commander : ' + nom;
-  document.getElementById('zoneCommande').style.display = 'block';
-  document.getElementById('zoneCommande').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById("titreCommande").textContent = "Commander : " + nom;
+  document.getElementById("zoneCommande").style.display = "block";
+  document.getElementById("zoneCommande").scrollIntoView({ behavior: "smooth" });
 }
 
-async function envoyerCommande(event) {
-  event.preventDefault();
-  var btn = document.getElementById('btn_commande');
+document.getElementById("btnPositionCmd").addEventListener("click", function() {
+  var msg = document.getElementById("msgPositionCmd");
+  var btn = document.getElementById("btnPositionCmd");
+
+  if (!navigator.geolocation) {
+    msg.textContent = "Localisation non disponible sur cet appareil.";
+    return;
+  }
+
   btn.disabled = true;
-  btn.textContent = 'Envoi en cours...';
+  btn.textContent = "Localisation en cours...";
 
-  var nom = document.getElementById('cmd_nom').value;
-  var tel = document.getElementById('cmd_tel').value;
-  var paiement = document.getElementById('cmd_paiement').value;
-  var adresse = document.getElementById('cmd_adresse').value;
+  navigator.geolocation.getCurrentPosition(function(position) {
+    positionClient = { lat: position.coords.latitude, lng: position.coords.longitude };
+    btn.disabled = false;
+    btn.textContent = "Position enregistree";
+    msg.textContent = "Votre position a ete capturee avec succes.";
+    msg.className = "msg-position ok";
+  }, function() {
+    btn.disabled = false;
+    btn.textContent = "Utiliser ma position actuelle (pour le livreur)";
+    msg.textContent = "Impossible d'obtenir votre position. Verifiez que la localisation est activee.";
+  });
+});
 
-  const { error } = await sb.from('commandes').insert([{
+document.getElementById("formCommande").addEventListener("submit", envoyerCommande);
+
+function envoyerCommande(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btn_commande");
+  btn.disabled = true;
+  btn.textContent = "Envoi en cours...";
+
+  var nom = document.getElementById("cmd_nom").value;
+  var tel = document.getElementById("cmd_tel").value;
+  var paiement = document.getElementById("cmd_paiement").value;
+  var adresse = document.getElementById("cmd_adresse").value;
+
+  var donneesCommande = {
     client_nom: nom,
     client_telephone: tel,
     produit: produitSelectionne.nom,
     mode_paiement: paiement,
     adresse_livraison: adresse
-  }]);
+  };
 
-  btn.disabled = false;
-  btn.textContent = 'Confirmer la commande';
-
-  if (error) {
-    alert("Erreur : la commande n'a pas pu être enregistrée. Réessayez.");
-    return;
+  if (positionClient) {
+    donneesCommande.latitude = positionClient.lat;
+    donneesCommande.longitude = positionClient.lng;
   }
 
-  var message = "Bonjour, je commande : " + produitSelectionne.nom + "\nNom : " + nom + "\nTéléphone : " + tel + "\nPaiement : " + paiement + "\nAdresse : " + adresse;
-  window.open('https://wa.me/221777589444?text=' + encodeURIComponent(message), '_blank');
-  document.getElementById('zoneCommande').style.display = 'none';
-  event.target.reset();
+  sb.from("commandes").insert([donneesCommande]).then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Confirmer la commande";
+
+    if (reponse.error) {
+      alert("Erreur : la commande n'a pas pu etre enregistree. Reessayez.");
+      return;
+    }
+
+    var message = "Bonjour, je commande : " + produitSelectionne.nom + "\nNom : " + nom + "\nTelephone : " + tel + "\nPaiement : " + paiement + "\nAdresse : " + adresse;
+    window.open("https://wa.me/221777589444?text=" + encodeURIComponent(message), "_blank");
+    document.getElementById("zoneCommande").style.display = "none";
+    document.getElementById("formCommande").reset();
+    positionClient = null;
+  });
 }
 
 chargerProduits();
