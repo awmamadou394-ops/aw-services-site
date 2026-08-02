@@ -25,6 +25,11 @@
 
   .separateur { border-top: 1px solid #2a3040; margin: 30px 0; }
 
+  .zone-detail { display: none; }
+  .zone-detail.actif { display: block; }
+
+  .retour-pays { display: inline-block; margin-bottom: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
+
   .detail-pays { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 18px; margin-bottom: 15px; scroll-margin-top: 15px; }
   .detail-pays h3 { font-size: 18px; margin-bottom: 10px; }
   .detail-pays p { color: #b0b8c5; font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
@@ -55,7 +60,7 @@
 
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
-<div class="content">
+<div class="content" id="zoneCatalogue">
   <h2>Pre-inscription etudes a l'etranger</h2>
   <p>Choisissez votre pays de destination pour voir la procedure, les frais, et postuler directement.</p>
 
@@ -65,7 +70,7 @@
       <div class="texte">
         <h3>France</h3>
         <div class="highlight">Campus France</div>
-        <a class="btn-voir" href="#france">Voir les details</a>
+        <a class="btn-voir btn-voir-pays" href="#" data-cible="france">Voir les details</a>
       </div>
     </div>
     <div class="offre">
@@ -73,7 +78,7 @@
       <div class="texte">
         <h3>Canada</h3>
         <div class="highlight">Permis d'etudes</div>
-        <a class="btn-voir" href="#canada">Voir les details</a>
+        <a class="btn-voir btn-voir-pays" href="#" data-cible="canada">Voir les details</a>
       </div>
     </div>
     <div class="offre">
@@ -81,7 +86,7 @@
       <div class="texte">
         <h3>USA</h3>
         <div class="highlight">Visa etudiant</div>
-        <a class="btn-voir" href="#usa">Voir les details</a>
+        <a class="btn-voir btn-voir-pays" href="#" data-cible="usa">Voir les details</a>
       </div>
     </div>
     <div class="offre">
@@ -89,7 +94,7 @@
       <div class="texte">
         <h3>Maroc</h3>
         <div class="highlight">Bourses AMCI</div>
-        <a class="btn-voir" href="#maroc">Voir les details</a>
+        <a class="btn-voir btn-voir-pays" href="#" data-cible="maroc">Voir les details</a>
       </div>
     </div>
     <div class="offre">
@@ -97,7 +102,7 @@
       <div class="texte">
         <h3>Russie</h3>
         <div class="highlight">Bourses gouvernementales</div>
-        <a class="btn-voir" href="#russie">Voir les details</a>
+        <a class="btn-voir btn-voir-pays" href="#" data-cible="russie">Voir les details</a>
       </div>
     </div>
     <div class="offre">
@@ -105,15 +110,15 @@
       <div class="texte">
         <h3>Belgique</h3>
         <div class="highlight">Visa D - TLScontact</div>
-        <a class="btn-voir" href="#belgique">Voir les details</a>
+        <a class="btn-voir btn-voir-pays" href="#" data-cible="belgique">Voir les details</a>
       </div>
     </div>
   </div>
 </div>
 
-<div class="content">
-
-  <div class="detail-pays" id="france">
+<div class="content zone-detail" id="france">
+  <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
+  <div class="detail-pays">
     <h3>&#127467;&#127479; France</h3>
     <p>Procedure Campus France. Pour eleves en terminale, bacheliers, etudiants en Licence jusqu'au Master 1, et doctorants souhaitant poursuivre leurs etudes en France (universite publique ou privee).</p>
     <p><strong style="color:#fff;">Services offerts :</strong></p>
@@ -163,8 +168,11 @@
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
+</div>
 
-  <div class="detail-pays" id="canada">
+<div class="content zone-detail" id="canada">
+  <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
+  <div class="detail-pays">
     <h3>&#127464;&#127462; Canada</h3>
     <p><strong style="color:#fff;">Les etapes :</strong></p>
     <ul>
@@ -205,8 +213,11 @@
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
+</div>
 
-  <div class="detail-pays" id="usa">
+<div class="content zone-detail" id="usa">
+  <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
+  <div class="detail-pays">
     <h3>&#127482;&#127480; USA</h3>
     <p><strong style="color:#fff;">Les etapes :</strong></p>
     <ul>
@@ -243,8 +254,11 @@
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
+</div>
 
-  <div class="detail-pays" id="maroc">
+<div class="content zone-detail" id="maroc">
+  <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
+  <div class="detail-pays">
     <h3>&#127474;&#127462; Maroc</h3>
     <p>Chaque annee, le Maroc accorde a travers l'AMCI (Agence Marocaine de Cooperation Internationale) plusieurs centaines de bourses aux etudiants senegalais, en partenariat avec la Direction des Bourses du Senegal. Ces bourses couvrent generalement les frais de scolarite, le logement et une allocation mensuelle, pour les cycles Licence, Master et Doctorat dans les universites publiques marocaines.</p>
     <p><strong style="color:#fff;">A savoir :</strong></p>
@@ -280,8 +294,11 @@
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
+</div>
 
-  <div class="detail-pays" id="russie">
+<div class="content zone-detail" id="russie">
+  <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
+  <div class="detail-pays">
     <h3>&#127479;&#127482; Russie</h3>
     <p>Le gouvernement russe, via Rossotrudnichestvo, met chaque annee des bourses a la disposition des etudiants senegalais pour les cycles Licence, Master et Doctorat. Ces bourses couvrent la scolarite et une allocation mensuelle, mais pas le transport ni le logement.</p>
     <p><strong style="color:#fff;">A savoir :</strong></p>
@@ -317,8 +334,11 @@
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
+</div>
 
-  <div class="detail-pays" id="belgique">
+<div class="content zone-detail" id="belgique">
+  <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
+  <div class="detail-pays">
     <h3>&#127463;&#127466; Belgique</h3>
     <p>Destination francophone tres appreciee pour la qualite de son enseignement (ULB, UCLouvain, Liege...) et son cout de vie plus accessible que d'autres pays europeens. Un visa long sejour (type D) est obligatoire pour toute etude de plus de 90 jours.</p>
     <p><strong style="color:#fff;">A savoir :</strong></p>
@@ -354,7 +374,6 @@
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
-
 </div>
 
 <div class="separateur"></div>
@@ -392,6 +411,34 @@ var sb = supabase.createClient(
   "https://vnceunqygoiwglnwpgcr.supabase.co",
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
+
+var boutonsVoir = document.getElementsByClassName("btn-voir-pays");
+for (var v = 0; v < boutonsVoir.length; v++) {
+  boutonsVoir[v].addEventListener("click", function(e) {
+    e.preventDefault();
+    var cible = e.target.getAttribute("data-cible");
+    document.getElementById("zoneCatalogue").style.display = "none";
+    var zones = document.getElementsByClassName("zone-detail");
+    for (var z = 0; z < zones.length; z++) {
+      zones[z].classList.remove("actif");
+    }
+    document.getElementById(cible).classList.add("actif");
+    window.scrollTo(0, 0);
+  });
+}
+
+var boutonsRetour = document.getElementsByClassName("btn-retour");
+for (var r = 0; r < boutonsRetour.length; r++) {
+  boutonsRetour[r].addEventListener("click", function(e) {
+    e.preventDefault();
+    var zones = document.getElementsByClassName("zone-detail");
+    for (var z = 0; z < zones.length; z++) {
+      zones[z].classList.remove("actif");
+    }
+    document.getElementById("zoneCatalogue").style.display = "block";
+    window.scrollTo(0, 0);
+  });
+}
 
 var formulaires = document.getElementsByClassName("form-preinscription");
 for (var f = 0; f < formulaires.length; f++) {
