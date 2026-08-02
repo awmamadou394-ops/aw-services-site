@@ -4,200 +4,232 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Agence de Voyage</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #0a0e17;
-    color: #ffffff;
-  }
-  header {
-    background-color: #0d1220;
-    padding: 20px;
-    text-align: center;
-    border-bottom: 2px solid #d62828;
-  }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
+  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
   header h1 { color: #1e6fd9; font-size: 22px; }
-  .back {
-    display: inline-block;
-    margin: 15px;
-    color: #b0b8c5;
-    text-decoration: none;
-    font-size: 14px;
-  }
+  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
   .content { padding: 20px 15px; }
   .content h2 { color: #ffffff; margin-bottom: 10px; font-size: 20px; }
-  .content > p {
-    color: #b0b8c5;
-    margin-bottom: 20px;
-    line-height: 1.5;
-  }
-  details {
-    background-color: #121826;
-    border: 1px solid #1e6fd9;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 12px;
-  }
-  summary {
-    font-size: 17px;
-    font-weight: bold;
-    color: #ffffff;
-    cursor: pointer;
-  }
-  details p, details li {
-    color: #b0b8c5;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-  details ul { margin: 10px 0 10px 20px; }
-  .prix-box {
-    background-color: #0a0e17;
-    border-left: 3px solid #d62828;
-    padding: 10px;
-    margin-top: 10px;
-    font-size: 14px;
-  }
+  .content > p { color: #b0b8c5; margin-bottom: 20px; line-height: 1.5; }
+
+  .offres { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .offre { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; overflow: hidden; text-align: center; }
+  .offre img { width: 100%; height: 90px; object-fit: cover; display: block; }
+  .offre .texte { padding: 10px; }
+  .offre h3 { color: #ffffff; font-size: 15px; }
+  .offre .highlight { color: #d62828; font-size: 12px; font-weight: bold; margin: 5px 0; }
+  .offre a.btn-voir { display: inline-block; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 8px; border-radius: 6px; font-weight: bold; font-size: 12px; width: 100%; margin-top: 5px; }
+
+  .separateur { border-top: 1px solid #2a3040; margin: 30px 0; }
+
+  .detail-pays { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 18px; margin-bottom: 15px; scroll-margin-top: 15px; }
+  .detail-pays h3 { font-size: 18px; margin-bottom: 10px; }
+  .detail-pays p { color: #b0b8c5; font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+  .detail-pays ul { margin: 8px 0 8px 20px; }
+  .detail-pays li { color: #b0b8c5; font-size: 14px; line-height: 1.6; }
+  .prix-box { background-color: #0a0e17; border-left: 3px solid #d62828; padding: 10px; margin-top: 10px; font-size: 13px; }
   .prix-box strong { color: #ffffff; }
-  form {
-    background-color: #121826;
-    border: 1px solid #1e6fd9;
-    border-radius: 10px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
-  }
+
+  form { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
   label { font-size: 14px; color: #b0b8c5; }
-  input, select {
-    background-color: #0a0e17;
-    border: 1px solid #2a3040;
-    border-radius: 6px;
-    padding: 10px;
-    color: #ffffff;
-    font-size: 14px;
-  }
-  button {
-    background-color: #1e6fd9;
-    color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: bold;
-    margin-top: 10px;
-  }
-  .separateur {
-    border-top: 1px solid #2a3040;
-    margin: 35px 0;
-  }
-  footer {
-    text-align: center;
-    padding: 20px;
-    color: #b0b8c5;
-    font-size: 12px;
-    border-top: 1px solid #d62828;
-    margin-top: 30px;
-  }
+  input, select { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
+  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; margin-top: 10px; }
+  button:disabled { opacity: 0.6; }
+  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
+  .msg.erreur { background-color: #3a1414; color: #ff8080; }
+  .msg.succes { background-color: #143a1e; color: #80ff9e; }
+  .note-paiement { text-align: center; color: #b0b8c5; font-size: 12px; margin-top: 15px; font-style: italic; }
+
+  footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
 </style>
 </head>
 <body>
 
-<img src="Imagevoyage.png" alt="AW SERVICES Agence de Voyage" style="width:100%; display:block;">
+<header>
+  <h1>AW SERVICES — Agence de Voyage</h1>
+</header>
 
-<a href="index.html" class="back">&#8592; Retour à l'accueil</a>
+<a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
 <div class="content">
-  <h2>Pré-inscription études à l'étranger</h2>
-  <p>Choisissez votre pays de destination pour connaître la procédure et les frais, puis remplissez le formulaire pour lancer votre pré-inscription.</p>
+  <h2>Pre-inscription etudes a l'etranger</h2>
+  <p>Choisissez votre pays de destination pour voir la procedure et les frais, puis remplissez le formulaire pour lancer votre pre-inscription.</p>
 
-  <details>
-    <summary>🇫🇷 France</summary>
-    <p style="margin-top:10px;">Procédure Campus France. Pour élèves en terminale, bacheliers, étudiants en Licence jusqu'au Master 1, et doctorants souhaitant poursuivre leurs études en France (université publique ou privée).</p>
-    <p style="margin-top:10px;"><strong style="color:#fff;">Services offerts :</strong></p>
+  <div class="offres">
+    <div class="offre">
+      <img src="Imagevoyage.png" alt="France">
+      <div class="texte">
+        <h3>France</h3>
+        <div class="highlight">Campus France</div>
+        <a class="btn-voir" href="#france">Voir les details</a>
+      </div>
+    </div>
+    <div class="offre">
+      <img src="Imagevoyage.png" alt="Canada">
+      <div class="texte">
+        <h3>Canada</h3>
+        <div class="highlight">Permis d'etudes</div>
+        <a class="btn-voir" href="#canada">Voir les details</a>
+      </div>
+    </div>
+    <div class="offre">
+      <img src="Imagevoyage.png" alt="USA">
+      <div class="texte">
+        <h3>USA</h3>
+        <div class="highlight">Visa etudiant</div>
+        <a class="btn-voir" href="#usa">Voir les details</a>
+      </div>
+    </div>
+    <div class="offre">
+      <img src="Imagevoyage.png" alt="Maroc">
+      <div class="texte">
+        <h3>Maroc</h3>
+        <div class="highlight">Bourses AMCI</div>
+        <a class="btn-voir" href="#maroc">Voir les details</a>
+      </div>
+    </div>
+    <div class="offre">
+      <img src="Imagevoyage.png" alt="Russie">
+      <div class="texte">
+        <h3>Russie</h3>
+        <div class="highlight">Bourses gouvernementales</div>
+        <a class="btn-voir" href="#russie">Voir les details</a>
+      </div>
+    </div>
+    <div class="offre">
+      <img src="Imagevoyage.png" alt="Belgique">
+      <div class="texte">
+        <h3>Belgique</h3>
+        <div class="highlight">Visa D - TLScontact</div>
+        <a class="btn-voir" href="#belgique">Voir les details</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="detail-pays" id="france">
+    <h3>&#127467;&#127479; France</h3>
+    <p>Procedure Campus France. Pour eleves en terminale, bacheliers, etudiants en Licence jusqu'au Master 1, et doctorants souhaitant poursuivre leurs etudes en France (universite publique ou privee).</p>
+    <p><strong style="color:#fff;">Services offerts :</strong></p>
     <ul>
-      <li>Création du compte Pastel</li>
+      <li>Creation du compte Pastel</li>
       <li>Remplissage du panier de formation</li>
-      <li>Rédaction des lettres de motivation</li>
-      <li>Choix des universités</li>
+      <li>Redaction des lettres de motivation</li>
+      <li>Choix des universites</li>
       <li>Soumission du dossier</li>
       <li>Prise de rendez-vous entretien</li>
       <li>Coaching entretien</li>
-      <li>Suivi du dossier jusqu'à la phase de visa</li>
+      <li>Suivi du dossier jusqu'a la phase de visa</li>
     </ul>
     <div class="prix-box">
-      <strong>Frais dossier :</strong> 75 000 FCFA (public) / 100 000 FCFA (privé)<br>
-      <strong>Frais Campus France :</strong> 85 000 FCFA (à payer à la banque BICIS)
+      <strong>Frais dossier :</strong> 75 000 FCFA (public) / 100 000 FCFA (prive)<br>
+      <strong>Frais Campus France :</strong> 85 000 FCFA (a payer a la banque BICIS)
     </div>
-    <p style="margin-top:10px;"><strong style="color:#fff;">Documents à fournir :</strong></p>
+    <p style="margin-top:10px;"><strong style="color:#fff;">Documents a fournir :</strong></p>
     <ul>
       <li>Trois derniers bulletins de notes</li>
       <li>CV</li>
-      <li>Photocopie pièce d'identité</li>
-      <li>Diplôme du Bac</li>
-      <li>Relevé de notes du Bac</li>
+      <li>Photocopie piece d'identite</li>
+      <li>Diplome du Bac</li>
+      <li>Releve de notes du Bac</li>
       <li>Photo vue de face</li>
     </ul>
-  </details>
+  </div>
 
-  <details>
-    <summary>🇨🇦 Canada</summary>
-    <p style="margin-top:10px;"><strong style="color:#fff;">Les étapes :</strong></p>
+  <div class="detail-pays" id="canada">
+    <h3>&#127464;&#127462; Canada</h3>
+    <p><strong style="color:#fff;">Les etapes :</strong></p>
     <ul>
-      <li>Étape 1 : École de formation professionnelle</li>
-      <li>Étape 2 : Choix d'une formation adéquate à votre projet</li>
-      <li>Étape 3 : Demande d'admission</li>
-      <li>Étape 4 : Paiement des frais d'admission</li>
-      <li>Étape 5 : Réponse de l'établissement</li>
-      <li>Étape 6 : Demande d'acceptation du Québec (CAQ) ou Lettre d'Attestation Provinciale</li>
-      <li>Étape 7 : Procédure consulaire (Visa)</li>
+      <li>Etape 1 : Ecole de formation professionnelle</li>
+      <li>Etape 2 : Choix d'une formation adequate a votre projet</li>
+      <li>Etape 3 : Demande d'admission</li>
+      <li>Etape 4 : Paiement des frais d'admission</li>
+      <li>Etape 5 : Reponse de l'etablissement</li>
+      <li>Etape 6 : Demande d'acceptation du Quebec (CAQ) ou Lettre d'Attestation Provinciale</li>
+      <li>Etape 7 : Procedure consulaire (Visa)</li>
     </ul>
     <div class="prix-box">
       <strong>Frais d'admission et de dossier :</strong> 175 000 FCFA<br>
       <strong>CAQ :</strong> 85 000 FCFA<br>
-      <strong>Demande de permis d'études :</strong> 130 000 FCFA<br>
+      <strong>Demande de permis d'etudes :</strong> 130 000 FCFA<br>
       <strong>Garant financier (si besoin) :</strong> 300 000 FCFA
     </div>
-  </details>
+  </div>
 
-  <details>
-    <summary>🇺🇸 USA</summary>
-    <p style="margin-top:10px;"><strong style="color:#fff;">Les étapes :</strong></p>
+  <div class="detail-pays" id="usa">
+    <h3>&#127482;&#127480; USA</h3>
+    <p><strong style="color:#fff;">Les etapes :</strong></p>
     <ul>
-      <li>Étape 1 : École de formation professionnelle</li>
-      <li>Étape 2 : Choix d'une formation adéquate à votre projet</li>
-      <li>Étape 3 : Demande d'admission</li>
-      <li>Étape 4 : Paiement des frais d'admission</li>
-      <li>Étape 5 : Réponse de l'établissement</li>
-      <li>Étape 6 : Procédure consulaire (Visa)</li>
+      <li>Etape 1 : Ecole de formation professionnelle</li>
+      <li>Etape 2 : Choix d'une formation adequate a votre projet</li>
+      <li>Etape 3 : Demande d'admission</li>
+      <li>Etape 4 : Paiement des frais d'admission</li>
+      <li>Etape 5 : Reponse de l'etablissement</li>
+      <li>Etape 6 : Procedure consulaire (Visa)</li>
     </ul>
     <div class="prix-box">
       <strong>Frais d'admission et de dossier :</strong> 400 000 FCFA
     </div>
-  </details>
+  </div>
 
-  <details>
-    <summary>🇲🇦 Maroc</summary>
-    <p style="margin-top:10px;">Informations à venir. Contactez-nous dès maintenant sur WhatsApp pour connaître la procédure et les frais.</p>
-  </details>
+  <div class="detail-pays" id="maroc">
+    <h3>&#127474;&#127462; Maroc</h3>
+    <p>Chaque annee, le Maroc accorde a travers l'AMCI (Agence Marocaine de Cooperation Internationale) plusieurs centaines de bourses aux etudiants senegalais, en partenariat avec la Direction des Bourses du Senegal. Ces bourses couvrent generalement les frais de scolarite, le logement et une allocation mensuelle, pour les cycles Licence, Master et Doctorat dans les universites publiques marocaines.</p>
+    <p><strong style="color:#fff;">A savoir :</strong></p>
+    <ul>
+      <li>Candidature via depot de dossier a Dakar (periode d'ouverture generalement entre janvier et juillet)</li>
+      <li>Documents cles : releves de notes des deux dernieres annees, copie certifiee du dernier diplome, pieces d'identite</li>
+      <li>Visa etudiant (type D) necessaire, sauf simplification pour les boursiers AMCI</li>
+      <li>Bon niveau de francais recommande, systeme d'enseignement largement francophone</li>
+    </ul>
+    <div class="prix-box">
+      Accompagnement AW SERVICES pour la constitution et le suivi du dossier — contactez-nous pour le tarif selon votre profil.
+    </div>
+  </div>
 
-  <details>
-    <summary>🇷🇺 Russie</summary>
-    <p style="margin-top:10px;">Informations à venir. Contactez-nous dès maintenant sur WhatsApp pour connaître la procédure et les frais.</p>
-  </details>
+  <div class="detail-pays" id="russie">
+    <h3>&#127479;&#127482; Russie</h3>
+    <p>Le gouvernement russe, via Rossotrudnichestvo, met chaque annee des bourses a la disposition des etudiants senegalais pour les cycles Licence, Master et Doctorat. Ces bourses couvrent la scolarite et une allocation mensuelle, mais pas le transport ni le logement.</p>
+    <p><strong style="color:#fff;">A savoir :</strong></p>
+    <ul>
+      <li>Inscription en ligne sur la plateforme officielle, puis selection nationale</li>
+      <li>Limite d'age indicative : moins de 25 ans (Licence), 30 ans (Master), 35 ans (Doctorat)</li>
+      <li>Documents cles : passeport valide au moins 18 mois apres le visa, diplome/releves de notes, certificat medical</li>
+      <li>Les etudiants ne parlant pas russe suivent souvent une annee preparatoire de langue avant le cursus choisi</li>
+    </ul>
+    <div class="prix-box">
+      Accompagnement AW SERVICES pour l'inscription et le dossier — contactez-nous pour le tarif selon votre profil.
+    </div>
+  </div>
 
-  <details>
-    <summary>🇧🇪 Belgique</summary>
-    <p style="margin-top:10px;">Informations à venir. Contactez-nous dès maintenant sur WhatsApp pour connaître la procédure et les frais.</p>
-  </details>
+  <div class="detail-pays" id="belgique">
+    <h3>&#127463;&#127466; Belgique</h3>
+    <p>Destination francophone tres appreciee pour la qualite de son enseignement (ULB, UCLouvain, Liege...) et son cout de vie plus accessible que d'autres pays europeens. Un visa long sejour (type D) est obligatoire pour toute etude de plus de 90 jours.</p>
+    <p><strong style="color:#fff;">A savoir :</strong></p>
+    <ul>
+      <li>Depuis 2023, la demande de visa passe par TLScontact Dakar (Mermoz), plus par l'ambassade directement</li>
+      <li>Pour un Master en Federation Wallonie-Bruxelles, une equivalence de diplome via l'ARES peut etre demandee (delai 4 a 8 semaines)</li>
+      <li>Preuve de ressources financieres suffisantes exigee (bourse, garant, ou compte bloque)</li>
+      <li>Comptez environ 3 semaines entre le depot du dossier et la recuperation du passeport avec visa</li>
+    </ul>
+    <div class="prix-box">
+      Accompagnement AW SERVICES pour le dossier et l'equivalence — contactez-nous pour le tarif selon votre profil.
+    </div>
+  </div>
+</div>
 
-  <form id="formPreinscription" onsubmit="envoyerPreinscription(event)">
+<div class="content">
+  <div id="zoneMessagePre"></div>
+  <form id="formPreinscription">
     <label>Nom complet</label>
     <input type="text" id="p_nom" placeholder="Votre nom" required>
 
-    <label>Numéro de téléphone</label>
-    <input type="tel" id="p_tel" placeholder="Votre numéro" required>
+    <label>Numero de telephone</label>
+    <input type="tel" id="p_tel" placeholder="Votre numero" required>
 
     <label>Pays de destination</label>
     <select id="p_pays" required>
@@ -210,7 +242,7 @@
       <option value="Belgique">Belgique</option>
     </select>
 
-    <label>Niveau d'étude actuel</label>
+    <label>Niveau d'etude actuel</label>
     <select id="p_niveau" required>
       <option value="">Choisir...</option>
       <option value="Terminale">Terminale</option>
@@ -220,27 +252,31 @@
       <option value="Doctorat">Doctorat</option>
     </select>
 
-    <button type="submit">Envoyer ma pré-inscription</button>
+    <label>Documents (releves, diplome, piece d'identite... plusieurs possibles)</label>
+    <input type="file" id="p_documents" accept="image/*,.pdf" multiple>
+
+    <button type="submit" id="btn_preinscription">Envoyer ma pre-inscription</button>
   </form>
+  <p class="note-paiement">Paiement des frais de dossier en ligne (Wave, Orange Money, carte) bientot disponible directement sur cette page.</p>
 </div>
 
 <div class="separateur"></div>
 
 <div class="content">
-  <h2>Réservation de billets & voyages</h2>
-  <p>Pour un simple billet d'avion, un séjour ou un hébergement, remplissez ce formulaire.</p>
+  <h2>Reservation de billets &amp; voyages</h2>
+  <p>Pour un simple billet d'avion, un sejour ou un hebergement, remplissez ce formulaire.</p>
 
   <form action="https://wa.me/221777589444" method="get" target="_blank">
     <label>Nom complet</label>
     <input type="text" name="nom" placeholder="Votre nom" required>
 
-    <label>Numéro de téléphone</label>
-    <input type="tel" name="telephone" placeholder="Votre numéro" required>
+    <label>Numero de telephone</label>
+    <input type="tel" name="telephone" placeholder="Votre numero" required>
 
     <label>Destination</label>
     <input type="text" name="destination" placeholder="Ville ou pays" required>
 
-    <label>Date de départ souhaitée</label>
+    <label>Date de depart souhaitee</label>
     <input type="date" name="date" required>
 
     <label>Nombre de personnes</label>
@@ -251,19 +287,74 @@
 </div>
 
 <footer>
-  &copy; 2026 AW SERVICES — Tous droits réservés
+  &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
 <script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+document.getElementById("formPreinscription").addEventListener("submit", envoyerPreinscription);
+
 function envoyerPreinscription(event) {
   event.preventDefault();
-  var nom = document.getElementById('p_nom').value;
-  var tel = document.getElementById('p_tel').value;
-  var pays = document.getElementById('p_pays').value;
-  var niveau = document.getElementById('p_niveau').value;
-  var message = "Bonjour, je souhaite une pré-inscription.\nNom : " + nom + "\nTéléphone : " + tel + "\nPays de destination : " + pays + "\nNiveau d'étude : " + niveau;
-  var url = "https://wa.me/221777589444?text=" + encodeURIComponent(message);
-  window.open(url, '_blank');
+  var btn = document.getElementById("btn_preinscription");
+  var zoneMsg = document.getElementById("zoneMessagePre");
+  btn.disabled = true;
+  btn.textContent = "Envoi en cours...";
+  zoneMsg.innerHTML = "";
+
+  var nom = document.getElementById("p_nom").value;
+  var tel = document.getElementById("p_tel").value;
+  var pays = document.getElementById("p_pays").value;
+  var niveau = document.getElementById("p_niveau").value;
+  var fichiers = document.getElementById("p_documents").files;
+
+  var urls = [];
+  var total = fichiers.length;
+  var compteur = 0;
+
+  function finaliser() {
+    sb.from("preinscriptions_voyage").insert([{
+      nom: nom,
+      telephone: tel,
+      pays: pays,
+      niveau: niveau,
+      documents: urls
+    }]).then(function(reponse) {
+      btn.disabled = false;
+      btn.textContent = "Envoyer ma pre-inscription";
+      if (reponse.error) {
+        zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
+        return;
+      }
+      var message = "Bonjour, je souhaite une pre-inscription.\nNom : " + nom + "\nTelephone : " + tel + "\nPays : " + pays + "\nNiveau : " + niveau + "\nDocuments envoyes : " + total;
+      window.open("https://wa.me/221777589444?text=" + encodeURIComponent(message), "_blank");
+      zoneMsg.innerHTML = "<div class=\"msg succes\">Pre-inscription envoyee avec succes !</div>";
+      document.getElementById("formPreinscription").reset();
+    });
+  }
+
+  if (total === 0) {
+    finaliser();
+    return;
+  }
+
+  for (var i = 0; i < total; i++) {
+    (function(fichier, index) {
+      var nomFichier = "doc_" + Date.now() + "_" + index + "_" + fichier.name;
+      sb.storage.from("documents-voyage").upload(nomFichier, fichier).then(function(reponseUpload) {
+        if (!reponseUpload.error) {
+          var urlData = sb.storage.from("documents-voyage").getPublicUrl(nomFichier);
+          urls.push(urlData.data.publicUrl);
+        }
+        compteur++;
+        if (compteur === total) finaliser();
+      });
+    })(fichiers[i], i);
+  }
 }
 </script>
 
