@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Gestion Boutique</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
+  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
+  header h1 { color: #1e6fd9; font-size: 20px; }
+  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
+  .content { padding: 15px; max-width: 500px; margin: 0 auto; }
+  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+  .carte h2 { font-size: 16px; margin-bottom: 12px; color: #1e6fd9; }
+  form { display: flex; flex-direction: column; gap: 12px; }
+  label { font-size: 14px; color: #b0b8c5; }
+  input, select, textarea { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; font-family: Arial, sans-serif; }
+  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 15px; font-weight: bold; margin-top: 8px; }
+  button:disabled { opacity: 0.6; }
+  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
+  .msg.erreur { background-color: #3a1414; color: #ff8080; }
+  .msg.succes { background-color: #143a1e; color: #80ff9e; }
+  .prod-carte { display: flex; gap: 10px; background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+  .prod-carte img { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; }
+  .prod-info { flex: 1; }
+  .prod-info h3 { font-size: 14px; }
+  .prod-info p { font-size: 12px; color: #b0b8c5; margin-top: 2px; }
+  .btn-suppr { background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 6px 10px; border-radius: 6px; font-size: 12px; margin-top: 6px; }
+  .chargement { text-align: center; padding: 30px; color: #b0b8c5; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Gestion Boutique</h1>
+</header>
+
+<a href="admin-espace.html" class="back">&#8592; Retour a l administration</a>
+
+<div class="content">
+  <div id="zoneContenu" class="chargement">Verification des droits...</div>
+</div>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+function verifierEtCharger() {
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) {
+      window.location.href = "admin-connexion.html";
+      return;
+    }
+    sb.from("admins").select("*").eq("user_id", user.id).single().then(function(reponseAdmin) {
+      var admin = reponseAdmin.data;
+      var zone = document.getElementById("zoneContenu");
+      if (!admin) {
+        zone.innerHTML = "<div class=\"carte\"><p>Acces refuse.</p></div>";
+        return;
+      }
+      zone.innerHTML =
+        "<div class=\"carte\">" +
+          "<h2>Ajouter un produit AW SERVICES</h2>" +
+          "<div id=\"zoneMessage\"></div>" +
+          "<form id=\"formProduit\">" +
+            "<label>Nom du produit</label>" +
+            "<input type=\"text\" id=\"p_nom\" placeholder=\"Ex : Casque Bluetooth\" required>" +
+            "<label>Description</label>" +
+            "<textarea id=\"p_description\" rows=\"3\" placeholder=\"Decrivez le produit\"></textarea>" +
+            "<label>Prix (FCFA)</label>" +
+            "<input type=\"number\" id=\"p_prix\" placeholder=\"Ex : 15000\" required>" +
+            "<label>Categorie</label>" +
+            "<input type=\"text\" id=\"p_categorie\" placeholder=\"Ex : Electronique\" required>" +
+            "<label>Quantite en stock</label>" +
+            "<input type=\"number\" id=\"p_stock\" placeholder=\"Ex : 10\" required>" +
+            "<label>Photo</label>" +
+            "<input type=\"file\" id=\"p_photo\" accept=\"image/*\" required>" +
+            "<button type=\"submit\" id=\"btn_produit\">Publier le produit</button>" +
+          "</form>" +
+        "</div>" +
+        "<div class=\"carte\">" +
+          "<h2>Tous les produits</h2>" +
+          "<div id=\"listeProduits\"><p>Chargement...</p></div>" +
+        "</div>";
+
+      document.getElementById("formProduit").addEventListener("submit", ajouterProduit);
+      chargerProduits();
+    });
+  });
+}
+
+function chargerProduits() {
+  sb.from("produits").select("*").order("date_ajout", { ascending: false }).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeProduits");
+    if (!data || data.length === 0) { zone.innerHTML = "<p>Aucun produit.</p>"; return; }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var p = data[i];
+      html += "<div class=\"prod-carte\">" +
+                "<img src=\"" + (p.image_url || "") + "\" alt=\"\">" +
+                "<div class=\"prod-info\">" +
+                  "<h3>" + p.nom + "</h3>" +
+                  "<p>" + p.prix + " FCFA - Stock : " + p.stock + " - " + p.statut + "</p>" +
+                  "<button class=\"btn-suppr btn-suppr-prod\" data-id=\"" + p.id + "\">Supprimer</button>" +
+                "</div>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+    var boutons = document.getElementsByClassName("btn-suppr-prod");
+    for (var j = 0; j < boutons.length; j++) {
+      boutons[j].addEventListener("click", function(e) {
+        var id = e.target.getAttribute("data-id");
+        if (!confirm("Supprimer definitivement ce produit ?")) return;
+        sb.from("produits").delete().eq("id", id).then(function() {
+          chargerProduits();
+        });
+      });
+    }
+  });
+}
+
+function ajouterProduit(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btn_produit");
+  var zoneMsg = document.getElementById("zoneMessage");
+  btn.disabled = true;
+  btn.textContent = "Publication en cours...";
+
+  var nom = document.getElementById("p_nom").value;
+  var description = document.getElementById("p_description").value;
+  var prix = document.getElementById("p_prix").value;
+  var categorie = document.getElementById("p_categorie").value;
+  var stock = document.getElementById("p_stock").value;
+  var fichier = document.getElementById("p_photo").files[0];
+  var nomFichier = "admin_" + Date.now() + "_" + fichier.name;
+
+  sb.storage.from("produits").upload(nomFichier, fichier).then(function(reponseUpload) {
+    if (reponseUpload.error) {
+      zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur photo : " + reponseUpload.error.message + "</div>";
+      btn.disabled = false;
+      btn.textContent = "Publier le produit";
+      return;
+    }
+    var urlData = sb.storage.from("produits").getPublicUrl(nomFichier);
+    sb.from("produits").insert([{
+      nom: nom,
+      description: description,
+      prix: prix,
+      categorie: categorie,
+      stock: stock,
+      image_url: urlData.data.publicUrl,
+      statut: "approuve"
+    }]).then(function(reponse) {
+      btn.disabled = false;
+      btn.textContent = "Publier le produit";
+      if (reponse.error) {
+        zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
+        return;
+      }
+      zoneMsg.innerHTML = "<div class=\"msg succes\">Produit publie et visible immediatement !</div>";
+      document.getElementById("formProduit").reset();
+      chargerProduits();
+    });
+  });
+}
+
+verifierEtCharger();
+</script>
+
+</body>
+</html>
