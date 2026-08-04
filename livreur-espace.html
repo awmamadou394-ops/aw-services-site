@@ -111,8 +111,29 @@ function chargerEspace() {
         "</div>";
 
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
+      verifierEtatNotifications();
       chargerCommandes();
       setInterval(chargerCommandes, 20000);
+    });
+  });
+}
+
+function afficherNotifActives() {
+  var btn = document.getElementById("btnActiverNotif");
+  var msg = document.getElementById("msgNotif");
+  btn.disabled = true;
+  btn.textContent = "Notifications activees";
+  msg.className = "msg-notif ok";
+  msg.textContent = "Vous recevrez une alerte a chaque nouvelle commande.";
+}
+
+function verifierEtatNotifications() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  if (Notification.permission !== "granted") return;
+  navigator.serviceWorker.getRegistration().then(function(registration) {
+    if (!registration) return;
+    registration.pushManager.getSubscription().then(function(subscription) {
+      if (subscription) afficherNotifActives();
     });
   });
 }
@@ -152,14 +173,18 @@ function activerNotifications() {
       });
     });
   }).then(function(subscription) {
-    return sb.from("push_subscriptions").insert([{
-      livreur_id: livreurCourant.id,
-      subscription: subscription.toJSON()
-    }]);
+    var sub = subscription.toJSON();
+    return sb.from("push_subscriptions").select("id").eq("subscription->>endpoint", sub.endpoint).then(function(existant) {
+      if (existant.data && existant.data.length > 0) {
+        return { error: null };
+      }
+      return sb.from("push_subscriptions").insert([{
+        livreur_id: livreurCourant.id,
+        subscription: sub
+      }]);
+    });
   }).then(function(reponse) {
-    btn.textContent = "Notifications activees";
-    msg.className = "msg-notif ok";
-    msg.textContent = "Vous recevrez desormais une alerte a chaque nouvelle commande.";
+    afficherNotifActives();
   }).catch(function(erreur) {
     btn.disabled = false;
     btn.textContent = "Activer les notifications";
@@ -209,12 +234,10 @@ function afficherListe(idZone, liste, avecBoutonAccepter) {
     if (avecBoutonAccepter) {
       html += "<br><button class=\"btn-accepter btn-accepter-cmd\" data-id=\"" + c.id + "\">Accepter cette commande</button>";
     } else if (statutLiv === "vers_boutique") {
-      if (statutPrep === "prete") {
-        html += "<br><button class=\"btn-recupere btn-recupere-cmd\" data-id=\"" + c.id + "\">J'ai recupere la commande</button>";
-      } else {
-        html += "<p class=\"attente-vendeur\">En attente : le vendeur prepare encore la commande.</p>" +
-                "<button class=\"btn-recupere btn-recupere-cmd\" data-id=\"" + c.id + "\">J'ai recupere la commande</button>";
+      if (statutPrep !== "prete") {
+        html += "<p class=\"attente-vendeur\">En attente : le vendeur prepare encore la commande.</p>";
       }
+      html += "<button class=\"btn-recupere btn-recupere-cmd\" data-id=\"" + c.id + "\">J'ai recupere la commande</button>";
     } else if (statutLiv === "en_livraison") {
       html += "<br><button class=\"btn-livree btn-livree-cmd\" data-id=\"" + c.id + "\">Marquer comme livree</button>";
     }
