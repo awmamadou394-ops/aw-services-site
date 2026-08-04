@@ -22,13 +22,16 @@
   .commande-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
   .commande-carte h3 { font-size: 14px; }
   .commande-carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
-  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-top: 6px; }
+  .badges { margin-top: 8px; }
+  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-right: 5px; margin-bottom: 4px; }
+  .badge-nouvelle { background-color: #3a2e14; color: #ffb84d; }
+  .badge-en_preparation { background-color: #14223a; color: #6aa9ff; }
   .badge-prete { background-color: #143a1e; color: #80ff9e; }
-  .badge-en_livraison { background-color: #2a1a3a; color: #c08cff; }
-  .badge-livree { background-color: #1a3a2a; color: #80ffc0; }
   .btn-maps { display: inline-block; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; margin-right: 6px; }
   .btn-accepter { background-color: #143a1e; color: #80ff9e; border: 1px solid #80ff9e; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; }
+  .btn-recupere { background-color: #2a1a3a; color: #c08cff; border: 1px solid #c08cff; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; }
   .btn-livree { background-color: #1e6fd9; color: #ffffff; border: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; }
+  .attente-vendeur { color: #ffb84d; font-size: 12px; margin-top: 8px; }
   .sans-position { color: #ffb84d; font-size: 12px; margin-top: 8px; }
   .btn-notif { background-color: #1e6fd9; color: #ffffff; border: none; padding: 12px; border-radius: 6px; font-size: 14px; font-weight: bold; width: 100%; }
   .btn-notif:disabled { opacity: 0.6; }
@@ -57,10 +60,10 @@ var sb = supabase.createClient(
 var VAPID_PUBLIC_KEY = "BJw5df2L2JS-HB2BoXP7QNx1caYe4F1PaLbXy6kY1KI7SY9Evt5GjH19HsacU1iT9547pf6sjUeVsThHd8mOkr0";
 var livreurCourant = null;
 
-var LIBELLES = {
-  prete: "Prete a etre livree",
-  en_livraison: "En cours de livraison",
-  livree: "Livree"
+var LIBELLES_PREPARATION = {
+  nouvelle: "Commande recue",
+  en_preparation: "En preparation",
+  prete: "Prete a recuperer"
 };
 
 document.getElementById("btnDeconnexion").addEventListener("click", function() {
@@ -94,7 +97,7 @@ function chargerEspace() {
         "</div>" +
         "<div class=\"carte\">" +
           "<h2>Notifications</h2>" +
-          "<p class=\"info\">Recevez une alerte des qu'une commande est prete a livrer.</p>" +
+          "<p class=\"info\">Recevez une alerte des qu'une nouvelle commande arrive.</p>" +
           "<button class=\"btn-notif\" id=\"btnActiverNotif\">Activer les notifications</button>" +
           "<p class=\"msg-notif\" id=\"msgNotif\"></p>" +
         "</div>" +
@@ -109,7 +112,7 @@ function chargerEspace() {
 
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
       chargerCommandes();
-      setInterval(chargerCommandes, 25000);
+      setInterval(chargerCommandes, 20000);
     });
   });
 }
@@ -156,7 +159,7 @@ function activerNotifications() {
   }).then(function(reponse) {
     btn.textContent = "Notifications activees";
     msg.className = "msg-notif ok";
-    msg.textContent = "Vous recevrez desormais une alerte a chaque commande prete.";
+    msg.textContent = "Vous recevrez desormais une alerte a chaque nouvelle commande.";
   }).catch(function(erreur) {
     btn.disabled = false;
     btn.textContent = "Activer les notifications";
@@ -168,8 +171,8 @@ function activerNotifications() {
 function chargerCommandes() {
   sb.from("commandes").select("*").order("date_commande", { ascending: false }).then(function(reponse) {
     var data = reponse.data || [];
-    var mesCommandes = data.filter(function(c) { return c.livreur_id === livreurCourant.id; });
-    var disponibles = data.filter(function(c) { return c.livreur_id === null && c.statut === "prete"; });
+    var mesCommandes = data.filter(function(c) { return c.livreur_id === livreurCourant.id && c.statut_livraison !== "livree"; });
+    var disponibles = data.filter(function(c) { return c.livreur_id === null; });
 
     afficherListe("listeMesCommandes", mesCommandes, false);
     afficherListe("listeDisponibles", disponibles, true);
@@ -185,48 +188,65 @@ function afficherListe(idZone, liste, avecBoutonAccepter) {
   var html = "";
   for (var i = 0; i < liste.length; i++) {
     var c = liste[i];
-    var statutActuel = c.statut || "prete";
-    var libelle = LIBELLES[statutActuel] || statutActuel;
+    var statutPrep = c.statut || "nouvelle";
+    var statutLiv = c.statut_livraison || "en_attente_livreur";
+    var libellePrep = LIBELLES_PREPARATION[statutPrep] || statutPrep;
+
     html += "<div class=\"commande-carte\">" +
               "<h3>" + c.client_nom + "</h3>" +
               "<p>Telephone : " + c.client_telephone + "</p>" +
               "<p>" + c.produit + "</p>" +
               "<p>Adresse : " + c.adresse_livraison + "</p>" +
               "<p>Paiement : " + c.mode_paiement + "</p>" +
-              "<span class=\"badge-statut badge-" + statutActuel + "\">" + libelle + "</span><br>";
+              "<div class=\"badges\"><span class=\"badge-statut badge-" + statutPrep + "\">" + libellePrep + "</span></div>";
+
     if (c.latitude && c.longitude) {
-      html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + c.latitude + "," + c.longitude + "\" target=\"_blank\">Voir l'itineraire</a>";
+      html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + c.latitude + "," + c.longitude + "\" target=\"_blank\">Itineraire client</a>";
     } else {
       html += "<p class=\"sans-position\">Position GPS non fournie par le client.</p>";
     }
+
     if (avecBoutonAccepter) {
-      html += "<button class=\"btn-accepter btn-accepter-cmd\" data-id=\"" + c.id + "\">Accepter cette commande</button>";
-    } else if (statutActuel === "en_livraison") {
-      html += "<button class=\"btn-livree btn-livree-cmd\" data-id=\"" + c.id + "\">Marquer comme livree</button>";
+      html += "<br><button class=\"btn-accepter btn-accepter-cmd\" data-id=\"" + c.id + "\">Accepter cette commande</button>";
+    } else if (statutLiv === "vers_boutique") {
+      if (statutPrep === "prete") {
+        html += "<br><button class=\"btn-recupere btn-recupere-cmd\" data-id=\"" + c.id + "\">J'ai recupere la commande</button>";
+      } else {
+        html += "<p class=\"attente-vendeur\">En attente : le vendeur prepare encore la commande.</p>" +
+                "<button class=\"btn-recupere btn-recupere-cmd\" data-id=\"" + c.id + "\">J'ai recupere la commande</button>";
+      }
+    } else if (statutLiv === "en_livraison") {
+      html += "<br><button class=\"btn-livree btn-livree-cmd\" data-id=\"" + c.id + "\">Marquer comme livree</button>";
     }
     html += "</div>";
   }
   zone.innerHTML = html;
 
   if (avecBoutonAccepter) {
-    var boutons = document.getElementsByClassName("btn-accepter-cmd");
-    for (var b = 0; b < boutons.length; b++) {
-      boutons[b].addEventListener("click", function(e) {
+    var boutonsAccepter = document.getElementsByClassName("btn-accepter-cmd");
+    for (var b = 0; b < boutonsAccepter.length; b++) {
+      boutonsAccepter[b].addEventListener("click", function(e) {
         accepterCommande(e.target.getAttribute("data-id"));
       });
     }
   } else {
+    var boutonsRecupere = document.getElementsByClassName("btn-recupere-cmd");
+    for (var r = 0; r < boutonsRecupere.length; r++) {
+      boutonsRecupere[r].addEventListener("click", function(e) {
+        majLivraison(e.target.getAttribute("data-id"), "en_livraison");
+      });
+    }
     var boutonsLivree = document.getElementsByClassName("btn-livree-cmd");
     for (var l = 0; l < boutonsLivree.length; l++) {
       boutonsLivree[l].addEventListener("click", function(e) {
-        marquerLivree(e.target.getAttribute("data-id"));
+        majLivraison(e.target.getAttribute("data-id"), "livree");
       });
     }
   }
 }
 
 function accepterCommande(id) {
-  sb.from("commandes").update({ livreur_id: livreurCourant.id, statut: "en_livraison" }).eq("id", id).then(function(reponse) {
+  sb.from("commandes").update({ livreur_id: livreurCourant.id, statut_livraison: "vers_boutique" }).eq("id", id).then(function(reponse) {
     if (reponse.error) {
       alert("Erreur : cette commande a peut-etre deja ete prise par un autre livreur.");
     }
@@ -234,8 +254,8 @@ function accepterCommande(id) {
   });
 }
 
-function marquerLivree(id) {
-  sb.from("commandes").update({ statut: "livree" }).eq("id", id).then(function(reponse) {
+function majLivraison(id, nouveauStatut) {
+  sb.from("commandes").update({ statut_livraison: nouveauStatut }).eq("id", id).then(function(reponse) {
     if (reponse.error) {
       alert("Erreur : " + reponse.error.message);
     }
