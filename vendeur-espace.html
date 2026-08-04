@@ -27,10 +27,20 @@
   .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
   .msg.erreur { background-color: #3a1414; color: #ff8080; }
   .msg.succes { background-color: #143a1e; color: #80ff9e; }
-  .produit-carte { display: flex; gap: 12px; background-color: #121826; border: 1px solid #2a3040; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+  .produit-carte { display: flex; gap: 12px; background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
   .produit-carte img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background-color: #0a0e17; }
   .produit-info h3 { font-size: 15px; }
   .produit-info p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
+  .commande-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+  .commande-carte h3 { font-size: 14px; }
+  .commande-carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
+  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-top: 6px; }
+  .badge-nouvelle { background-color: #3a2e14; color: #ffb84d; }
+  .badge-en_preparation { background-color: #14223a; color: #6aa9ff; }
+  .badge-prete { background-color: #143a1e; color: #80ff9e; }
+  .badge-en_livraison { background-color: #2a1a3a; color: #c08cff; }
+  .badge-livree { background-color: #1a3a2a; color: #80ffc0; }
+  .btn-etape { background-color: #1e6fd9; color: #ffffff; border: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -51,6 +61,14 @@ var sb = supabase.createClient(
 );
 
 var vendeurCourant = null;
+
+var LIBELLES = {
+  nouvelle: "Commande recue",
+  en_preparation: "En preparation",
+  prete: "Prete a etre livree",
+  en_livraison: "En cours de livraison",
+  livree: "Livree"
+};
 
 document.getElementById("btnDeconnexion").addEventListener("click", function() {
   sb.auth.signOut().then(function() {
@@ -82,6 +100,11 @@ function chargerEspace() {
           "<span class=\"statut " + vendeur.statut + "\">" + statutLabel + "</span>" +
           "<p class=\"info\">Telephone : " + vendeur.telephone + "</p>" +
           "<p class=\"info\">Produits : " + vendeur.produits_categorie + "</p>" +
+        "</div>" +
+
+        "<div class=\"carte\">" +
+          "<h2>Commandes a traiter</h2>" +
+          "<div id=\"listeCommandes\"><p class=\"info\">Chargement...</p></div>" +
         "</div>" +
 
         "<div class=\"carte\">" +
@@ -118,8 +141,60 @@ function chargerEspace() {
 
       document.getElementById("btnPosition").addEventListener("click", enregistrerPosition);
       document.getElementById("formProduit").addEventListener("submit", ajouterProduit);
+      chargerCommandes();
       chargerProduits();
+      setInterval(chargerCommandes, 25000);
     });
+  });
+}
+
+function chargerCommandes() {
+  sb.from("commandes").select("*").order("date_commande", { ascending: false }).limit(30).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeCommandes");
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p class=\"info\">Aucune commande pour le moment.</p>";
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var c = data[i];
+      var statutActuel = c.statut || "nouvelle";
+      var libelle = LIBELLES[statutActuel] || statutActuel;
+      html += "<div class=\"commande-carte\">" +
+                "<h3>" + c.client_nom + "</h3>" +
+                "<p>Telephone : " + c.client_telephone + "</p>" +
+                "<p>" + c.produit + "</p>";
+      if (c.total) {
+        html += "<p>Total : " + Number(c.total).toLocaleString("fr-FR") + " FCFA</p>";
+      }
+      html += "<p>Adresse : " + c.adresse_livraison + "</p>" +
+              "<span class=\"badge-statut badge-" + statutActuel + "\">" + libelle + "</span>";
+
+      if (statutActuel === "nouvelle") {
+        html += "<br><button class=\"btn-etape btn-changer\" data-id=\"" + c.id + "\" data-statut=\"en_preparation\">Demarrer la preparation</button>";
+      } else if (statutActuel === "en_preparation") {
+        html += "<br><button class=\"btn-etape btn-changer\" data-id=\"" + c.id + "\" data-statut=\"prete\">Marquer prete a livrer</button>";
+      }
+      html += "</div>";
+    }
+    zone.innerHTML = html;
+
+    var boutons = document.getElementsByClassName("btn-changer");
+    for (var b = 0; b < boutons.length; b++) {
+      boutons[b].addEventListener("click", function(e) {
+        changerStatut(e.target.getAttribute("data-id"), e.target.getAttribute("data-statut"));
+      });
+    }
+  });
+}
+
+function changerStatut(id, nouveauStatut) {
+  sb.from("commandes").update({ statut: nouveauStatut }).eq("id", id).then(function(reponse) {
+    if (reponse.error) {
+      alert("Erreur : " + reponse.error.message);
+    }
+    chargerCommandes();
   });
 }
 
