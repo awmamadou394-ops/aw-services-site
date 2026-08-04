@@ -20,7 +20,10 @@
   .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-top: 12px; }
   .msg.erreur { background-color: #3a1414; color: #ff8080; }
   .msg.succes { background-color: #143a1e; color: #80ff9e; }
-  a { color: #1e6fd9; }
+  .liens-espaces { margin-top: 15px; display: none; }
+  .liens-espaces.visible { display: block; }
+  .liens-espaces p { font-size: 13px; color: #b0b8c5; margin-bottom: 10px; text-align: center; }
+  .liens-espaces a { display: block; text-align: center; background-color: #121826; border: 1px solid #1e6fd9; border-radius: 8px; padding: 12px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 14px; margin-bottom: 8px; }
 </style>
 </head>
 <body>
@@ -40,6 +43,12 @@
       <button type="submit" id="btnReset">Valider le nouveau mot de passe</button>
     </form>
     <div id="zoneMsg"></div>
+    <div class="liens-espaces" id="liensEspaces">
+      <p>Connectez-vous a votre espace :</p>
+      <a href="client-connexion.html">Espace Client</a>
+      <a href="vendeur-connexion.html">Espace Vendeur</a>
+      <a href="livreur-connexion.html">Espace Livreur</a>
+    </div>
   </div>
 </div>
 
@@ -71,8 +80,9 @@ document.getElementById("formReset").addEventListener("submit", function(event) 
       zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + ". Le lien a peut-etre expire, redemandez une reinitialisation.</div>";
       return;
     }
-    zoneMsg.innerHTML = "<div class=\"msg succes\">Mot de passe modifie avec succes ! Vous pouvez maintenant vous <a href=\"vendeur-connexion.html\">reconnecter</a>.</div>";
+    zoneMsg.innerHTML = "<div class=\"msg succes\">Mot de passe modifie avec succes !</div>";
     document.getElementById("formReset").style.display = "none";
+    document.getElementById("liensEspaces").classList.add("visible");
   });
 });
 </script>
