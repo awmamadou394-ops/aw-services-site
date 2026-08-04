@@ -108,8 +108,29 @@ function chargerEspace() {
         "</div>";
 
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
+      verifierEtatNotifications();
       chargerCommandes();
       setInterval(chargerCommandes, 20000);
+    });
+  });
+}
+
+function afficherNotifActives() {
+  var btn = document.getElementById("btnActiverNotif");
+  var msg = document.getElementById("msgNotif");
+  btn.disabled = true;
+  btn.textContent = "Notifications activees";
+  msg.className = "msg-notif ok";
+  msg.textContent = "Vous serez alerte a chaque etape de vos commandes.";
+}
+
+function verifierEtatNotifications() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  if (Notification.permission !== "granted") return;
+  navigator.serviceWorker.getRegistration().then(function(registration) {
+    if (!registration) return;
+    registration.pushManager.getSubscription().then(function(subscription) {
+      if (subscription) afficherNotifActives();
     });
   });
 }
@@ -149,14 +170,18 @@ function activerNotifications() {
       });
     });
   }).then(function(subscription) {
-    return sb.from("push_subscriptions").insert([{
-      client_id: clientCourant.id,
-      subscription: subscription.toJSON()
-    }]);
+    var sub = subscription.toJSON();
+    return sb.from("push_subscriptions").select("id").eq("subscription->>endpoint", sub.endpoint).then(function(existant) {
+      if (existant.data && existant.data.length > 0) {
+        return { error: null };
+      }
+      return sb.from("push_subscriptions").insert([{
+        client_id: clientCourant.id,
+        subscription: sub
+      }]);
+    });
   }).then(function(reponse) {
-    btn.textContent = "Notifications activees";
-    msg.className = "msg-notif ok";
-    msg.textContent = "Vous serez alerte a chaque etape de vos commandes.";
+    afficherNotifActives();
   }).catch(function(erreur) {
     btn.disabled = false;
     btn.textContent = "Activer les notifications";
