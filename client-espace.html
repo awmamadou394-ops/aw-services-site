@@ -53,11 +53,12 @@ var sb = supabase.createClient(
 var clientCourant = null;
 
 var ETAPES = [
-  { cle: "nouvelle", label: "Commande recue" },
-  { cle: "en_preparation", label: "En preparation" },
-  { cle: "prete", label: "Prete a etre livree" },
-  { cle: "en_livraison", label: "En cours de livraison" },
-  { cle: "livree", label: "Livree" }
+  "Commande recue",
+  "Preparation de votre commande",
+  "Un livreur vient recuperer votre commande",
+  "Commande prete",
+  "Le livreur est en route vers vous",
+  "Commande livree"
 ];
 
 document.getElementById("btnDeconnexion").addEventListener("click", function() {
@@ -85,7 +86,7 @@ function chargerEspace() {
       zone.innerHTML =
         "<div class=\"carte\">" +
           "<h2>Bonjour, " + client.nom + "</h2>" +
-          "<p class=\"info\">Telephone : " + client.telephone + "</p>" +
+          "<p class=\"info\">Telephone : " + (client.telephone || "-") + "</p>" +
         "</div>" +
         "<a href=\"catalogue.html\" class=\"lien-boutique\">Parcourir la boutique</a>" +
         "<div class=\"carte\">" +
@@ -97,6 +98,32 @@ function chargerEspace() {
       setInterval(chargerCommandes, 20000);
     });
   });
+}
+
+function calculerEtapes(statutPrep, statutLiv) {
+  var faites = [true, false, false, false, false, false];
+  var active = 0;
+
+  if (statutPrep === "en_preparation" || statutPrep === "prete") {
+    faites[1] = true;
+  }
+  if (statutLiv === "vers_boutique" || statutLiv === "en_livraison" || statutLiv === "livree") {
+    faites[2] = true;
+  }
+  if (statutPrep === "prete") {
+    faites[3] = true;
+  }
+  if (statutLiv === "en_livraison" || statutLiv === "livree") {
+    faites[4] = true;
+  }
+  if (statutLiv === "livree") {
+    faites[5] = true;
+  }
+
+  for (var i = 5; i >= 0; i--) {
+    if (faites[i]) { active = i; break; }
+  }
+  return { faites: faites, active: active };
 }
 
 function chargerCommandes() {
@@ -111,11 +138,7 @@ function chargerCommandes() {
     var html = "";
     for (var i = 0; i < data.length; i++) {
       var c = data[i];
-      var statutActuel = c.statut || "nouvelle";
-      var indexActuel = 0;
-      for (var e = 0; e < ETAPES.length; e++) {
-        if (ETAPES[e].cle === statutActuel) { indexActuel = e; break; }
-      }
+      var etat = calculerEtapes(c.statut || "nouvelle", c.statut_livraison || "en_attente_livreur");
 
       var dateAffichee = new Date(c.date_commande).toLocaleDateString("fr-FR") + " a " + new Date(c.date_commande).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
@@ -129,9 +152,9 @@ function chargerCommandes() {
       html += "<div class=\"etapes\">";
       for (var j = 0; j < ETAPES.length; j++) {
         var classe = "etape";
-        if (j < indexActuel) classe += " faite";
-        if (j === indexActuel) classe += " active";
-        html += "<div class=\"" + classe + "\"><span class=\"pastille\"></span>" + ETAPES[j].label + "</div>";
+        if (etat.faites[j] && j !== etat.active) classe += " faite";
+        if (j === etat.active) classe += " active";
+        html += "<div class=\"" + classe + "\"><span class=\"pastille\"></span>" + ETAPES[j] + "</div>";
       }
       html += "</div></div>";
     }
