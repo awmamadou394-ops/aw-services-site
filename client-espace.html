@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Mes Commandes</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
+  header { background-color: #0d1220; padding: 20px; border-bottom: 2px solid #d62828; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { color: #1e6fd9; font-size: 18px; }
+  .deconnexion { background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
+  .content { padding: 20px 15px; max-width: 550px; margin: 0 auto; }
+  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 15px; }
+  .carte h2 { font-size: 16px; margin-bottom: 10px; }
+  .info { color: #b0b8c5; font-size: 14px; margin-top: 6px; }
+  .chargement { text-align: center; padding: 40px; color: #b0b8c5; }
+  .lien-boutique { display: block; text-align: center; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 13px; border-radius: 8px; font-weight: bold; font-size: 14px; margin-bottom: 15px; }
+
+  .commande-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .commande-carte h3 { font-size: 14px; margin-bottom: 4px; }
+  .commande-carte .date { font-size: 11px; color: #b0b8c5; margin-bottom: 10px; }
+  .commande-carte .articles { font-size: 13px; color: #b0b8c5; margin-bottom: 4px; }
+  .commande-carte .total { font-size: 14px; color: #d62828; font-weight: bold; margin-bottom: 12px; }
+
+  .etapes { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .etape { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #6a7383; }
+  .etape.faite { color: #80ff9e; }
+  .etape.active { color: #ffffff; font-weight: bold; }
+  .pastille { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #2a3040; flex-shrink: 0; }
+  .etape.faite .pastille { background-color: #80ff9e; border-color: #80ff9e; }
+  .etape.active .pastille { background-color: #1e6fd9; border-color: #1e6fd9; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Mes Commandes</h1>
+  <button class="deconnexion" id="btnDeconnexion">Deconnexion</button>
+</header>
+
+<div class="content">
+  <div id="zoneContenu" class="chargement">Chargement...</div>
+</div>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+var clientCourant = null;
+
+var ETAPES = [
+  { cle: "nouvelle", label: "Commande recue" },
+  { cle: "en_preparation", label: "En preparation" },
+  { cle: "prete", label: "Prete a etre livree" },
+  { cle: "en_livraison", label: "En cours de livraison" },
+  { cle: "livree", label: "Livree" }
+];
+
+document.getElementById("btnDeconnexion").addEventListener("click", function() {
+  sb.auth.signOut().then(function() {
+    window.location.href = "client-connexion.html";
+  });
+});
+
+function chargerEspace() {
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) {
+      window.location.href = "client-connexion.html";
+      return;
+    }
+    sb.from("clients").select("*").eq("user_id", user.id).single().then(function(reponse) {
+      var client = reponse.data;
+      var zone = document.getElementById("zoneContenu");
+      if (reponse.error || !client) {
+        zone.innerHTML = "<div class=\"carte\"><p class=\"info\">Profil introuvable. Contactez AW SERVICES.</p></div>";
+        return;
+      }
+      clientCourant = client;
+
+      zone.innerHTML =
+        "<div class=\"carte\">" +
+          "<h2>Bonjour, " + client.nom + "</h2>" +
+          "<p class=\"info\">Telephone : " + client.telephone + "</p>" +
+        "</div>" +
+        "<a href=\"catalogue.html\" class=\"lien-boutique\">Parcourir la boutique</a>" +
+        "<div class=\"carte\">" +
+          "<h2>Suivi de mes commandes</h2>" +
+          "<div id=\"listeCommandes\"><p class=\"info\">Chargement...</p></div>" +
+        "</div>";
+
+      chargerCommandes();
+      setInterval(chargerCommandes, 20000);
+    });
+  });
+}
+
+function chargerCommandes() {
+  sb.from("commandes").select("*").eq("client_id", clientCourant.id).order("date_commande", { ascending: false }).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeCommandes");
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p class=\"info\">Vous n'avez pas encore passe de commande.</p>";
+      return;
+    }
+
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var c = data[i];
+      var statutActuel = c.statut || "nouvelle";
+      var indexActuel = 0;
+      for (var e = 0; e < ETAPES.length; e++) {
+        if (ETAPES[e].cle === statutActuel) { indexActuel = e; break; }
+      }
+
+      var dateAffichee = new Date(c.date_commande).toLocaleDateString("fr-FR") + " a " + new Date(c.date_commande).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+      html += "<div class=\"commande-carte\">" +
+                "<h3>Commande</h3>" +
+                "<div class=\"date\">" + dateAffichee + "</div>" +
+                "<div class=\"articles\">" + c.produit + "</div>";
+      if (c.total) {
+        html += "<div class=\"total\">Total : " + Number(c.total).toLocaleString("fr-FR") + " FCFA</div>";
+      }
+      html += "<div class=\"etapes\">";
+      for (var j = 0; j < ETAPES.length; j++) {
+        var classe = "etape";
+        if (j < indexActuel) classe += " faite";
+        if (j === indexActuel) classe += " active";
+        html += "<div class=\"" + classe + "\"><span class=\"pastille\"></span>" + ETAPES[j].label + "</div>";
+      }
+      html += "</div></div>";
+    }
+    zone.innerHTML = html;
+  });
+}
+
+chargerEspace();
+</script>
+
+</body>
+</html>
