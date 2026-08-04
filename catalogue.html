@@ -14,6 +14,9 @@
   .content { padding: 15px; max-width: 700px; margin: 0 auto; }
   .content h2 { font-size: 17px; margin-bottom: 12px; color: #1e6fd9; }
 
+  .bandeau-compte { background-color: #121826; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 13px; color: #b0b8c5; text-align: center; }
+  .bandeau-compte a { color: #1e6fd9; font-weight: bold; text-decoration: none; }
+
   .grille { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .produit-carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; overflow: hidden; }
   .produit-carte img { width: 100%; height: 120px; object-fit: cover; background-color: #0a0e17; }
@@ -65,6 +68,8 @@
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
 <div class="content">
+  <div class="bandeau-compte" id="bandeauCompte"></div>
+
   <h2>Nos produits</h2>
   <div class="grille" id="grilleProduits">
     <p class="vide">Chargement des produits...</p>
@@ -121,6 +126,28 @@ var sb = supabase.createClient(
 
 var panier = [];
 var positionClient = null;
+var clientConnecte = null;
+
+function verifierConnexion() {
+  var bandeau = document.getElementById("bandeauCompte");
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) {
+      bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\">connectez-vous ou creez un compte</a>.";
+      return;
+    }
+    sb.from("clients").select("*").eq("user_id", user.id).single().then(function(reponse) {
+      if (reponse.data) {
+        clientConnecte = reponse.data;
+        bandeau.innerHTML = "Connecte : " + clientConnecte.nom + " - <a href=\"client-espace.html\">Mes commandes</a>";
+        document.getElementById("cmd_nom").value = clientConnecte.nom;
+        document.getElementById("cmd_tel").value = clientConnecte.telephone;
+      } else {
+        bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\">connectez-vous ou creez un compte</a>.";
+      }
+    });
+  });
+}
 
 function chargerProduits() {
   sb.from("produits").select("*").eq("statut", "approuve").gt("stock", 0).then(function(reponse) {
@@ -322,8 +349,13 @@ function envoyerCommande(event) {
     produits: produitsStructures,
     total: total,
     mode_paiement: paiement,
-    adresse_livraison: adresse
+    adresse_livraison: adresse,
+    statut: "nouvelle"
   };
+
+  if (clientConnecte) {
+    donneesCommande.client_id = clientConnecte.id;
+  }
 
   if (positionClient) {
     donneesCommande.latitude = positionClient.lat;
@@ -348,9 +380,14 @@ function envoyerCommande(event) {
     mettreAJourAffichagePanier();
     document.getElementById("formCommande").reset();
     positionClient = null;
+
+    if (clientConnecte) {
+      window.location.href = "client-espace.html";
+    }
   });
 }
 
+verifierConnexion();
 chargerProduits();
 </script>
 
