@@ -120,28 +120,19 @@ document.getElementById("formInscription").addEventListener("submit", function(e
   btn.disabled = true;
   btn.textContent = "Creation en cours...";
 
-  sb.auth.signUp({ email: email, password: password }).then(function(reponse) {
+  sb.auth.signUp({
+    email: email,
+    password: password,
+    options: { data: { nom: nom, telephone: telephone } }
+  }).then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Creer mon compte";
     if (reponse.error) {
-      btn.disabled = false;
-      btn.textContent = "Creer mon compte";
       msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
       return;
     }
-    var userId = reponse.data.user.id;
-    sb.from("clients").insert([{
-      nom: nom,
-      telephone: telephone,
-      user_id: userId
-    }]).then(function(reponse2) {
-      btn.disabled = false;
-      btn.textContent = "Creer mon compte";
-      if (reponse2.error) {
-        msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse2.error.message + "</div>";
-        return;
-      }
-      msg.innerHTML = "<div class=\"msg succes\">Compte cree ! Verifiez votre email pour confirmer, puis connectez-vous.</div>";
-      document.getElementById("formInscription").reset();
-    });
+    msg.innerHTML = "<div class=\"msg succes\">Compte cree ! Verifiez votre email pour confirmer, puis connectez-vous.</div>";
+    document.getElementById("formInscription").reset();
   });
 });
 
@@ -156,13 +147,35 @@ document.getElementById("formConnexion").addEventListener("submit", function(eve
   btn.textContent = "Connexion en cours...";
 
   sb.auth.signInWithPassword({ email: email, password: password }).then(function(reponse) {
-    btn.disabled = false;
-    btn.textContent = "Se connecter";
     if (reponse.error) {
+      btn.disabled = false;
+      btn.textContent = "Se connecter";
       msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
       return;
     }
-    window.location.href = "client-espace.html";
+
+    var user = reponse.data.user;
+    sb.from("clients").select("*").eq("user_id", user.id).maybeSingle().then(function(reponseProfil) {
+      if (reponseProfil.data) {
+        window.location.href = "client-espace.html";
+        return;
+      }
+      var nomStocke = (user.user_metadata && user.user_metadata.nom) ? user.user_metadata.nom : user.email;
+      var telStocke = (user.user_metadata && user.user_metadata.telephone) ? user.user_metadata.telephone : "";
+      sb.from("clients").insert([{
+        nom: nomStocke,
+        telephone: telStocke,
+        user_id: user.id
+      }]).then(function(reponseInsert) {
+        btn.disabled = false;
+        btn.textContent = "Se connecter";
+        if (reponseInsert.error) {
+          msg.innerHTML = "<div class=\"msg erreur\">Erreur profil : " + reponseInsert.error.message + "</div>";
+          return;
+        }
+        window.location.href = "client-espace.html";
+      });
+    });
   });
 });
 
