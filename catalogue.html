@@ -7,11 +7,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; padding-bottom: 70px; }
   header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
   header h1 { color: #1e6fd9; font-size: 22px; }
   .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
   .content { padding: 15px; max-width: 700px; margin: 0 auto; }
+  .content h2 { font-size: 17px; margin-bottom: 12px; color: #1e6fd9; }
+
   .grille { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .produit-carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; overflow: hidden; }
   .produit-carte img { width: 100%; height: 120px; object-fit: cover; background-color: #0a0e17; }
@@ -21,15 +23,36 @@
   .produit-carte .stock { color: #b0b8c5; font-size: 12px; margin-top: 3px; }
   .produit-carte button { width: 100%; background-color: #1e6fd9; color: #ffffff; border: none; padding: 8px; font-size: 13px; font-weight: bold; margin-top: 8px; border-radius: 6px; }
   .vide { text-align: center; color: #b0b8c5; padding: 40px; grid-column: 1 / -1; }
+
+  #zonePanier { display: none; margin-top: 25px; }
+  #zonePanier.visible { display: block; }
+  .article-panier { display: flex; justify-content: space-between; align-items: center; background-color: #121826; border: 1px solid #2a3040; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .article-panier .nom { font-size: 13px; flex: 1; }
+  .article-panier .prix-unitaire { font-size: 11px; color: #b0b8c5; }
+  .article-panier .controles { display: flex; align-items: center; gap: 8px; }
+  .btn-qte { background-color: #0a0e17; border: 1px solid #1e6fd9; color: #ffffff; width: 28px; height: 28px; border-radius: 6px; font-size: 16px; font-weight: bold; }
+  .qte-valeur { font-size: 14px; font-weight: bold; min-width: 18px; text-align: center; }
+  .btn-retirer { background-color: transparent; border: none; color: #d62828; font-size: 13px; margin-left: 8px; }
+  .total-panier { text-align: right; font-size: 17px; font-weight: bold; color: #d62828; margin: 15px 0; }
+  #zonePanier > button { width: 100%; background-color: #1e6fd9; color: #ffffff; border: none; padding: 14px; border-radius: 6px; font-size: 15px; font-weight: bold; }
+
   #zoneCommande { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-top: 25px; display: none; }
+  #zoneCommande.visible { display: block; }
   #zoneCommande h2 { font-size: 16px; margin-bottom: 12px; }
   #zoneCommande form { display: flex; flex-direction: column; gap: 12px; }
   label { font-size: 14px; color: #b0b8c5; }
   input, select { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
   button[type="submit"] { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; }
+  button[type="submit"]:disabled { opacity: 0.6; }
   .btn-position { background-color: transparent; border: 1px solid #1e6fd9; color: #1e6fd9; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
   .msg-position { font-size: 12px; color: #b0b8c5; }
   .msg-position.ok { color: #80ff9e; }
+
+  .panier-flottant { position: fixed; bottom: 0; left: 0; right: 0; background-color: #1e6fd9; padding: 14px 15px; display: none; justify-content: space-between; align-items: center; z-index: 10; }
+  .panier-flottant.visible { display: flex; }
+  .panier-flottant span { color: #ffffff; font-weight: bold; font-size: 14px; }
+  .panier-flottant button { background-color: #ffffff; color: #1e6fd9; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+
   footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
 </style>
 </head>
@@ -42,12 +65,20 @@
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
 <div class="content">
+  <h2>Nos produits</h2>
   <div class="grille" id="grilleProduits">
     <p class="vide">Chargement des produits...</p>
   </div>
 
+  <div id="zonePanier">
+    <h2>Mon panier</h2>
+    <div id="listeArticlesPanier"></div>
+    <div class="total-panier" id="totalPanier"></div>
+    <button type="button" id="btnPasserCommande">Passer la commande</button>
+  </div>
+
   <div id="zoneCommande">
-    <h2 id="titreCommande">Commander</h2>
+    <h2>Finaliser la commande</h2>
     <form id="formCommande">
       <label>Nom complet</label>
       <input type="text" id="cmd_nom" required>
@@ -73,6 +104,11 @@
   </div>
 </div>
 
+<div class="panier-flottant" id="panierFlottant">
+  <span id="texteFlottant">0 article</span>
+  <button type="button" id="btnVoirPanier">Voir le panier</button>
+</div>
+
 <footer>
   &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
@@ -83,7 +119,7 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
-var produitSelectionne = null;
+var panier = [];
 var positionClient = null;
 
 function chargerProduits() {
@@ -105,29 +141,130 @@ function chargerProduits() {
                   "<h3>" + p.nom + "</h3>" +
                   "<div class=\"prix\">" + p.prix + " FCFA</div>" +
                   "<div class=\"stock\">" + p.stock + " en stock</div>" +
-                  "<button class=\"btn-selectionner\" data-nom=\"" + p.nom + "\" data-id=\"" + p.id + "\">Commander</button>" +
+                  "<button class=\"btn-ajouter\" data-id=\"" + p.id + "\" data-nom=\"" + p.nom + "\" data-prix=\"" + p.prix + "\" data-stock=\"" + p.stock + "\">Ajouter au panier</button>" +
                 "</div>" +
               "</div>";
     }
     grille.innerHTML = html;
 
-    var boutons = document.getElementsByClassName("btn-selectionner");
+    var boutons = document.getElementsByClassName("btn-ajouter");
     for (var b = 0; b < boutons.length; b++) {
       boutons[b].addEventListener("click", function(e) {
-        var nom = e.target.getAttribute("data-nom");
-        var id = e.target.getAttribute("data-id");
-        selectionnerProduit(nom, id);
+        var btn = e.target;
+        ajouterAuPanier(btn.getAttribute("data-id"), btn.getAttribute("data-nom"), parseFloat(btn.getAttribute("data-prix")), parseInt(btn.getAttribute("data-stock")));
       });
     }
   });
 }
 
-function selectionnerProduit(nom, id) {
-  produitSelectionne = { nom: nom, id: id };
-  document.getElementById("titreCommande").textContent = "Commander : " + nom;
-  document.getElementById("zoneCommande").style.display = "block";
-  document.getElementById("zoneCommande").scrollIntoView({ behavior: "smooth" });
+function ajouterAuPanier(id, nom, prix, stock) {
+  var existant = null;
+  for (var i = 0; i < panier.length; i++) {
+    if (panier[i].id === id) { existant = panier[i]; break; }
+  }
+  if (existant) {
+    if (existant.quantite < stock) {
+      existant.quantite++;
+    } else {
+      alert("Stock maximum atteint pour ce produit.");
+      return;
+    }
+  } else {
+    panier.push({ id: id, nom: nom, prix: prix, quantite: 1, stock: stock });
+  }
+  mettreAJourAffichagePanier();
 }
+
+function changerQuantite(id, delta) {
+  var article = null;
+  for (var i = 0; i < panier.length; i++) {
+    if (panier[i].id === id) { article = panier[i]; break; }
+  }
+  if (!article) return;
+  article.quantite += delta;
+  if (article.quantite <= 0) {
+    panier = panier.filter(function(a) { return a.id !== id; });
+  } else if (article.quantite > article.stock) {
+    article.quantite = article.stock;
+  }
+  mettreAJourAffichagePanier();
+}
+
+function retirerArticle(id) {
+  panier = panier.filter(function(a) { return a.id !== id; });
+  mettreAJourAffichagePanier();
+}
+
+function calculerTotal() {
+  var total = 0;
+  for (var i = 0; i < panier.length; i++) {
+    total += panier[i].prix * panier[i].quantite;
+  }
+  return total;
+}
+
+function mettreAJourAffichagePanier() {
+  var zonePanier = document.getElementById("zonePanier");
+  var panierFlottant = document.getElementById("panierFlottant");
+  var listeArticles = document.getElementById("listeArticlesPanier");
+  var totalPanierEl = document.getElementById("totalPanier");
+  var texteFlottant = document.getElementById("texteFlottant");
+
+  var nombreArticles = 0;
+  for (var i = 0; i < panier.length; i++) { nombreArticles += panier[i].quantite; }
+
+  if (panier.length === 0) {
+    zonePanier.classList.remove("visible");
+    panierFlottant.classList.remove("visible");
+    document.getElementById("zoneCommande").classList.remove("visible");
+    return;
+  }
+
+  panierFlottant.classList.add("visible");
+  texteFlottant.textContent = nombreArticles + " article" + (nombreArticles > 1 ? "s" : "") + " - " + calculerTotal().toLocaleString("fr-FR") + " FCFA";
+
+  var html = "";
+  for (var j = 0; j < panier.length; j++) {
+    var a = panier[j];
+    html += "<div class=\"article-panier\">" +
+              "<div>" +
+                "<div class=\"nom\">" + a.nom + "</div>" +
+                "<div class=\"prix-unitaire\">" + a.prix + " FCFA / unite</div>" +
+              "</div>" +
+              "<div class=\"controles\">" +
+                "<button type=\"button\" class=\"btn-qte btn-moins\" data-id=\"" + a.id + "\">-</button>" +
+                "<span class=\"qte-valeur\">" + a.quantite + "</span>" +
+                "<button type=\"button\" class=\"btn-qte btn-plus\" data-id=\"" + a.id + "\">+</button>" +
+                "<button type=\"button\" class=\"btn-retirer\" data-id=\"" + a.id + "\">Retirer</button>" +
+              "</div>" +
+            "</div>";
+  }
+  listeArticles.innerHTML = html;
+  totalPanierEl.textContent = "Total : " + calculerTotal().toLocaleString("fr-FR") + " FCFA";
+
+  var boutonsMoins = document.getElementsByClassName("btn-moins");
+  for (var m = 0; m < boutonsMoins.length; m++) {
+    boutonsMoins[m].addEventListener("click", function(e) { changerQuantite(e.target.getAttribute("data-id"), -1); });
+  }
+  var boutonsPlus = document.getElementsByClassName("btn-plus");
+  for (var pl = 0; pl < boutonsPlus.length; pl++) {
+    boutonsPlus[pl].addEventListener("click", function(e) { changerQuantite(e.target.getAttribute("data-id"), 1); });
+  }
+  var boutonsRetirer = document.getElementsByClassName("btn-retirer");
+  for (var r = 0; r < boutonsRetirer.length; r++) {
+    boutonsRetirer[r].addEventListener("click", function(e) { retirerArticle(e.target.getAttribute("data-id")); });
+  }
+}
+
+document.getElementById("btnVoirPanier").addEventListener("click", function() {
+  document.getElementById("zonePanier").classList.add("visible");
+  document.getElementById("zonePanier").scrollIntoView({ behavior: "smooth" });
+});
+
+document.getElementById("btnPasserCommande").addEventListener("click", function() {
+  document.getElementById("zoneCommande").classList.add("visible");
+  document.getElementById("zoneCommande").scrollIntoView({ behavior: "smooth" });
+});
 
 document.getElementById("btnPositionCmd").addEventListener("click", function() {
   var msg = document.getElementById("msgPositionCmd");
@@ -167,10 +304,23 @@ function envoyerCommande(event) {
   var paiement = document.getElementById("cmd_paiement").value;
   var adresse = document.getElementById("cmd_adresse").value;
 
+  var resumeArticles = [];
+  var messageArticles = [];
+  var produitsStructures = [];
+  for (var i = 0; i < panier.length; i++) {
+    var a = panier[i];
+    resumeArticles.push(a.nom + " x" + a.quantite);
+    messageArticles.push("- " + a.nom + " x" + a.quantite + " (" + (a.prix * a.quantite).toLocaleString("fr-FR") + " FCFA)");
+    produitsStructures.push({ nom: a.nom, prix: a.prix, quantite: a.quantite });
+  }
+  var total = calculerTotal();
+
   var donneesCommande = {
     client_nom: nom,
     client_telephone: tel,
-    produit: produitSelectionne.nom,
+    produit: resumeArticles.join(", "),
+    produits: produitsStructures,
+    total: total,
     mode_paiement: paiement,
     adresse_livraison: adresse
   };
@@ -189,9 +339,13 @@ function envoyerCommande(event) {
       return;
     }
 
-    var message = "Bonjour, je commande : " + produitSelectionne.nom + "\nNom : " + nom + "\nTelephone : " + tel + "\nPaiement : " + paiement + "\nAdresse : " + adresse;
+    var message = "Bonjour, je passe une commande :\n" + messageArticles.join("\n") +
+                   "\nTotal : " + total.toLocaleString("fr-FR") + " FCFA" +
+                   "\nNom : " + nom + "\nTelephone : " + tel + "\nPaiement : " + paiement + "\nAdresse : " + adresse;
     window.open("https://wa.me/221777589444?text=" + encodeURIComponent(message), "_blank");
-    document.getElementById("zoneCommande").style.display = "none";
+
+    panier = [];
+    mettreAJourAffichagePanier();
     document.getElementById("formCommande").reset();
     positionClient = null;
   });
