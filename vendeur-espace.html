@@ -27,6 +27,11 @@
   .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
   .msg.erreur { background-color: #3a1414; color: #ff8080; }
   .msg.succes { background-color: #143a1e; color: #80ff9e; }
+  .btn-notif { background-color: #1e6fd9; color: #ffffff; border: none; padding: 12px; border-radius: 6px; font-size: 14px; font-weight: bold; width: 100%; margin-top: 8px; }
+  .btn-notif:disabled { opacity: 0.6; }
+  .msg-notif { font-size: 12px; margin-top: 8px; color: #b0b8c5; }
+  .msg-notif.ok { color: #80ff9e; }
+  .msg-notif.err { color: #ff8080; }
   .produit-carte { display: flex; gap: 12px; background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
   .produit-carte img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background-color: #0a0e17; }
   .produit-info h3 { font-size: 15px; }
@@ -34,12 +39,11 @@
   .commande-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
   .commande-carte h3 { font-size: 14px; }
   .commande-carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
-  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-top: 6px; }
+  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-top: 6px; margin-right: 5px; }
   .badge-nouvelle { background-color: #3a2e14; color: #ffb84d; }
   .badge-en_preparation { background-color: #14223a; color: #6aa9ff; }
   .badge-prete { background-color: #143a1e; color: #80ff9e; }
-  .badge-en_livraison { background-color: #2a1a3a; color: #c08cff; }
-  .badge-livree { background-color: #1a3a2a; color: #80ffc0; }
+  .badge-liv { background-color: #2a1a3a; color: #c08cff; }
   .btn-etape { background-color: #1e6fd9; color: #ffffff; border: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 10px; }
 </style>
 </head>
@@ -60,14 +64,19 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+var VAPID_PUBLIC_KEY = "BJw5df2L2JS-HB2BoXP7QNx1caYe4F1PaLbXy6kY1KI7SY9Evt5GjH19HsacU1iT9547pf6sjUeVsThHd8mOkr0";
 var vendeurCourant = null;
 
 var LIBELLES = {
   nouvelle: "Commande recue",
   en_preparation: "En preparation",
-  prete: "Prete a etre livree",
-  en_livraison: "En cours de livraison",
-  livree: "Livree"
+  prete: "Prete a recuperer"
+};
+
+var LIBELLES_LIV = {
+  vers_boutique: "Livreur en route vers vous",
+  en_livraison: "Recuperee par le livreur",
+  livree: "Livree au client"
 };
 
 document.getElementById("btnDeconnexion").addEventListener("click", function() {
@@ -100,6 +109,13 @@ function chargerEspace() {
           "<span class=\"statut " + vendeur.statut + "\">" + statutLabel + "</span>" +
           "<p class=\"info\">Telephone : " + vendeur.telephone + "</p>" +
           "<p class=\"info\">Produits : " + vendeur.produits_categorie + "</p>" +
+        "</div>" +
+
+        "<div class=\"carte\">" +
+          "<h2>Notifications</h2>" +
+          "<p class=\"info\">Soyez alerte des nouvelles commandes et de leur suivi.</p>" +
+          "<button class=\"btn-notif\" id=\"btnActiverNotif\">Activer les notifications</button>" +
+          "<p class=\"msg-notif\" id=\"msgNotif\"></p>" +
         "</div>" +
 
         "<div class=\"carte\">" +
@@ -139,12 +155,64 @@ function chargerEspace() {
           "<div id=\"listeProduits\"><p class=\"info\">Chargement...</p></div>" +
         "</div>";
 
+      document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
       document.getElementById("btnPosition").addEventListener("click", enregistrerPosition);
       document.getElementById("formProduit").addEventListener("submit", ajouterProduit);
       chargerCommandes();
       chargerProduits();
       setInterval(chargerCommandes, 25000);
     });
+  });
+}
+
+function urlBase64ToUint8Array(base64String) {
+  var padding = "=".repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  var rawData = atob(base64);
+  var outputArray = new Uint8Array(rawData.length);
+  for (var i = 0; i < rawData.length; i++) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+function activerNotifications() {
+  var btn = document.getElementById("btnActiverNotif");
+  var msg = document.getElementById("msgNotif");
+
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    msg.className = "msg-notif err";
+    msg.textContent = "Les notifications ne sont pas prises en charge sur cet appareil/navigateur.";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Activation en cours...";
+
+  navigator.serviceWorker.register("sw.js").then(function(registration) {
+    return Notification.requestPermission().then(function(permission) {
+      if (permission !== "granted") {
+        throw new Error("Permission refusee");
+      }
+      return registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    });
+  }).then(function(subscription) {
+    return sb.from("push_subscriptions").insert([{
+      vendeur_id: vendeurCourant.id,
+      subscription: subscription.toJSON()
+    }]);
+  }).then(function(reponse) {
+    btn.textContent = "Notifications activees";
+    msg.className = "msg-notif ok";
+    msg.textContent = "Vous serez alerte a chaque nouvelle commande.";
+  }).catch(function(erreur) {
+    btn.disabled = false;
+    btn.textContent = "Activer les notifications";
+    msg.className = "msg-notif err";
+    msg.textContent = "Impossible d'activer les notifications. Verifiez les autorisations de votre navigateur.";
   });
 }
 
@@ -159,8 +227,10 @@ function chargerCommandes() {
     var html = "";
     for (var i = 0; i < data.length; i++) {
       var c = data[i];
-      var statutActuel = c.statut || "nouvelle";
-      var libelle = LIBELLES[statutActuel] || statutActuel;
+      var statutPrep = c.statut || "nouvelle";
+      var statutLiv = c.statut_livraison || "en_attente_livreur";
+      var libelle = LIBELLES[statutPrep] || statutPrep;
+
       html += "<div class=\"commande-carte\">" +
                 "<h3>" + c.client_nom + "</h3>" +
                 "<p>Telephone : " + c.client_telephone + "</p>" +
@@ -169,11 +239,15 @@ function chargerCommandes() {
         html += "<p>Total : " + Number(c.total).toLocaleString("fr-FR") + " FCFA</p>";
       }
       html += "<p>Adresse : " + c.adresse_livraison + "</p>" +
-              "<span class=\"badge-statut badge-" + statutActuel + "\">" + libelle + "</span>";
+              "<span class=\"badge-statut badge-" + statutPrep + "\">" + libelle + "</span>";
 
-      if (statutActuel === "nouvelle") {
+      if (LIBELLES_LIV[statutLiv]) {
+        html += "<span class=\"badge-statut badge-liv\">" + LIBELLES_LIV[statutLiv] + "</span>";
+      }
+
+      if (statutPrep === "nouvelle") {
         html += "<br><button class=\"btn-etape btn-changer\" data-id=\"" + c.id + "\" data-statut=\"en_preparation\">Demarrer la preparation</button>";
-      } else if (statutActuel === "en_preparation") {
+      } else if (statutPrep === "en_preparation") {
         html += "<br><button class=\"btn-etape btn-changer\" data-id=\"" + c.id + "\" data-statut=\"prete\">Marquer prete a livrer</button>";
       }
       html += "</div>";
