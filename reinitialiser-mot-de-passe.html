@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Nouveau mot de passe</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
+  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
+  header h1 { color: #1e6fd9; font-size: 20px; }
+  .content { padding: 20px 15px; max-width: 420px; margin: 0 auto; }
+  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-top: 20px; }
+  form { display: flex; flex-direction: column; gap: 12px; }
+  label { font-size: 14px; color: #b0b8c5; }
+  input { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
+  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 15px; font-weight: bold; margin-top: 8px; }
+  button:disabled { opacity: 0.6; }
+  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-top: 12px; }
+  .msg.erreur { background-color: #3a1414; color: #ff8080; }
+  .msg.succes { background-color: #143a1e; color: #80ff9e; }
+  a { color: #1e6fd9; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AW SERVICES</h1>
+</header>
+
+<div class="content">
+  <div class="carte">
+    <h2 style="font-size:16px; margin-bottom:10px;">Choisir un nouveau mot de passe</h2>
+    <form id="formReset">
+      <label>Nouveau mot de passe</label>
+      <input type="password" id="nouveauMdp" required minlength="6">
+      <label>Confirmer le mot de passe</label>
+      <input type="password" id="confirmerMdp" required minlength="6">
+      <button type="submit" id="btnReset">Valider le nouveau mot de passe</button>
+    </form>
+    <div id="zoneMsg"></div>
+  </div>
+</div>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+document.getElementById("formReset").addEventListener("submit", function(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btnReset");
+  var zoneMsg = document.getElementById("zoneMsg");
+  var nouveau = document.getElementById("nouveauMdp").value;
+  var confirmer = document.getElementById("confirmerMdp").value;
+
+  if (nouveau !== confirmer) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Les deux mots de passe ne correspondent pas.</div>";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Enregistrement...";
+
+  sb.auth.updateUser({ password: nouveau }).then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Valider le nouveau mot de passe";
+    if (reponse.error) {
+      zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + ". Le lien a peut-etre expire, redemandez une reinitialisation.</div>";
+      return;
+    }
+    zoneMsg.innerHTML = "<div class=\"msg succes\">Mot de passe modifie avec succes ! Vous pouvez maintenant vous <a href=\"vendeur-connexion.html\">reconnecter</a>.</div>";
+    document.getElementById("formReset").style.display = "none";
+  });
+});
+</script>
+
+</body>
+</html>
