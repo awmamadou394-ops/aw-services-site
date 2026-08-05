@@ -245,6 +245,13 @@ document.getElementById("btnPlus").addEventListener("click", function() {
   mettreAJourRecap();
 });
 
+function remplirProfilLocal() {
+  var nom = localStorage.getItem("aw_client_nom");
+  var tel = localStorage.getItem("aw_client_telephone");
+  if (nom) document.getElementById("cmd_nom").value = nom;
+  if (tel) document.getElementById("cmd_tel").value = tel;
+}
+
 function verifierConnexion() {
   var bandeau = document.getElementById("bandeauCompte");
   sb.auth.getUser().then(function(reponseUser) {
@@ -301,6 +308,8 @@ function envoyerCommande(event) {
 
   var nom = document.getElementById("cmd_nom").value;
   var tel = document.getElementById("cmd_tel").value;
+  localStorage.setItem("aw_client_nom", nom);
+  localStorage.setItem("aw_client_telephone", tel);
   var paiement = document.getElementById("cmd_paiement").value;
   var adresse = document.getElementById("cmd_adresse").value;
   var pu = prixUnitaire(quantite);
@@ -352,6 +361,7 @@ function envoyerCommande(event) {
 }
 
 verifierConnexion();
+remplirProfilLocal();
 mettreAJourRecap();
 </script>
 
