@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Transport</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; padding-bottom: 30px; }
+  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
+  header h1 { color: #1e6fd9; font-size: 22px; }
+  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
+  .content { padding: 15px; max-width: 600px; margin: 0 auto; }
+
+  .onglets { display: flex; gap: 8px; margin-bottom: 20px; }
+  .onglet { flex: 1; background-color: #121826; border: 1px solid #2a3040; color: #b0b8c5; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: bold; text-align: center; }
+  .onglet.actif { background-color: #1e6fd9; border-color: #1e6fd9; color: #ffffff; }
+
+  .panneau { display: none; }
+  .panneau.visible { display: block; }
+
+  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 15px; }
+  .carte h2 { font-size: 16px; margin-bottom: 12px; }
+  .carte p.desc { color: #b0b8c5; font-size: 13px; margin-bottom: 15px; line-height: 1.5; }
+
+  label { font-size: 14px; color: #b0b8c5; display: block; margin-top: 12px; margin-bottom: 6px; }
+  input, select { width: 100%; background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
+  button[type="submit"] { width: 100%; background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; margin-top: 18px; }
+  button[type="submit"]:disabled { opacity: 0.6; }
+
+  .direction-choix { display: flex; gap: 8px; margin-top: 12px; }
+  .btn-direction { flex: 1; background-color: #0a0e17; border: 1px solid #2a3040; color: #b0b8c5; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+  .btn-direction.actif { background-color: #1e6fd9; border-color: #1e6fd9; color: #ffffff; }
+
+  .plan-voiture { margin-top: 18px; }
+  .chauffeur-label { text-align: center; color: #6f7a8c; font-size: 12px; margin-bottom: 10px; border: 1px dashed #2a3040; border-radius: 6px; padding: 8px; }
+  .grille-sieges { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .siege { background-color: #0a0e17; border: 1px solid #1e6fd9; color: #ffffff; border-radius: 8px; padding: 14px 0; text-align: center; font-size: 14px; font-weight: bold; }
+  .siege.pris { background-color: #1a1a1a; border-color: #2a3040; color: #4a4f5a; }
+  .siege.selectionne { background-color: #d62828; border-color: #d62828; }
+  .legende { display: flex; gap: 15px; margin-top: 12px; font-size: 11px; color: #b0b8c5; flex-wrap: wrap; }
+  .legende span { display: inline-flex; align-items: center; gap: 5px; }
+  .pastille { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .pastille.libre { background-color: #0a0e17; border: 1px solid #1e6fd9; }
+  .pastille.occupe { background-color: #1a1a1a; border: 1px solid #2a3040; }
+  .pastille.choisi { background-color: #d62828; }
+
+  .msg { font-size: 13px; padding: 10px; border-radius: 6px; margin-top: 12px; }
+  .msg.erreur { background-color: #3a1414; color: #ff8080; }
+  .msg.succes { background-color: #143a1e; color: #80ff9e; }
+
+  footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AW SERVICES — Transport</h1>
+</header>
+
+<a href="index.html" class="back">&#8592; Retour a l'accueil</a>
+
+<div class="content">
+
+  <div class="onglets">
+    <div class="onglet actif" id="ongletMoto">Course moto</div>
+    <div class="onglet" id="ongletVoiture">Dakar &#8596; Bokidiawe</div>
+  </div>
+
+  <div class="panneau visible" id="panneauMoto">
+    <div class="carte">
+      <h2>Course moto seule</h2>
+      <p class="desc">Un moto-taxi rien que pour vous, sans livraison de produit. Indiquez votre depart et votre destination.</p>
+
+      <form id="formMoto">
+        <label>Lieu de depart</label>
+        <input type="text" id="m_depart" required>
+
+        <label>Destination</label>
+        <input type="text" id="m_arrivee" required>
+
+        <label>Nom complet</label>
+        <input type="text" id="m_nom" required>
+
+        <label>Numero de telephone</label>
+        <input type="tel" id="m_telephone" required>
+
+        <label>Mode de paiement</label>
+        <select id="m_paiement" required>
+          <option value="">Choisir...</option>
+          <option value="Wave">Wave</option>
+          <option value="Orange Money">Orange Money</option>
+          <option value="Free Money">Free Money</option>
+          <option value="Especes">Especes au chauffeur</option>
+        </select>
+
+        <button type="submit" id="btnMoto">Demander une course</button>
+        <div id="msgMoto"></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="panneau" id="panneauVoiture">
+    <div class="carte">
+      <h2>Reservation Dakar &#8596; Bokidiawe</h2>
+      <p class="desc">Voiture 14 places, region de Matam. Choisissez votre trajet, votre date et votre chaise.</p>
+
+      <label>Trajet</label>
+      <div class="direction-choix">
+        <button type="button" class="btn-direction actif" id="btnAller" data-direction="aller">Dakar &#8594; Bokidiawe</button>
+        <button type="button" class="btn-direction" id="btnRetour" data-direction="retour">Bokidiawe &#8594; Dakar</button>
+      </div>
+
+      <label>Date du voyage</label>
+      <input type="date" id="v_date" required>
+
+      <div class="plan-voiture">
+        <div class="chauffeur-label">Chauffeur</div>
+        <div class="grille-sieges" id="grilleSieges">
+          <p style="color:#b0b8c5;font-size:13px;grid-column:1/-1;">Choisissez une date pour voir les chaises disponibles.</p>
+        </div>
+        <div class="legende">
+          <span><span class="pastille libre"></span> Libre</span>
+          <span><span class="pastille occupe"></span> Deja prise</span>
+          <span><span class="pastille choisi"></span> Votre choix</span>
+        </div>
+      </div>
+
+      <form id="formVoiture">
+        <label>Nom complet</label>
+        <input type="text" id="v_nom" required>
+
+        <label>Numero de telephone</label>
+        <input type="tel" id="v_telephone" required>
+
+        <label>Mode de paiement</label>
+        <select id="v_paiement" required>
+          <option value="">Choisir...</option>
+          <option value="Wave">Wave</option>
+          <option value="Orange Money">Orange Money</option>
+          <option value="Free Money">Free Money</option>
+          <option value="Especes">Especes au depart</option>
+        </select>
+
+        <button type="submit" id="btnVoiture">Reserver ma chaise</button>
+        <div id="msgVoiture"></div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  &copy; 2026 AW SERVICES — Tous droits reserves
+</footer>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+var NUMERO_WHATSAPP = "221777589444";
+
+document.getElementById("ongletMoto").addEventListener("click", function() {
+  document.getElementById("ongletMoto").classList.add("actif");
+  document.getElementById("ongletVoiture").classList.remove("actif");
+  document.getElementById("panneauMoto").classList.add("visible");
+  document.getElementById("panneauVoiture").classList.remove("visible");
+});
+
+document.getElementById("ongletVoiture").addEventListener("click", function() {
+  document.getElementById("ongletVoiture").classList.add("actif");
+  document.getElementById("ongletMoto").classList.remove("actif");
+  document.getElementById("panneauVoiture").classList.add("visible");
+  document.getElementById("panneauMoto").classList.remove("visible");
+});
+
+document.getElementById("formMoto").addEventListener("submit", function(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btnMoto");
+  var msg = document.getElementById("msgMoto");
+  btn.disabled = true;
+  btn.textContent = "Envoi en cours...";
+  msg.innerHTML = "";
+
+  var depart = document.getElementById("m_depart").value;
+  var arrivee = document.getElementById("m_arrivee").value;
+  var nom = document.getElementById("m_nom").value;
+  var telephone = document.getElementById("m_telephone").value;
+  var paiement = document.getElementById("m_paiement").value;
+
+  sb.from("courses_moto").insert([{
+    client_nom: nom,
+    client_telephone: telephone,
+    lieu_depart: depart,
+    lieu_arrivee: arrivee,
+    mode_paiement: paiement,
+    statut: "nouvelle"
+  }]).then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Demander une course";
+
+    if (reponse.error) {
+      msg.innerHTML = "<div class=\"msg erreur\">Erreur : la course n'a pas pu etre enregistree. Reessayez.</div>";
+      return;
+    }
+
+    msg.innerHTML = "<div class=\"msg succes\">Course demandee ! Un chauffeur va la recuperer sous peu.</div>";
+    var message = "Bonjour, je demande une course moto :\nDepart : " + depart + "\nDestination : " + arrivee +
+                   "\nNom : " + nom + "\nTelephone : " + telephone + "\nPaiement : " + paiement;
+    window.open("https://wa.me/" + NUMERO_WHATSAPP + "?text=" + encodeURIComponent(message), "_blank");
+    document.getElementById("formMoto").reset();
+  });
+});
+
+var NB_SIEGES = 14;
+var direction = "aller";
+var siegeSelectionne = null;
+var siegesPris = [];
+
+document.getElementById("btnAller").addEventListener("click", function() {
+  direction = "aller";
+  document.getElementById("btnAller").classList.add("actif");
+  document.getElementById("btnRetour").classList.remove("actif");
+  siegeSelectionne = null;
+  chargerSieges();
+});
+
+document.getElementById("btnRetour").addEventListener("click", function() {
+  direction = "retour";
+  document.getElementById("btnRetour").classList.add("actif");
+  document.getElementById("btnAller").classList.remove("actif");
+  siegeSelectionne = null;
+  chargerSieges();
+});
+
+document.getElementById("v_date").addEventListener("change", function() {
+  siegeSelectionne = null;
+  chargerSieges();
+});
+
+function chargerSieges() {
+  var dateVoyage = document.getElementById("v_date").value;
+  var grille = document.getElementById("grilleSieges");
+
+  if (!dateVoyage) {
+    grille.innerHTML = "<p style=\"color:#b0b8c5;font-size:13px;grid-column:1/-1;\">Choisissez une date pour voir les chaises disponibles.</p>";
+    return;
+  }
+
+  grille.innerHTML = "<p style=\"color:#b0b8c5;font-size:13px;grid-column:1/-1;\">Chargement des chaises...</p>";
+
+  sb.from("reservations_voiture").select("siege").eq("date_voyage", dateVoyage).eq("direction", direction).neq("statut", "annulee").then(function(reponse) {
+    siegesPris = (reponse.data || []).map(function(r) { return r.siege; });
+    afficherGrilleSieges();
+  });
+}
+
+function afficherGrilleSieges() {
+  var grille = document.getElementById("grilleSieges");
+  var html = "";
+  for (var i = 1; i <= NB_SIEGES; i++) {
+    var estPris = siegesPris.indexOf(i) !== -1;
+    var estChoisi = siegeSelectionne === i;
+    var classes = "siege" + (estPris ? " pris" : "") + (estChoisi ? " selectionne" : "");
+    html += "<button type=\"button\" class=\"" + classes + "\" data-siege=\"" + i + "\"" + (estPris ? " disabled" : "") + ">Chaise " + i + "</button>";
+  }
+  grille.innerHTML = html;
+
+  var boutons = document.getElementsByClassName("siege");
+  for (var b = 0; b < boutons.length; b++) {
+    boutons[b].addEventListener("click", function(e) {
+      siegeSelectionne = parseInt(e.target.getAttribute("data-siege"));
+      afficherGrilleSieges();
+    });
+  }
+}
+
+document.getElementById("formVoiture").addEventListener("submit", function(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btnVoiture");
+  var msg = document.getElementById("msgVoiture");
+  msg.innerHTML = "";
+
+  var dateVoyage = document.getElementById("v_date").value;
+  if (!dateVoyage) {
+    msg.innerHTML = "<div class=\"msg erreur\">Choisissez une date de voyage.</div>";
+    return;
+  }
+  if (!siegeSelectionne) {
+    msg.innerHTML = "<div class=\"msg erreur\">Choisissez une chaise disponible.</div>";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Reservation en cours...";
+
+  var nom = document.getElementById("v_nom").value;
+  var telephone = document.getElementById("v_telephone").value;
+  var paiement = document.getElementById("v_paiement").value;
+
+  sb.from("reservations_voiture").insert([{
+    client_nom: nom,
+    client_telephone: telephone,
+    direction: direction,
+    date_voyage: dateVoyage,
+    siege: siegeSelectionne,
+    mode_paiement: paiement,
+    statut: "confirmee"
+  }]).then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Reserver ma chaise";
+
+    if (reponse.error) {
+      if (reponse.error.code === "23505") {
+        msg.innerHTML = "<div class=\"msg erreur\">Cette chaise vient d'etre prise par quelqu'un d'autre. Choisissez-en une autre.</div>";
+        siegeSelectionne = null;
+        chargerSieges();
+      } else {
+        msg.innerHTML = "<div class=\"msg erreur\">Erreur : la reservation n'a pas pu etre enregistree. Reessayez.</div>";
+      }
+      return;
+    }
+
+    var texteDirection = direction === "aller" ? "Dakar -> Bokidiawe" : "Bokidiawe -> Dakar";
+    msg.innerHTML = "<div class=\"msg succes\">Chaise " + siegeSelectionne + " reservee pour le " + dateVoyage + " !</div>";
+    var message = "Bonjour, je reserve une place :\nTrajet : " + texteDirection + "\nDate : " + dateVoyage +
+                   "\nChaise : " + siegeSelectionne + "\nNom : " + nom + "\nTelephone : " + telephone + "\nPaiement : " + paiement;
+    window.open("https://wa.me/" + NUMERO_WHATSAPP + "?text=" + encodeURIComponent(message), "_blank");
+
+    document.getElementById("formVoiture").reset();
+    siegeSelectionne = null;
+    chargerSieges();
+  });
+});
+</script>
+
+</body>
+</html>
