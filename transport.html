@@ -121,6 +121,10 @@
       <label>Date du voyage</label>
       <input type="date" id="v_date" required>
 
+      <p class="msg" style="background-color:#14223a;color:#6aa9ff;">Le prix du trajet vous sera communique directement (il depend du nombre de bagages et sera confirme avant le depart).</p>
+
+      <div id="zoneRassemblement"></div>
+
       <div class="plan-voiture">
         <div class="chauffeur-label">Chauffeur</div>
         <div class="grille-sieges" id="grilleSieges">
@@ -139,6 +143,11 @@
 
         <label>Numero de telephone</label>
         <input type="tel" id="v_telephone" required>
+
+        <div id="zonePositionRetour" style="display:none;">
+          <button type="button" class="btn-position" id="btnPositionVoiture">Utiliser ma position actuelle (obligatoire pour le retour)</button>
+          <p class="msg-position" id="msgPositionVoiture">Necessaire pour que le chauffeur vienne vous chercher a domicile.</p>
+        </div>
 
         <label>Mode de paiement</label>
         <select id="v_paiement" required>
@@ -280,12 +289,61 @@ var NB_SIEGES = 14;
 var direction = "aller";
 var siegeSelectionne = null;
 var siegesPris = [];
+var positionVoiture = null;
+
+document.getElementById("btnPositionVoiture").addEventListener("click", function() {
+  var msg = document.getElementById("msgPositionVoiture");
+  var btn = document.getElementById("btnPositionVoiture");
+
+  if (!navigator.geolocation) {
+    msg.textContent = "Localisation non disponible sur cet appareil.";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Localisation en cours...";
+
+  navigator.geolocation.getCurrentPosition(function(position) {
+    positionVoiture = { lat: position.coords.latitude, lng: position.coords.longitude };
+    btn.disabled = false;
+    btn.textContent = "Position enregistree";
+    msg.textContent = "Votre position a ete capturee avec succes.";
+    msg.className = "msg-position ok";
+  }, function() {
+    btn.disabled = false;
+    btn.textContent = "Utiliser ma position actuelle (obligatoire pour le retour)";
+    msg.textContent = "Impossible d'obtenir votre position. Verifiez que la localisation est activee.";
+  });
+});
+
+function afficherZoneDirection() {
+  var zoneRassemblement = document.getElementById("zoneRassemblement");
+  var zonePosition = document.getElementById("zonePositionRetour");
+
+  if (direction === "aller") {
+    zonePosition.style.display = "none";
+    zoneRassemblement.innerHTML = "<p style=\"color:#b0b8c5;font-size:13px;margin-bottom:12px;\">Chargement du point de rassemblement...</p>";
+    sb.from("chauffeurs").select("*").eq("statut", "approuve").not("lieu_rassemblement", "is", null).limit(1).then(function(reponse) {
+      var c = reponse.data && reponse.data[0];
+      if (c) {
+        var lienCarte = (c.latitude && c.longitude) ? " <a href=\"https://www.google.com/maps?q=" + c.latitude + "," + c.longitude + "\" target=\"_blank\" style=\"color:#1e6fd9;\">Voir sur la carte</a>" : "";
+        zoneRassemblement.innerHTML = "<p style=\"background-color:#121826;border:1px solid #2a3040;border-radius:8px;padding:10px;font-size:13px;color:#b0b8c5;margin-bottom:12px;\">Point de rassemblement : " + c.lieu_rassemblement + lienCarte + "</p>";
+      } else {
+        zoneRassemblement.innerHTML = "<p style=\"color:#ffb84d;font-size:12px;margin-bottom:12px;\">Point de rassemblement pas encore renseigne, contactez-nous.</p>";
+      }
+    });
+  } else {
+    zoneRassemblement.innerHTML = "";
+    zonePosition.style.display = "block";
+  }
+}
 
 document.getElementById("btnAller").addEventListener("click", function() {
   direction = "aller";
   document.getElementById("btnAller").classList.add("actif");
   document.getElementById("btnRetour").classList.remove("actif");
   siegeSelectionne = null;
+  afficherZoneDirection();
   chargerSieges();
 });
 
@@ -294,6 +352,7 @@ document.getElementById("btnRetour").addEventListener("click", function() {
   document.getElementById("btnRetour").classList.add("actif");
   document.getElementById("btnAller").classList.remove("actif");
   siegeSelectionne = null;
+  afficherZoneDirection();
   chargerSieges();
 });
 
@@ -354,6 +413,10 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
     msg.innerHTML = "<div class=\"msg erreur\">Choisissez une chaise disponible.</div>";
     return;
   }
+  if (direction === "retour" && !positionVoiture) {
+    msg.innerHTML = "<div class=\"msg erreur\">Merci d'utiliser le bouton de position avant d'envoyer (le chauffeur en a besoin pour le retour).</div>";
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = "Reservation en cours...";
@@ -364,7 +427,7 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
   localStorage.setItem("aw_client_nom", nom);
   localStorage.setItem("aw_client_telephone", telephone);
 
-  sb.from("reservations_voiture").insert([{
+  var donneesReservation = {
     client_nom: nom,
     client_telephone: telephone,
     direction: direction,
@@ -372,7 +435,13 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
     siege: siegeSelectionne,
     mode_paiement: paiement,
     statut: "confirmee"
-  }]).then(function(reponse) {
+  };
+  if (direction === "retour" && positionVoiture) {
+    donneesReservation.latitude = positionVoiture.lat;
+    donneesReservation.longitude = positionVoiture.lng;
+  }
+
+  sb.from("reservations_voiture").insert([donneesReservation]).then(function(reponse) {
     btn.disabled = false;
     btn.textContent = "Reserver ma chaise";
 
@@ -395,9 +464,15 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
 
     document.getElementById("formVoiture").reset();
     siegeSelectionne = null;
+    positionVoiture = null;
+    document.getElementById("btnPositionVoiture").textContent = "Utiliser ma position actuelle (obligatoire pour le retour)";
+    document.getElementById("msgPositionVoiture").textContent = "Necessaire pour que le chauffeur vienne vous chercher a domicile.";
+    document.getElementById("msgPositionVoiture").className = "msg-position";
     chargerSieges();
   });
 });
+
+afficherZoneDirection();
 </script>
 
 </body>
