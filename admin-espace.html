@@ -74,6 +74,10 @@ function verifierEtCharger() {
           "<div id=\"listeVendeurs\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>" +
         "<div class=\"section\">" +
+          "<h2>Chauffeurs en attente (Dakar-Bokidiawe)</h2>" +
+          "<div id=\"listeChauffeurs\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"section\">" +
           "<h2>Produits en attente (Boutique)</h2>" +
           "<div id=\"listeProduits\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>" +
@@ -87,6 +91,7 @@ function verifierEtCharger() {
         "</div>";
 
       chargerVendeurs();
+      chargerChauffeurs();
       chargerProduits();
       chargerLivreurs();
       chargerCommandes();
@@ -115,6 +120,30 @@ function chargerVendeurs() {
     zone.innerHTML = html;
     attacherBoutons("btn-v-approuver", "vendeurs", "approuve", chargerVendeurs);
     attacherBoutons("btn-v-refuser", "vendeurs", "refuse", chargerVendeurs);
+  });
+}
+
+function chargerChauffeurs() {
+  sb.from("chauffeurs").select("*").eq("statut", "en_attente").then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeChauffeurs");
+    if (!data || data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucun chauffeur en attente.</p>"; return; }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var c = data[i];
+      html += "<div class=\"carte\">" +
+                "<h3>" + c.nom + "</h3>" +
+                "<p>Telephone : " + c.telephone + "</p>" +
+                "<p>" + c.vehicule + "</p>" +
+                "<div class=\"boutons\">" +
+                  "<button class=\"btn-approuver btn-c-approuver\" data-id=\"" + c.id + "\">Approuver</button>" +
+                  "<button class=\"btn-refuser btn-c-refuser\" data-id=\"" + c.id + "\">Refuser</button>" +
+                "</div>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+    attacherBoutons("btn-c-approuver", "chauffeurs", "approuve", chargerChauffeurs);
+    attacherBoutons("btn-c-refuser", "chauffeurs", "refuse", chargerChauffeurs);
   });
 }
 
