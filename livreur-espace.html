@@ -21,6 +21,7 @@
   .chargement { text-align: center; padding: 40px; color: #b0b8c5; }
   .commande-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
   .commande-carte h3 { font-size: 14px; }
+  .date-commande { font-size: 11px; color: #6f7a8c; margin-bottom: 4px; }
   .commande-carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
   .badges { margin-top: 8px; }
   .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-right: 5px; margin-bottom: 4px; }
@@ -216,8 +217,10 @@ function afficherListe(idZone, liste, avecBoutonAccepter) {
     var statutPrep = c.statut || "nouvelle";
     var statutLiv = c.statut_livraison || "en_attente_livreur";
     var libellePrep = LIBELLES_PREPARATION[statutPrep] || statutPrep;
+    var dateAffichee = c.date_commande ? new Date(c.date_commande).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Date inconnue";
 
     html += "<div class=\"commande-carte\">" +
+              "<p class=\"date-commande\">" + dateAffichee + "</p>" +
               "<h3>" + c.client_nom + "</h3>" +
               "<p>Telephone : " + c.client_telephone + "</p>" +
               "<p>" + c.produit + "</p>" +
