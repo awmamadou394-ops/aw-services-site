@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Espace Chauffeur</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
+  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
+  header h1 { color: #1e6fd9; font-size: 20px; }
+  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
+  .content { padding: 15px; max-width: 420px; margin: 0 auto; }
+  .onglets { display: flex; gap: 8px; margin-bottom: 15px; }
+  .onglet { flex: 1; background-color: #121826; border: 1px solid #2a3040; color: #b0b8c5; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; text-align: center; }
+  .onglet.actif { background-color: #1e6fd9; border-color: #1e6fd9; color: #ffffff; }
+  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; display: none; }
+  .carte.visible { display: block; }
+  form { display: flex; flex-direction: column; gap: 12px; }
+  label { font-size: 14px; color: #b0b8c5; }
+  input { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
+  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 15px; font-weight: bold; margin-top: 8px; }
+  button:disabled { opacity: 0.6; }
+  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
+  .msg.erreur { background-color: #3a1414; color: #ff8080; }
+  .msg.succes { background-color: #143a1e; color: #80ff9e; }
+  .lien-oublie { text-align: center; margin-top: 12px; }
+  .lien-oublie a { color: #1e6fd9; font-size: 13px; text-decoration: none; }
+  #zoneOublie { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #2a3040; }
+  #zoneOublie.visible { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AW SERVICES — Espace Chauffeur</h1>
+</header>
+
+<a href="index.html" class="back">&#8592; Retour a l'accueil</a>
+
+<div class="content">
+  <div class="onglets">
+    <div class="onglet actif" id="ongletInscription">Creer un compte</div>
+    <div class="onglet" id="ongletConnexion">Se connecter</div>
+  </div>
+
+  <div class="carte visible" id="carteInscription">
+    <div id="msgInscription"></div>
+    <form id="formInscription">
+      <label>Nom complet</label>
+      <input type="text" id="i_nom" required>
+      <label>Numero de telephone</label>
+      <input type="tel" id="i_telephone" required>
+      <label>Email</label>
+      <input type="email" id="i_email" required>
+      <label>Mot de passe</label>
+      <input type="password" id="i_password" required minlength="6">
+      <label>Confirmer le mot de passe</label>
+      <input type="password" id="i_password2" required minlength="6">
+      <button type="submit" id="btnInscription">Creer mon compte chauffeur</button>
+    </form>
+  </div>
+
+  <div class="carte" id="carteConnexion">
+    <div id="msgConnexion"></div>
+    <form id="formConnexion">
+      <label>Email</label>
+      <input type="email" id="c_email" required>
+      <label>Mot de passe</label>
+      <input type="password" id="c_password" required>
+      <button type="submit" id="btnConnexion">Se connecter</button>
+    </form>
+    <div class="lien-oublie"><a href="#" id="lienOublie">Mot de passe oublie ?</a></div>
+
+    <div id="zoneOublie">
+      <label>Votre email</label>
+      <input type="email" id="o_email" style="margin-top:8px;">
+      <button type="button" id="btnEnvoyerReset" style="margin-top:10px;">Envoyer le lien de reinitialisation</button>
+      <div id="msgOublie"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+document.getElementById("ongletInscription").addEventListener("click", function() {
+  document.getElementById("ongletInscription").classList.add("actif");
+  document.getElementById("ongletConnexion").classList.remove("actif");
+  document.getElementById("carteInscription").classList.add("visible");
+  document.getElementById("carteConnexion").classList.remove("visible");
+});
+
+document.getElementById("ongletConnexion").addEventListener("click", function() {
+  document.getElementById("ongletConnexion").classList.add("actif");
+  document.getElementById("ongletInscription").classList.remove("actif");
+  document.getElementById("carteConnexion").classList.add("visible");
+  document.getElementById("carteInscription").classList.remove("visible");
+});
+
+document.getElementById("formInscription").addEventListener("submit", function(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btnInscription");
+  var msg = document.getElementById("msgInscription");
+  var nom = document.getElementById("i_nom").value;
+  var telephone = document.getElementById("i_telephone").value;
+  var email = document.getElementById("i_email").value;
+  var password = document.getElementById("i_password").value;
+  var password2 = document.getElementById("i_password2").value;
+
+  if (password !== password2) {
+    msg.innerHTML = "<div class=\"msg erreur\">Les mots de passe ne correspondent pas.</div>";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Creation en cours...";
+
+  sb.auth.signUp({ email: email, password: password }).then(function(reponse) {
+    if (reponse.error) {
+      btn.disabled = false;
+      btn.textContent = "Creer mon compte chauffeur";
+      msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
+      return;
+    }
+    var userId = reponse.data.user.id;
+    sb.from("chauffeurs").insert([{
+      nom: nom,
+      telephone: telephone,
+      user_id: userId
+    }]).then(function(reponse2) {
+      btn.disabled = false;
+      btn.textContent = "Creer mon compte chauffeur";
+      if (reponse2.error) {
+        msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse2.error.message + "</div>";
+        return;
+      }
+      msg.innerHTML = "<div class=\"msg succes\">Compte cree ! Verifiez votre email pour confirmer, puis connectez-vous.</div>";
+      document.getElementById("formInscription").reset();
+    });
+  });
+});
+
+document.getElementById("formConnexion").addEventListener("submit", function(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btnConnexion");
+  var msg = document.getElementById("msgConnexion");
+  var email = document.getElementById("c_email").value;
+  var password = document.getElementById("c_password").value;
+
+  btn.disabled = true;
+  btn.textContent = "Connexion en cours...";
+
+  sb.auth.signInWithPassword({ email: email, password: password }).then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Se connecter";
+    if (reponse.error) {
+      msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
+      return;
+    }
+    window.location.href = "chauffeur-espace.html";
+  });
+});
+
+document.getElementById("lienOublie").addEventListener("click", function(event) {
+  event.preventDefault();
+  document.getElementById("zoneOublie").classList.toggle("visible");
+});
+
+document.getElementById("btnEnvoyerReset").addEventListener("click", function() {
+  var btn = document.getElementById("btnEnvoyerReset");
+  var msg = document.getElementById("msgOublie");
+  var email = document.getElementById("o_email").value;
+
+  if (!email) {
+    msg.innerHTML = "<div class=\"msg erreur\">Entrez votre email.</div>";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Envoi en cours...";
+
+  sb.auth.resetPasswordForEmail(email, {
+    redirectTo: "https://awmamadou394-ops.github.io/aw-services-site/reinitialiser-mot-de-passe.html"
+  }).then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Envoyer le lien de reinitialisation";
+    if (reponse.error) {
+      msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
+      return;
+    }
+    msg.innerHTML = "<div class=\"msg succes\">Email envoye ! Verifiez votre boite mail (et les spams).</div>";
+  });
+});
+</script>
+
+</body>
+</html>
