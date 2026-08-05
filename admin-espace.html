@@ -174,7 +174,9 @@ function chargerCommandes() {
     var html = "";
     for (var i = 0; i < data.length; i++) {
       var c = data[i];
+      var dateAffichee = c.date_commande ? new Date(c.date_commande).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Date inconnue";
       html += "<div class=\"carte\">" +
+                "<p style=\"font-size:11px;color:#6f7a8c;margin-bottom:4px;\">" + dateAffichee + "</p>" +
                 "<h3>" + c.client_nom + "</h3>" +
                 "<p>Telephone : " + c.client_telephone + "</p>" +
                 "<p>Produit : " + c.produit + "</p>" +
