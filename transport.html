@@ -28,6 +28,9 @@
   input, select { width: 100%; background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
   button[type="submit"] { width: 100%; background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; margin-top: 18px; }
   button[type="submit"]:disabled { opacity: 0.6; }
+  .btn-position { width: 100%; background-color: transparent; border: 1px solid #1e6fd9; color: #1e6fd9; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 12px; }
+  .msg-position { font-size: 12px; color: #b0b8c5; margin-top: 6px; }
+  .msg-position.ok { color: #80ff9e; }
 
   .direction-choix { display: flex; gap: 8px; margin-top: 12px; }
   .btn-direction { flex: 1; background-color: #0a0e17; border: 1px solid #2a3040; color: #b0b8c5; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
@@ -71,11 +74,14 @@
   <div class="panneau visible" id="panneauMoto">
     <div class="carte">
       <h2>Course moto seule</h2>
-      <p class="desc">Un moto-taxi rien que pour vous, sans livraison de produit. Indiquez votre depart et votre destination.</p>
+      <p class="desc">Un moto-taxi rien que pour vous. Votre position sert de point de depart : les livreurs la voient et acceptent la course la plus proche.</p>
 
       <form id="formMoto">
-        <label>Lieu de depart</label>
-        <input type="text" id="m_depart" required>
+        <button type="button" class="btn-position" id="btnPositionMoto">Utiliser ma position actuelle (obligatoire)</button>
+        <p class="msg-position" id="msgPositionMoto">Le livreur en a besoin pour venir vous chercher.</p>
+
+        <label>Point de repere (optionnel)</label>
+        <input type="text" id="m_repere" placeholder="Ex : devant la pharmacie">
 
         <label>Destination</label>
         <input type="text" id="m_arrivee" required>
@@ -162,6 +168,32 @@ var sb = supabase.createClient(
 );
 
 var NUMERO_WHATSAPP = "221777589444";
+var positionMoto = null;
+
+document.getElementById("btnPositionMoto").addEventListener("click", function() {
+  var msg = document.getElementById("msgPositionMoto");
+  var btn = document.getElementById("btnPositionMoto");
+
+  if (!navigator.geolocation) {
+    msg.textContent = "Localisation non disponible sur cet appareil.";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Localisation en cours...";
+
+  navigator.geolocation.getCurrentPosition(function(position) {
+    positionMoto = { lat: position.coords.latitude, lng: position.coords.longitude };
+    btn.disabled = false;
+    btn.textContent = "Position enregistree";
+    msg.textContent = "Votre position a ete capturee avec succes.";
+    msg.className = "msg-position ok";
+  }, function() {
+    btn.disabled = false;
+    btn.textContent = "Utiliser ma position actuelle (obligatoire)";
+    msg.textContent = "Impossible d'obtenir votre position. Verifiez que la localisation est activee.";
+  });
+});
 
 document.getElementById("ongletMoto").addEventListener("click", function() {
   document.getElementById("ongletMoto").classList.add("actif");
@@ -181,11 +213,17 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
   event.preventDefault();
   var btn = document.getElementById("btnMoto");
   var msg = document.getElementById("msgMoto");
+
+  if (!positionMoto) {
+    msg.innerHTML = "<div class=\"msg erreur\">Merci d'utiliser le bouton de position avant d'envoyer.</div>";
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = "Envoi en cours...";
   msg.innerHTML = "";
 
-  var depart = document.getElementById("m_depart").value;
+  var repere = document.getElementById("m_repere").value;
   var arrivee = document.getElementById("m_arrivee").value;
   var nom = document.getElementById("m_nom").value;
   var telephone = document.getElementById("m_telephone").value;
@@ -194,8 +232,10 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
   sb.from("courses_moto").insert([{
     client_nom: nom,
     client_telephone: telephone,
-    lieu_depart: depart,
+    lieu_depart: repere || "Position GPS",
     lieu_arrivee: arrivee,
+    latitude: positionMoto.lat,
+    longitude: positionMoto.lng,
     mode_paiement: paiement,
     statut: "nouvelle"
   }]).then(function(reponse) {
@@ -207,11 +247,16 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
       return;
     }
 
-    msg.innerHTML = "<div class=\"msg succes\">Course demandee ! Un chauffeur va la recuperer sous peu.</div>";
-    var message = "Bonjour, je demande une course moto :\nDepart : " + depart + "\nDestination : " + arrivee +
-                   "\nNom : " + nom + "\nTelephone : " + telephone + "\nPaiement : " + paiement;
+    msg.innerHTML = "<div class=\"msg succes\">Course demandee ! Un livreur va la recuperer sous peu.</div>";
+    var message = "Bonjour, je demande une course moto :\nDestination : " + arrivee +
+                   "\nNom : " + nom + "\nTelephone : " + telephone + "\nPaiement : " + paiement +
+                   "\nPosition : https://www.google.com/maps?q=" + positionMoto.lat + "," + positionMoto.lng;
     window.open("https://wa.me/" + NUMERO_WHATSAPP + "?text=" + encodeURIComponent(message), "_blank");
     document.getElementById("formMoto").reset();
+    positionMoto = null;
+    document.getElementById("btnPositionMoto").textContent = "Utiliser ma position actuelle (obligatoire)";
+    document.getElementById("msgPositionMoto").textContent = "Le livreur en a besoin pour venir vous chercher.";
+    document.getElementById("msgPositionMoto").className = "msg-position";
   });
 });
 
