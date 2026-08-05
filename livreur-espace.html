@@ -60,6 +60,7 @@ var sb = supabase.createClient(
 
 var VAPID_PUBLIC_KEY = "BJw5df2L2JS-HB2BoXP7QNx1caYe4F1PaLbXy6kY1KI7SY9Evt5GjH19HsacU1iT9547pf6sjUeVsThHd8mOkr0";
 var livreurCourant = null;
+var positionLivreur = null;
 
 var LIBELLES_PREPARATION = {
   nouvelle: "Commande recue",
@@ -109,14 +110,50 @@ function chargerEspace() {
         "<div class=\"carte\">" +
           "<h2>Commandes disponibles</h2>" +
           "<div id=\"listeDisponibles\"><p class=\"info\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"carte\">" +
+          "<h2>Mes courses moto en cours</h2>" +
+          "<div id=\"listeMesCourses\"><p class=\"info\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"carte\">" +
+          "<h2>Courses moto disponibles</h2>" +
+          "<p class=\"info\" id=\"infoPositionLivreur\">Localisation en cours pour trier par distance...</p>" +
+          "<div id=\"listeCoursesDisponibles\"><p class=\"info\">Chargement...</p></div>" +
         "</div>";
 
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
       verifierEtatNotifications();
+      localiserLivreur();
       chargerCommandes();
+      chargerCourses();
       setInterval(chargerCommandes, 20000);
+      setInterval(chargerCourses, 20000);
     });
   });
+}
+
+function localiserLivreur() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(function(position) {
+    positionLivreur = { lat: position.coords.latitude, lng: position.coords.longitude };
+    var info = document.getElementById("infoPositionLivreur");
+    if (info) info.textContent = "Triees par distance depuis votre position.";
+    chargerCourses();
+  }, function() {
+    var info = document.getElementById("infoPositionLivreur");
+    if (info) info.textContent = "Position non disponible : activez la localisation pour trier par distance.";
+  });
+}
+
+function distanceKm(lat1, lon1, lat2, lon2) {
+  var R = 6371;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLon = (lon2 - lon1) * Math.PI / 180;
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 function afficherNotifActives() {
@@ -286,6 +323,128 @@ function majLivraison(id, nouveauStatut) {
       alert("Erreur : " + reponse.error.message);
     }
     chargerCommandes();
+  });
+}
+
+var LIBELLES_COURSE = {
+  nouvelle: "En attente d'un livreur",
+  acceptee: "En route vers le client",
+  en_cours: "Client recupere, en route vers la destination"
+};
+
+function chargerCourses() {
+  sb.from("courses_moto").select("*").neq("statut", "terminee").then(function(reponse) {
+    var data = reponse.data || [];
+    var mesCourses = data.filter(function(c) { return c.livreur_id === livreurCourant.id; });
+    var disponibles = data.filter(function(c) { return c.livreur_id === null && c.statut === "nouvelle"; });
+
+    if (positionLivreur) {
+      disponibles.sort(function(a, b) {
+        if (!a.latitude || !a.longitude) return 1;
+        if (!b.latitude || !b.longitude) return -1;
+        var da = distanceKm(positionLivreur.lat, positionLivreur.lng, a.latitude, a.longitude);
+        var db = distanceKm(positionLivreur.lat, positionLivreur.lng, b.latitude, b.longitude);
+        return da - db;
+      });
+    }
+
+    afficherMesCourses(mesCourses);
+    afficherCoursesDisponibles(disponibles);
+  });
+}
+
+function afficherMesCourses(liste) {
+  var zone = document.getElementById("listeMesCourses");
+  if (liste.length === 0) {
+    zone.innerHTML = "<p class=\"info\">Aucune course en cours.</p>";
+    return;
+  }
+  var html = "";
+  for (var i = 0; i < liste.length; i++) {
+    var c = liste[i];
+    html += "<div class=\"commande-carte\">" +
+              "<h3>" + c.client_nom + "</h3>" +
+              "<p>Telephone : " + c.client_telephone + "</p>" +
+              "<p>Destination : " + c.lieu_arrivee + "</p>" +
+              (c.lieu_depart ? "<p>Repere : " + c.lieu_depart + "</p>" : "") +
+              "<p>Paiement : " + c.mode_paiement + "</p>" +
+              "<div class=\"badges\"><span class=\"badge-statut badge-en_preparation\">" + (LIBELLES_COURSE[c.statut] || c.statut) + "</span></div>";
+    if (c.latitude && c.longitude) {
+      html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + c.latitude + "," + c.longitude + "\" target=\"_blank\">Itineraire vers le client</a>";
+    }
+    if (c.statut === "acceptee") {
+      html += "<br><button class=\"btn-recupere btn-recupere-course\" data-id=\"" + c.id + "\">J'ai recupere le client</button>";
+    } else if (c.statut === "en_cours") {
+      html += "<br><button class=\"btn-livree btn-termine-course\" data-id=\"" + c.id + "\">Course terminee</button>";
+    }
+    html += "</div>";
+  }
+  zone.innerHTML = html;
+
+  var boutonsRecupere = document.getElementsByClassName("btn-recupere-course");
+  for (var r = 0; r < boutonsRecupere.length; r++) {
+    boutonsRecupere[r].addEventListener("click", function(e) {
+      majCourse(e.target.getAttribute("data-id"), "en_cours");
+    });
+  }
+  var boutonsTermine = document.getElementsByClassName("btn-termine-course");
+  for (var t = 0; t < boutonsTermine.length; t++) {
+    boutonsTermine[t].addEventListener("click", function(e) {
+      majCourse(e.target.getAttribute("data-id"), "terminee");
+    });
+  }
+}
+
+function afficherCoursesDisponibles(liste) {
+  var zone = document.getElementById("listeCoursesDisponibles");
+  if (liste.length === 0) {
+    zone.innerHTML = "<p class=\"info\">Aucune course disponible pour le moment.</p>";
+    return;
+  }
+  var html = "";
+  for (var i = 0; i < liste.length; i++) {
+    var c = liste[i];
+    var texteDistance = "";
+    if (positionLivreur && c.latitude && c.longitude) {
+      texteDistance = " - " + distanceKm(positionLivreur.lat, positionLivreur.lng, c.latitude, c.longitude).toFixed(1) + " km";
+    }
+    html += "<div class=\"commande-carte\">" +
+              "<h3>" + c.client_nom + texteDistance + "</h3>" +
+              "<p>Telephone : " + c.client_telephone + "</p>" +
+              "<p>Destination : " + c.lieu_arrivee + "</p>" +
+              (c.lieu_depart ? "<p>Repere : " + c.lieu_depart + "</p>" : "") +
+              "<p>Paiement : " + c.mode_paiement + "</p>";
+    if (c.latitude && c.longitude) {
+      html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + c.latitude + "," + c.longitude + "\" target=\"_blank\">Itineraire vers le client</a>";
+    }
+    html += "<br><button class=\"btn-accepter btn-accepter-course\" data-id=\"" + c.id + "\">Accepter cette course</button>" +
+            "</div>";
+  }
+  zone.innerHTML = html;
+
+  var boutonsAccepter = document.getElementsByClassName("btn-accepter-course");
+  for (var a = 0; a < boutonsAccepter.length; a++) {
+    boutonsAccepter[a].addEventListener("click", function(e) {
+      accepterCourse(e.target.getAttribute("data-id"));
+    });
+  }
+}
+
+function accepterCourse(id) {
+  sb.from("courses_moto").update({ livreur_id: livreurCourant.id, statut: "acceptee" }).eq("id", id).eq("statut", "nouvelle").then(function(reponse) {
+    if (reponse.error) {
+      alert("Erreur : cette course a peut-etre deja ete prise par un autre livreur.");
+    }
+    chargerCourses();
+  });
+}
+
+function majCourse(id, nouveauStatut) {
+  sb.from("courses_moto").update({ statut: nouveauStatut }).eq("id", id).then(function(reponse) {
+    if (reponse.error) {
+      alert("Erreur : " + reponse.error.message);
+    }
+    chargerCourses();
   });
 }
 
