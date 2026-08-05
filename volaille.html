@@ -4,12 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Foyre Bamtaare</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: Arial, sans-serif;
     background-color: #0a0e17;
     color: #ffffff;
+    padding-bottom: 30px;
   }
   header {
     background-color: #0d1220;
@@ -25,17 +27,22 @@
     text-decoration: none;
     font-size: 14px;
   }
-  .content { padding: 20px 15px; }
+  .content { padding: 20px 15px; max-width: 600px; margin: 0 auto; }
   .content h2 { color: #ffffff; margin-bottom: 10px; }
-  .content > p {
+  .content > p.intro {
     color: #b0b8c5;
     margin-bottom: 20px;
     line-height: 1.5;
   }
+
+  .bandeau-compte { background-color: #121826; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 13px; color: #b0b8c5; text-align: center; }
+  .bandeau-compte a { color: #1e6fd9; font-weight: bold; text-decoration: none; }
+
   .offres {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+    margin-bottom: 25px;
   }
   .offre {
     background-color: #121826;
@@ -73,18 +80,26 @@
     margin: 6px 0;
   }
   .offre .parunite { color: #b0b8c5; font-size: 11px; margin-top: -4px; margin-bottom: 6px; }
-  .offre p.desc { color: #b0b8c5; font-size: 12px; margin-bottom: 10px; }
-  .offre a {
-    display: inline-block;
-    background-color: #1e6fd9;
-    color: #ffffff;
-    text-decoration: none;
-    padding: 9px;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 13px;
-    width: 100%;
-  }
+  .offre p.desc { color: #b0b8c5; font-size: 12px; }
+
+  #zoneCommande { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; }
+  #zoneCommande h2 { font-size: 16px; margin-bottom: 12px; }
+  .qte-controles { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .btn-qte { background-color: #0a0e17; border: 1px solid #1e6fd9; color: #ffffff; width: 40px; height: 40px; border-radius: 8px; font-size: 20px; font-weight: bold; }
+  .qte-valeur { font-size: 20px; font-weight: bold; min-width: 40px; text-align: center; }
+  .recap-prix { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+  .recap-prix p { font-size: 13px; color: #b0b8c5; margin-top: 4px; }
+  .recap-prix .total { font-size: 18px; font-weight: bold; color: #d62828; margin-top: 8px; }
+
+  #zoneCommande form { display: flex; flex-direction: column; gap: 12px; }
+  label { font-size: 14px; color: #b0b8c5; }
+  input, select { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
+  button[type="submit"] { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; }
+  button[type="submit"]:disabled { opacity: 0.6; }
+  .btn-position { background-color: transparent; border: 1px solid #1e6fd9; color: #1e6fd9; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
+  .msg-position { font-size: 12px; color: #b0b8c5; }
+  .msg-position.ok { color: #80ff9e; }
+
   footer {
     text-align: center;
     padding: 20px;
@@ -104,8 +119,10 @@
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
 <div class="content">
+  <div class="bandeau-compte" id="bandeauCompte"></div>
+
   <h2>Volaille fraiche</h2>
-  <p>Poulets de chair frais, livres directement chez vous. Plus vous commandez, moins c'est cher a l'unite.</p>
+  <p class="intro">Poulets de chair frais, livres directement chez vous. Plus vous commandez, moins c'est cher a l'unite.</p>
 
   <div class="offres">
     <div class="offre">
@@ -115,7 +132,6 @@
         <div class="prix">3 500 FCFA</div>
         <div class="parunite">par piece</div>
         <p class="desc">1 a 4 poulets</p>
-        <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20souhaite%20commander%20des%20poulets%20%28tarif%20unite%29" target="_blank">Commander</a>
       </div>
     </div>
 
@@ -126,7 +142,6 @@
         <div class="prix">3 250 FCFA</div>
         <div class="parunite">par piece</div>
         <p class="desc">5 poulets ou plus</p>
-        <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20souhaite%20commander%20des%20poulets%20%28tarif%205%20pieces%29" target="_blank">Commander</a>
       </div>
     </div>
 
@@ -137,7 +152,6 @@
         <div class="prix">3 100 FCFA</div>
         <div class="parunite">par piece</div>
         <p class="desc">10 poulets ou plus</p>
-        <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20souhaite%20commander%20des%20poulets%20%28tarif%2010%20pieces%29" target="_blank">Commander</a>
       </div>
     </div>
 
@@ -149,15 +163,197 @@
         <div class="prix">3 000 FCFA</div>
         <div class="parunite">par piece</div>
         <p class="desc">20 poulets ou plus</p>
-        <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20souhaite%20commander%20des%20poulets%20%28tarif%2020%20pieces%29" target="_blank">Commander</a>
       </div>
     </div>
+  </div>
+
+  <div id="zoneCommande">
+    <h2>Passer commande</h2>
+
+    <label>Nombre de poulets</label>
+    <div class="qte-controles">
+      <button type="button" class="btn-qte" id="btnMoins">-</button>
+      <span class="qte-valeur" id="qteValeur">1</span>
+      <button type="button" class="btn-qte" id="btnPlus">+</button>
+    </div>
+
+    <div class="recap-prix">
+      <p id="prixUnitaireAffiche">Prix unitaire : 3 500 FCFA</p>
+      <div class="total" id="totalAffiche">Total : 3 500 FCFA</div>
+    </div>
+
+    <form id="formCommande">
+      <label>Nom complet</label>
+      <input type="text" id="cmd_nom" required>
+
+      <label>Numero de telephone</label>
+      <input type="tel" id="cmd_tel" required>
+
+      <label>Mode de paiement</label>
+      <select id="cmd_paiement" required>
+        <option value="">Choisir...</option>
+        <option value="Paiement en ligne (Wave/Orange Money)">Paiement en ligne (Wave/Orange Money)</option>
+        <option value="Paiement en especes a la livraison">Paiement en especes a la livraison</option>
+      </select>
+
+      <label>Adresse de livraison</label>
+      <input type="text" id="cmd_adresse" required>
+
+      <button type="button" class="btn-position" id="btnPositionCmd">Utiliser ma position actuelle (pour le livreur)</button>
+      <p class="msg-position" id="msgPositionCmd">Optionnel, mais aide le livreur a vous trouver facilement.</p>
+
+      <button type="submit" id="btn_commande">Confirmer la commande</button>
+    </form>
   </div>
 </div>
 
 <footer>
   &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+var quantite = 1;
+var positionClient = null;
+var clientConnecte = null;
+
+function prixUnitaire(qte) {
+  if (qte >= 20) return 3000;
+  if (qte >= 10) return 3100;
+  if (qte >= 5) return 3250;
+  return 3500;
+}
+
+function mettreAJourRecap() {
+  var pu = prixUnitaire(quantite);
+  document.getElementById("qteValeur").textContent = quantite;
+  document.getElementById("prixUnitaireAffiche").textContent = "Prix unitaire : " + pu.toLocaleString("fr-FR") + " FCFA";
+  document.getElementById("totalAffiche").textContent = "Total : " + (pu * quantite).toLocaleString("fr-FR") + " FCFA";
+}
+
+document.getElementById("btnMoins").addEventListener("click", function() {
+  if (quantite > 1) quantite--;
+  mettreAJourRecap();
+});
+
+document.getElementById("btnPlus").addEventListener("click", function() {
+  quantite++;
+  mettreAJourRecap();
+});
+
+function verifierConnexion() {
+  var bandeau = document.getElementById("bandeauCompte");
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) {
+      bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\">connectez-vous ou creez un compte</a>.";
+      return;
+    }
+    sb.from("clients").select("*").eq("user_id", user.id).single().then(function(reponse) {
+      if (reponse.data) {
+        clientConnecte = reponse.data;
+        bandeau.innerHTML = "Connecte : " + clientConnecte.nom + " - <a href=\"client-espace.html\">Mes commandes</a>";
+        document.getElementById("cmd_nom").value = clientConnecte.nom;
+        document.getElementById("cmd_tel").value = clientConnecte.telephone;
+      } else {
+        bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\">connectez-vous ou creez un compte</a>.";
+      }
+    });
+  });
+}
+
+document.getElementById("btnPositionCmd").addEventListener("click", function() {
+  var msg = document.getElementById("msgPositionCmd");
+  var btn = document.getElementById("btnPositionCmd");
+
+  if (!navigator.geolocation) {
+    msg.textContent = "Localisation non disponible sur cet appareil.";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Localisation en cours...";
+
+  navigator.geolocation.getCurrentPosition(function(position) {
+    positionClient = { lat: position.coords.latitude, lng: position.coords.longitude };
+    btn.disabled = false;
+    btn.textContent = "Position enregistree";
+    msg.textContent = "Votre position a ete capturee avec succes.";
+    msg.className = "msg-position ok";
+  }, function() {
+    btn.disabled = false;
+    btn.textContent = "Utiliser ma position actuelle (pour le livreur)";
+    msg.textContent = "Impossible d'obtenir votre position. Verifiez que la localisation est activee.";
+  });
+});
+
+document.getElementById("formCommande").addEventListener("submit", envoyerCommande);
+
+function envoyerCommande(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btn_commande");
+  btn.disabled = true;
+  btn.textContent = "Envoi en cours...";
+
+  var nom = document.getElementById("cmd_nom").value;
+  var tel = document.getElementById("cmd_tel").value;
+  var paiement = document.getElementById("cmd_paiement").value;
+  var adresse = document.getElementById("cmd_adresse").value;
+  var pu = prixUnitaire(quantite);
+  var total = pu * quantite;
+
+  var donneesCommande = {
+    client_nom: nom,
+    client_telephone: tel,
+    produit: "Poulet de chair x" + quantite + " (" + pu.toLocaleString("fr-FR") + " FCFA/piece)",
+    produits: [{ nom: "Poulet de chair", prix: pu, quantite: quantite }],
+    total: total,
+    mode_paiement: paiement,
+    adresse_livraison: adresse,
+    statut: "nouvelle"
+  };
+
+  if (clientConnecte) {
+    donneesCommande.client_id = clientConnecte.id;
+  }
+
+  if (positionClient) {
+    donneesCommande.latitude = positionClient.lat;
+    donneesCommande.longitude = positionClient.lng;
+  }
+
+  sb.from("commandes").insert([donneesCommande]).then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Confirmer la commande";
+
+    if (reponse.error) {
+      alert("Erreur : la commande n'a pas pu etre enregistree. Reessayez.");
+      return;
+    }
+
+    var message = "Bonjour, je passe une commande :\n- Poulet de chair x" + quantite +
+                   " (" + total.toLocaleString("fr-FR") + " FCFA)" +
+                   "\nNom : " + nom + "\nTelephone : " + tel + "\nPaiement : " + paiement + "\nAdresse : " + adresse;
+    window.open("https://wa.me/221777589444?text=" + encodeURIComponent(message), "_blank");
+
+    document.getElementById("formCommande").reset();
+    quantite = 1;
+    positionClient = null;
+    mettreAJourRecap();
+
+    if (clientConnecte) {
+      window.location.href = "client-espace.html";
+    }
+  });
+}
+
+verifierConnexion();
+mettreAJourRecap();
+</script>
 
 </body>
 </html>
