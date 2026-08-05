@@ -170,6 +170,20 @@ var sb = supabase.createClient(
 var NUMERO_WHATSAPP = "221777589444";
 var positionMoto = null;
 
+function remplirProfilLocal() {
+  var nom = localStorage.getItem("aw_client_nom");
+  var tel = localStorage.getItem("aw_client_telephone");
+  if (nom) {
+    document.getElementById("m_nom").value = nom;
+    document.getElementById("v_nom").value = nom;
+  }
+  if (tel) {
+    document.getElementById("m_telephone").value = tel;
+    document.getElementById("v_telephone").value = tel;
+  }
+}
+remplirProfilLocal();
+
 document.getElementById("btnPositionMoto").addEventListener("click", function() {
   var msg = document.getElementById("msgPositionMoto");
   var btn = document.getElementById("btnPositionMoto");
@@ -228,6 +242,8 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
   var nom = document.getElementById("m_nom").value;
   var telephone = document.getElementById("m_telephone").value;
   var paiement = document.getElementById("m_paiement").value;
+  localStorage.setItem("aw_client_nom", nom);
+  localStorage.setItem("aw_client_telephone", telephone);
 
   sb.from("courses_moto").insert([{
     client_nom: nom,
@@ -345,6 +361,8 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
   var nom = document.getElementById("v_nom").value;
   var telephone = document.getElementById("v_telephone").value;
   var paiement = document.getElementById("v_paiement").value;
+  localStorage.setItem("aw_client_nom", nom);
+  localStorage.setItem("aw_client_telephone", telephone);
 
   sb.from("reservations_voiture").insert([{
     client_nom: nom,
