@@ -118,10 +118,19 @@
         <button type="button" class="btn-direction" id="btnRetour" data-direction="retour">Bokidiawe &#8594; Dakar</button>
       </div>
 
-      <label>Date du voyage</label>
-      <input type="date" id="v_date" required>
+      <div id="zoneDateAller">
+        <label>Date et heure de depart</label>
+        <select id="v_depart_select">
+          <option value="">Chargement...</option>
+        </select>
+      </div>
 
-      <p class="msg" style="background-color:#14223a;color:#6aa9ff;">Le prix du trajet vous sera communique directement (il depend du nombre de bagages et sera confirme avant le depart).</p>
+      <div id="zoneDateRetour" style="display:none;">
+        <label>Date du voyage</label>
+        <input type="date" id="v_date">
+      </div>
+
+      <p class="msg" style="background-color:#14223a;color:#6aa9ff;">Place : 12 500 FCFA (23kg de bagages inclus). Valise supplementaire au-dela de 23kg : +1 000 FCFA/valise.</p>
 
       <div id="zoneRassemblement"></div>
 
@@ -137,17 +146,36 @@
         </div>
       </div>
 
+      <div class="recap-prix" style="margin-top:15px;">
+        <p id="prixDetailAffiche">1 place : 12 500 FCFA</p>
+        <div class="total" id="prixTotalAffiche">Total : 12 500 FCFA</div>
+      </div>
+
       <form id="formVoiture">
-        <label>Nom complet</label>
-        <input type="text" id="v_nom" required>
+        <label>Prenom</label>
+        <input type="text" id="v_prenom" required>
+
+        <label>Nom</label>
+        <input type="text" id="v_nom_famille" required>
+
+        <label>Numero CNI ou passeport</label>
+        <input type="text" id="v_cni" required>
 
         <label>Numero de telephone</label>
         <input type="tel" id="v_telephone" required>
+
+        <div id="zoneVillageDepart" style="display:none;">
+          <label>Village de depart</label>
+          <input type="text" id="v_village" placeholder="Nom du village">
+        </div>
 
         <div id="zonePositionRetour" style="display:none;">
           <button type="button" class="btn-position" id="btnPositionVoiture">Utiliser ma position actuelle (obligatoire pour le retour)</button>
           <p class="msg-position" id="msgPositionVoiture">Necessaire pour que le chauffeur vienne vous chercher a domicile.</p>
         </div>
+
+        <label>Valises supplementaires (au-dela de 23kg)</label>
+        <input type="number" id="v_valises" min="0" value="0">
 
         <label>Mode de paiement</label>
         <select id="v_paiement" required>
@@ -182,14 +210,19 @@ var positionMoto = null;
 function remplirProfilLocal() {
   var nom = localStorage.getItem("aw_client_nom");
   var tel = localStorage.getItem("aw_client_telephone");
+  var prenom = localStorage.getItem("aw_client_prenom");
+  var nomFamille = localStorage.getItem("aw_client_nom_famille");
+  var cni = localStorage.getItem("aw_client_cni");
   if (nom) {
     document.getElementById("m_nom").value = nom;
-    document.getElementById("v_nom").value = nom;
   }
   if (tel) {
     document.getElementById("m_telephone").value = tel;
     document.getElementById("v_telephone").value = tel;
   }
+  if (prenom) document.getElementById("v_prenom").value = prenom;
+  if (nomFamille) document.getElementById("v_nom_famille").value = nomFamille;
+  if (cni) document.getElementById("v_cni").value = cni;
 }
 remplirProfilLocal();
 
@@ -319,9 +352,15 @@ document.getElementById("btnPositionVoiture").addEventListener("click", function
 function afficherZoneDirection() {
   var zoneRassemblement = document.getElementById("zoneRassemblement");
   var zonePosition = document.getElementById("zonePositionRetour");
+  var zoneVillage = document.getElementById("zoneVillageDepart");
+  var zoneDateAller = document.getElementById("zoneDateAller");
+  var zoneDateRetour = document.getElementById("zoneDateRetour");
 
   if (direction === "aller") {
     zonePosition.style.display = "none";
+    zoneVillage.style.display = "none";
+    zoneDateAller.style.display = "block";
+    zoneDateRetour.style.display = "none";
     zoneRassemblement.innerHTML = "<p style=\"color:#b0b8c5;font-size:13px;margin-bottom:12px;\">Chargement du point de rassemblement...</p>";
     sb.from("chauffeurs").select("*").eq("statut", "approuve").not("lieu_rassemblement", "is", null).limit(1).then(function(reponse) {
       var c = reponse.data && reponse.data[0];
@@ -332,10 +371,33 @@ function afficherZoneDirection() {
         zoneRassemblement.innerHTML = "<p style=\"color:#ffb84d;font-size:12px;margin-bottom:12px;\">Point de rassemblement pas encore renseigne, contactez-nous.</p>";
       }
     });
+    chargerDepartsProgrammes();
   } else {
     zoneRassemblement.innerHTML = "";
     zonePosition.style.display = "block";
+    zoneVillage.style.display = "block";
+    zoneDateAller.style.display = "none";
+    zoneDateRetour.style.display = "block";
   }
+}
+
+function chargerDepartsProgrammes() {
+  var select = document.getElementById("v_depart_select");
+  var aujourdHui = new Date().toISOString().split("T")[0];
+  select.innerHTML = "<option value=\"\">Chargement...</option>";
+  sb.from("departs_programmes").select("*").eq("statut", "actif").gte("date_depart", aujourdHui).order("date_depart", { ascending: true }).then(function(reponse) {
+    var data = reponse.data || [];
+    if (data.length === 0) {
+      select.innerHTML = "<option value=\"\">Aucun depart programme, contactez-nous</option>";
+      return;
+    }
+    var html = "<option value=\"\">Choisir...</option>";
+    for (var i = 0; i < data.length; i++) {
+      var d = data[i];
+      html += "<option value=\"" + d.date_depart + "\">" + d.date_depart + " a " + d.heure_depart + "</option>";
+    }
+    select.innerHTML = html;
+  });
 }
 
 document.getElementById("btnAller").addEventListener("click", function() {
@@ -361,8 +423,31 @@ document.getElementById("v_date").addEventListener("change", function() {
   chargerSieges();
 });
 
+document.getElementById("v_depart_select").addEventListener("change", function() {
+  siegeSelectionne = null;
+  chargerSieges();
+});
+
+document.getElementById("v_valises").addEventListener("input", mettreAJourPrix);
+
+function dateVoyageActuelle() {
+  return direction === "aller" ? document.getElementById("v_depart_select").value : document.getElementById("v_date").value;
+}
+
+function mettreAJourPrix() {
+  var valises = parseInt(document.getElementById("v_valises").value) || 0;
+  var total = 12500 + (valises * 1000);
+  var detail = "1 place : 12 500 FCFA";
+  if (valises > 0) {
+    detail += " + " + valises + " valise" + (valises > 1 ? "s" : "") + " supplementaire" + (valises > 1 ? "s" : "") + " : " + (valises * 1000).toLocaleString("fr-FR") + " FCFA";
+  }
+  document.getElementById("prixDetailAffiche").textContent = detail;
+  document.getElementById("prixTotalAffiche").textContent = "Total : " + total.toLocaleString("fr-FR") + " FCFA";
+  return total;
+}
+
 function chargerSieges() {
-  var dateVoyage = document.getElementById("v_date").value;
+  var dateVoyage = dateVoyageActuelle();
   var grille = document.getElementById("grilleSieges");
 
   if (!dateVoyage) {
@@ -404,9 +489,9 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
   var msg = document.getElementById("msgVoiture");
   msg.innerHTML = "";
 
-  var dateVoyage = document.getElementById("v_date").value;
+  var dateVoyage = dateVoyageActuelle();
   if (!dateVoyage) {
-    msg.innerHTML = "<div class=\"msg erreur\">Choisissez une date de voyage.</div>";
+    msg.innerHTML = "<div class=\"msg erreur\">" + (direction === "aller" ? "Choisissez une date/heure de depart." : "Choisissez une date de voyage.") + "</div>";
     return;
   }
   if (!siegeSelectionne) {
@@ -421,24 +506,42 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
   btn.disabled = true;
   btn.textContent = "Reservation en cours...";
 
-  var nom = document.getElementById("v_nom").value;
+  var prenom = document.getElementById("v_prenom").value;
+  var nomFamille = document.getElementById("v_nom_famille").value;
+  var cni = document.getElementById("v_cni").value;
   var telephone = document.getElementById("v_telephone").value;
   var paiement = document.getElementById("v_paiement").value;
-  localStorage.setItem("aw_client_nom", nom);
+  var valises = parseInt(document.getElementById("v_valises").value) || 0;
+  var village = document.getElementById("v_village").value;
+  var prixTotal = 12500 + (valises * 1000);
+  var nomComplet = prenom + " " + nomFamille;
+
+  localStorage.setItem("aw_client_nom", nomComplet);
   localStorage.setItem("aw_client_telephone", telephone);
+  localStorage.setItem("aw_client_prenom", prenom);
+  localStorage.setItem("aw_client_nom_famille", nomFamille);
+  localStorage.setItem("aw_client_cni", cni);
 
   var donneesReservation = {
-    client_nom: nom,
+    client_nom: nomComplet,
+    prenom: prenom,
+    nom_famille: nomFamille,
+    cni_passeport: cni,
     client_telephone: telephone,
     direction: direction,
     date_voyage: dateVoyage,
     siege: siegeSelectionne,
     mode_paiement: paiement,
+    valises_supplementaires: valises,
+    prix_total: prixTotal,
     statut: "confirmee"
   };
-  if (direction === "retour" && positionVoiture) {
-    donneesReservation.latitude = positionVoiture.lat;
-    donneesReservation.longitude = positionVoiture.lng;
+  if (direction === "retour") {
+    donneesReservation.village_depart = village;
+    if (positionVoiture) {
+      donneesReservation.latitude = positionVoiture.lat;
+      donneesReservation.longitude = positionVoiture.lng;
+    }
   }
 
   sb.from("reservations_voiture").insert([donneesReservation]).then(function(reponse) {
@@ -457,9 +560,13 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
     }
 
     var texteDirection = direction === "aller" ? "Dakar -> Bokidiawe" : "Bokidiawe -> Dakar";
-    msg.innerHTML = "<div class=\"msg succes\">Chaise " + siegeSelectionne + " reservee pour le " + dateVoyage + " !</div>";
+    msg.innerHTML = "<div class=\"msg succes\">Chaise " + siegeSelectionne + " reservee pour le " + dateVoyage + " ! Total : " + prixTotal.toLocaleString("fr-FR") + " FCFA</div>";
     var message = "Bonjour, je reserve une place :\nTrajet : " + texteDirection + "\nDate : " + dateVoyage +
-                   "\nChaise : " + siegeSelectionne + "\nNom : " + nom + "\nTelephone : " + telephone + "\nPaiement : " + paiement;
+                   "\nChaise : " + siegeSelectionne + "\nNom : " + nomComplet + "\nCNI/Passeport : " + cni +
+                   "\nTelephone : " + telephone + "\nValises supplementaires : " + valises +
+                   "\nTotal : " + prixTotal.toLocaleString("fr-FR") + " FCFA" +
+                   (village ? "\nVillage de depart : " + village : "") +
+                   "\nPaiement : " + paiement;
     window.open("https://wa.me/" + NUMERO_WHATSAPP + "?text=" + encodeURIComponent(message), "_blank");
 
     document.getElementById("formVoiture").reset();
@@ -468,10 +575,13 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
     document.getElementById("btnPositionVoiture").textContent = "Utiliser ma position actuelle (obligatoire pour le retour)";
     document.getElementById("msgPositionVoiture").textContent = "Necessaire pour que le chauffeur vienne vous chercher a domicile.";
     document.getElementById("msgPositionVoiture").className = "msg-position";
+    mettreAJourPrix();
+    remplirProfilLocal();
     chargerSieges();
   });
 });
 
+mettreAJourPrix();
 afficherZoneDirection();
 </script>
 
