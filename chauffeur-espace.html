@@ -96,6 +96,17 @@ function chargerEspace() {
           "<p class=\"msg-zone\" id=\"msgRassemblement\"></p>" +
         "</div>" +
         "<div class=\"carte\">" +
+          "<h2>Departs programmes (Dakar &#8594; Bokidiawe)</h2>" +
+          "<p class=\"info\">Les clients ne pourront reserver que sur ces dates/heures precises.</p>" +
+          "<label>Date</label>" +
+          "<input type=\"date\" id=\"nouvelleDate\">" +
+          "<label>Heure</label>" +
+          "<input type=\"time\" id=\"nouvelleHeure\">" +
+          "<button type=\"button\" id=\"btnAjouterDepart\">Ajouter ce depart</button>" +
+          "<p class=\"msg-zone\" id=\"msgDepart\"></p>" +
+          "<div id=\"listeDeparts\" style=\"margin-top:12px;\"><p class=\"info\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"carte\">" +
           "<h2>Aller - Dakar &#8594; Bokidiawe</h2>" +
           "<p class=\"info\">Passagers qui rejoignent le point de rassemblement.</p>" +
           "<div id=\"listeAller\"><p class=\"info\">Chargement...</p></div>" +
@@ -108,6 +119,8 @@ function chargerEspace() {
 
       document.getElementById("btnPositionRassemblement").addEventListener("click", capturerPositionRassemblement);
       document.getElementById("btnEnregistrerRassemblement").addEventListener("click", enregistrerRassemblement);
+      document.getElementById("btnAjouterDepart").addEventListener("click", ajouterDepart);
+      chargerDeparts();
       chargerReservations();
     });
   });
@@ -173,6 +186,79 @@ function enregistrerRassemblement() {
   });
 }
 
+function ajouterDepart() {
+  var btn = document.getElementById("btnAjouterDepart");
+  var msg = document.getElementById("msgDepart");
+  var date = document.getElementById("nouvelleDate").value;
+  var heure = document.getElementById("nouvelleHeure").value;
+
+  if (!date || !heure) {
+    msg.className = "msg-zone err";
+    msg.textContent = "Choisissez une date et une heure.";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Ajout en cours...";
+
+  sb.from("departs_programmes").insert([{
+    date_depart: date,
+    heure_depart: heure,
+    chauffeur_id: chauffeurCourant.id,
+    statut: "actif"
+  }]).then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Ajouter ce depart";
+    if (reponse.error) {
+      msg.className = "msg-zone err";
+      msg.textContent = "Erreur : " + reponse.error.message;
+      return;
+    }
+    msg.className = "msg-zone ok";
+    msg.textContent = "Depart ajoute.";
+    document.getElementById("nouvelleDate").value = "";
+    document.getElementById("nouvelleHeure").value = "";
+    chargerDeparts();
+  });
+}
+
+function chargerDeparts() {
+  var aujourdHui = new Date().toISOString().split("T")[0];
+  sb.from("departs_programmes").select("*").eq("chauffeur_id", chauffeurCourant.id).eq("statut", "actif").gte("date_depart", aujourdHui).order("date_depart", { ascending: true }).then(function(reponse) {
+    var data = reponse.data || [];
+    var zone = document.getElementById("listeDeparts");
+    if (data.length === 0) {
+      zone.innerHTML = "<p class=\"info\">Aucun depart programme.</p>";
+      return;
+    }
+    var html = "<div class=\"grille-reservations\">";
+    for (var i = 0; i < data.length; i++) {
+      var d = data[i];
+      html += "<div class=\"reservation-carte\">" +
+                "<h3>" + d.date_depart + "</h3>" +
+                "<p>" + d.heure_depart + "</p>" +
+                "<button type=\"button\" class=\"btn-supprimer-depart\" data-id=\"" + d.id + "\" style=\"background-color:transparent;border:1px solid #d62828;color:#d62828;margin-top:8px;\">Supprimer</button>" +
+              "</div>";
+    }
+    html += "</div>";
+    zone.innerHTML = html;
+
+    var boutons = zone.getElementsByClassName("btn-supprimer-depart");
+    for (var b = 0; b < boutons.length; b++) {
+      boutons[b].addEventListener("click", function(e) {
+        e.stopPropagation();
+        supprimerDepart(e.target.getAttribute("data-id"));
+      });
+    }
+  });
+}
+
+function supprimerDepart(id) {
+  sb.from("departs_programmes").update({ statut: "annule" }).eq("id", id).then(function() {
+    chargerDeparts();
+  });
+}
+
 function chargerReservations() {
   var aujourdHui = new Date().toISOString().split("T")[0];
   sb.from("reservations_voiture").select("*").gte("date_voyage", aujourdHui).neq("statut", "annulee").order("date_voyage", { ascending: true }).then(function(reponse) {
@@ -198,8 +284,11 @@ function afficherAller(liste) {
               "<p>" + r.client_nom + "</p>" +
               "<div class=\"details-reservation\">" +
                 "<p>Date : " + r.date_voyage + "</p>" +
+                "<p>Nom : " + (r.prenom || "") + " " + (r.nom_famille || r.client_nom) + "</p>" +
+                (r.cni_passeport ? "<p>CNI/Passeport : " + r.cni_passeport + "</p>" : "") +
                 "<p>Telephone : " + r.client_telephone + "</p>" +
                 "<p>Paiement : " + r.mode_paiement + "</p>" +
+                (r.prix_total ? "<p>Prix : " + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</p>" : "") +
               "</div>" +
             "</div>";
   }
@@ -222,8 +311,12 @@ function afficherRetour(liste) {
               "<p>" + r.client_nom + "</p>" +
               "<div class=\"details-reservation\">" +
                 "<p>Date : " + r.date_voyage + "</p>" +
+                "<p>Nom : " + (r.prenom || "") + " " + (r.nom_famille || r.client_nom) + "</p>" +
+                (r.cni_passeport ? "<p>CNI/Passeport : " + r.cni_passeport + "</p>" : "") +
+                (r.village_depart ? "<p>Village de depart : " + r.village_depart + "</p>" : "") +
                 "<p>Telephone : " + r.client_telephone + "</p>" +
-                "<p>Paiement : " + r.mode_paiement + "</p>";
+                "<p>Paiement : " + r.mode_paiement + "</p>" +
+                (r.prix_total ? "<p>Prix : " + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</p>" : "");
     if (r.latitude && r.longitude) {
       html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + r.latitude + "," + r.longitude + "\" target=\"_blank\">Itineraire vers le client</a>";
     } else {
