@@ -27,9 +27,12 @@
   .msg-zone { font-size: 13px; margin-top: 8px; }
   .msg-zone.ok { color: #80ff9e; }
   .msg-zone.err { color: #ff8080; }
-  .reservation-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+  .reservation-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; cursor: pointer; }
   .reservation-carte h3 { font-size: 14px; }
   .reservation-carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
+  .grille-reservations { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .details-reservation { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a3040; }
+  .reservation-carte.ouvert .details-reservation { display: block; }
   .btn-maps { display: inline-block; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; }
 </style>
 </head>
@@ -187,17 +190,22 @@ function afficherAller(liste) {
     zone.innerHTML = "<p class=\"info\">Aucune reservation pour le moment.</p>";
     return;
   }
-  var html = "";
+  var html = "<div class=\"grille-reservations\">";
   for (var i = 0; i < liste.length; i++) {
     var r = liste[i];
     html += "<div class=\"reservation-carte\">" +
-              "<h3>" + r.client_nom + " - Chaise " + r.siege + "</h3>" +
-              "<p>Date : " + r.date_voyage + "</p>" +
-              "<p>Telephone : " + r.client_telephone + "</p>" +
-              "<p>Paiement : " + r.mode_paiement + "</p>" +
+              "<h3>Chaise " + r.siege + "</h3>" +
+              "<p>" + r.client_nom + "</p>" +
+              "<div class=\"details-reservation\">" +
+                "<p>Date : " + r.date_voyage + "</p>" +
+                "<p>Telephone : " + r.client_telephone + "</p>" +
+                "<p>Paiement : " + r.mode_paiement + "</p>" +
+              "</div>" +
             "</div>";
   }
+  html += "</div>";
   zone.innerHTML = html;
+  attacherClicsCartes(zone);
 }
 
 function afficherRetour(liste) {
@@ -206,22 +214,36 @@ function afficherRetour(liste) {
     zone.innerHTML = "<p class=\"info\">Aucune reservation pour le moment.</p>";
     return;
   }
-  var html = "";
+  var html = "<div class=\"grille-reservations\">";
   for (var i = 0; i < liste.length; i++) {
     var r = liste[i];
     html += "<div class=\"reservation-carte\">" +
-              "<h3>" + r.client_nom + " - Chaise " + r.siege + "</h3>" +
-              "<p>Date : " + r.date_voyage + "</p>" +
-              "<p>Telephone : " + r.client_telephone + "</p>" +
-              "<p>Paiement : " + r.mode_paiement + "</p>";
+              "<h3>Chaise " + r.siege + "</h3>" +
+              "<p>" + r.client_nom + "</p>" +
+              "<div class=\"details-reservation\">" +
+                "<p>Date : " + r.date_voyage + "</p>" +
+                "<p>Telephone : " + r.client_telephone + "</p>" +
+                "<p>Paiement : " + r.mode_paiement + "</p>";
     if (r.latitude && r.longitude) {
       html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + r.latitude + "," + r.longitude + "\" target=\"_blank\">Itineraire vers le client</a>";
     } else {
       html += "<p style=\"color:#ffb84d;\">Position non fournie par le client.</p>";
     }
-    html += "</div>";
+    html += "</div></div>";
   }
+  html += "</div>";
   zone.innerHTML = html;
+  attacherClicsCartes(zone);
+}
+
+function attacherClicsCartes(zone) {
+  var cartes = zone.getElementsByClassName("reservation-carte");
+  for (var i = 0; i < cartes.length; i++) {
+    cartes[i].addEventListener("click", function(e) {
+      if (e.target.tagName === "A") return;
+      this.classList.toggle("ouvert");
+    });
+  }
 }
 
 chargerEspace();
