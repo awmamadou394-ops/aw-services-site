@@ -34,6 +34,15 @@
   .details-reservation { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a3040; }
   .reservation-carte.ouvert .details-reservation { display: block; }
   .btn-maps { display: inline-block; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; }
+  .direction-choix { display: flex; gap: 8px; margin-top: 8px; margin-bottom: 8px; }
+  .btn-direction { flex: 1; background-color: #0a0e17; border: 1px solid #2a3040; color: #b0b8c5; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-top: 0; }
+  .btn-direction.actif { background-color: #1e6fd9; border-color: #1e6fd9; color: #ffffff; }
+  .fenetre-fond { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); z-index: 20; align-items: center; justify-content: center; padding: 20px; }
+  .fenetre-fond.visible { display: flex; }
+  .fenetre-contenu { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; max-width: 400px; width: 100%; max-height: 80vh; overflow-y: auto; }
+  .fenetre-contenu h3 { font-size: 16px; margin-bottom: 12px; }
+  .fenetre-contenu p { font-size: 14px; color: #b0b8c5; margin-top: 6px; }
+  .btn-fermer-fenetre { background-color: transparent; border: 1px solid #d62828; color: #d62828; margin-top: 15px; }
 </style>
 </head>
 <body>
@@ -45,6 +54,14 @@
 
 <div class="content">
   <div id="zoneContenu" class="chargement">Chargement...</div>
+</div>
+
+<div class="fenetre-fond" id="fenetreFond">
+  <div class="fenetre-contenu">
+    <h3>Details de la reservation</h3>
+    <div id="fenetreDetails"></div>
+    <button type="button" class="btn-fermer-fenetre" id="btnFermerFenetre">Fermer</button>
+  </div>
 </div>
 
 <script>
@@ -96,8 +113,13 @@ function chargerEspace() {
           "<p class=\"msg-zone\" id=\"msgRassemblement\"></p>" +
         "</div>" +
         "<div class=\"carte\">" +
-          "<h2>Departs programmes (Dakar &#8594; Bokidiawe)</h2>" +
+          "<h2>Departs programmes</h2>" +
           "<p class=\"info\">Les clients ne pourront reserver que sur ces dates/heures precises.</p>" +
+          "<label>Trajet</label>" +
+          "<div class=\"direction-choix\">" +
+            "<button type=\"button\" class=\"btn-direction actif\" id=\"btnDirAller\" data-direction=\"aller\">Dakar &#8594; Bokidiawe</button>" +
+            "<button type=\"button\" class=\"btn-direction\" id=\"btnDirRetour\" data-direction=\"retour\">Bokidiawe &#8594; Dakar</button>" +
+          "</div>" +
           "<label>Date</label>" +
           "<input type=\"date\" id=\"nouvelleDate\">" +
           "<label>Heure</label>" +
@@ -120,11 +142,25 @@ function chargerEspace() {
       document.getElementById("btnPositionRassemblement").addEventListener("click", capturerPositionRassemblement);
       document.getElementById("btnEnregistrerRassemblement").addEventListener("click", enregistrerRassemblement);
       document.getElementById("btnAjouterDepart").addEventListener("click", ajouterDepart);
+      document.getElementById("btnDirAller").addEventListener("click", function() {
+        directionDepart = "aller";
+        document.getElementById("btnDirAller").classList.add("actif");
+        document.getElementById("btnDirRetour").classList.remove("actif");
+        chargerDeparts();
+      });
+      document.getElementById("btnDirRetour").addEventListener("click", function() {
+        directionDepart = "retour";
+        document.getElementById("btnDirRetour").classList.add("actif");
+        document.getElementById("btnDirAller").classList.remove("actif");
+        chargerDeparts();
+      });
       chargerDeparts();
       chargerReservations();
     });
   });
 }
+
+var directionDepart = "aller";
 
 var nouvellePosition = null;
 
@@ -204,6 +240,7 @@ function ajouterDepart() {
   sb.from("departs_programmes").insert([{
     date_depart: date,
     heure_depart: heure,
+    direction: directionDepart,
     chauffeur_id: chauffeurCourant.id,
     statut: "actif"
   }]).then(function(reponse) {
@@ -224,7 +261,7 @@ function ajouterDepart() {
 
 function chargerDeparts() {
   var aujourdHui = new Date().toISOString().split("T")[0];
-  sb.from("departs_programmes").select("*").eq("chauffeur_id", chauffeurCourant.id).eq("statut", "actif").gte("date_depart", aujourdHui).order("date_depart", { ascending: true }).then(function(reponse) {
+  sb.from("departs_programmes").select("*").eq("chauffeur_id", chauffeurCourant.id).eq("statut", "actif").eq("direction", directionDepart).gte("date_depart", aujourdHui).order("date_depart", { ascending: true }).then(function(reponse) {
     var data = reponse.data || [];
     var zone = document.getElementById("listeDeparts");
     if (data.length === 0) {
@@ -270,6 +307,38 @@ function chargerReservations() {
   });
 }
 
+var reservationsIndex = {};
+
+document.getElementById("btnFermerFenetre").addEventListener("click", function() {
+  document.getElementById("fenetreFond").classList.remove("visible");
+});
+document.getElementById("fenetreFond").addEventListener("click", function(e) {
+  if (e.target.id === "fenetreFond") {
+    document.getElementById("fenetreFond").classList.remove("visible");
+  }
+});
+
+function ouvrirFenetre(id) {
+  var r = reservationsIndex[id];
+  if (!r) return;
+  var html = "<p>Nom : " + (r.prenom || "") + " " + (r.nom_famille || r.client_nom) + "</p>" +
+             "<p>Date : " + r.date_voyage + "</p>";
+  if (r.cni_passeport) html += "<p>CNI/Passeport : " + r.cni_passeport + "</p>";
+  if (r.direction === "retour" && r.village_depart) html += "<p>Village de depart : " + r.village_depart + "</p>";
+  html += "<p>Telephone : " + r.client_telephone + "</p>";
+  html += "<p>Paiement : " + r.mode_paiement + "</p>";
+  if (r.prix_total) html += "<p>Prix : " + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</p>";
+  if (r.direction === "retour") {
+    if (r.latitude && r.longitude) {
+      html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + r.latitude + "," + r.longitude + "\" target=\"_blank\">Itineraire vers le client</a>";
+    } else {
+      html += "<p style=\"color:#ffb84d;\">Position non fournie par le client.</p>";
+    }
+  }
+  document.getElementById("fenetreDetails").innerHTML = html;
+  document.getElementById("fenetreFond").classList.add("visible");
+}
+
 function afficherAller(liste) {
   var zone = document.getElementById("listeAller");
   if (liste.length === 0) {
@@ -279,17 +348,9 @@ function afficherAller(liste) {
   var html = "<div class=\"grille-reservations\">";
   for (var i = 0; i < liste.length; i++) {
     var r = liste[i];
-    html += "<div class=\"reservation-carte\">" +
+    reservationsIndex[r.id] = r;
+    html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">" +
               "<h3>Chaise " + r.siege + "</h3>" +
-              "<p>" + r.client_nom + "</p>" +
-              "<div class=\"details-reservation\">" +
-                "<p>Date : " + r.date_voyage + "</p>" +
-                "<p>Nom : " + (r.prenom || "") + " " + (r.nom_famille || r.client_nom) + "</p>" +
-                (r.cni_passeport ? "<p>CNI/Passeport : " + r.cni_passeport + "</p>" : "") +
-                "<p>Telephone : " + r.client_telephone + "</p>" +
-                "<p>Paiement : " + r.mode_paiement + "</p>" +
-                (r.prix_total ? "<p>Prix : " + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</p>" : "") +
-              "</div>" +
             "</div>";
   }
   html += "</div>";
@@ -306,23 +367,10 @@ function afficherRetour(liste) {
   var html = "<div class=\"grille-reservations\">";
   for (var i = 0; i < liste.length; i++) {
     var r = liste[i];
-    html += "<div class=\"reservation-carte\">" +
+    reservationsIndex[r.id] = r;
+    html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">" +
               "<h3>Chaise " + r.siege + "</h3>" +
-              "<p>" + r.client_nom + "</p>" +
-              "<div class=\"details-reservation\">" +
-                "<p>Date : " + r.date_voyage + "</p>" +
-                "<p>Nom : " + (r.prenom || "") + " " + (r.nom_famille || r.client_nom) + "</p>" +
-                (r.cni_passeport ? "<p>CNI/Passeport : " + r.cni_passeport + "</p>" : "") +
-                (r.village_depart ? "<p>Village de depart : " + r.village_depart + "</p>" : "") +
-                "<p>Telephone : " + r.client_telephone + "</p>" +
-                "<p>Paiement : " + r.mode_paiement + "</p>" +
-                (r.prix_total ? "<p>Prix : " + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</p>" : "");
-    if (r.latitude && r.longitude) {
-      html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + r.latitude + "," + r.longitude + "\" target=\"_blank\">Itineraire vers le client</a>";
-    } else {
-      html += "<p style=\"color:#ffb84d;\">Position non fournie par le client.</p>";
-    }
-    html += "</div></div>";
+            "</div>";
   }
   html += "</div>";
   zone.innerHTML = html;
@@ -333,8 +381,7 @@ function attacherClicsCartes(zone) {
   var cartes = zone.getElementsByClassName("reservation-carte");
   for (var i = 0; i < cartes.length; i++) {
     cartes[i].addEventListener("click", function(e) {
-      if (e.target.tagName === "A") return;
-      this.classList.toggle("ouvert");
+      ouvrirFenetre(this.getAttribute("data-id"));
     });
   }
 }
