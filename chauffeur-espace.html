@@ -339,21 +339,43 @@ function ouvrirFenetre(id) {
   document.getElementById("fenetreFond").classList.add("visible");
 }
 
+function grouperParDate(liste) {
+  var groupes = {};
+  var dates = [];
+  for (var i = 0; i < liste.length; i++) {
+    var d = liste[i].date_voyage;
+    if (!groupes[d]) {
+      groupes[d] = [];
+      dates.push(d);
+    }
+    groupes[d].push(liste[i]);
+  }
+  dates.sort();
+  return { groupes: groupes, dates: dates };
+}
+
 function afficherAller(liste) {
   var zone = document.getElementById("listeAller");
   if (liste.length === 0) {
     zone.innerHTML = "<p class=\"info\">Aucune reservation pour le moment.</p>";
     return;
   }
-  var html = "<div class=\"grille-reservations\">";
-  for (var i = 0; i < liste.length; i++) {
-    var r = liste[i];
-    reservationsIndex[r.id] = r;
-    html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">" +
-              "<h3>Chaise " + r.siege + "</h3>" +
-            "</div>";
+  var g = grouperParDate(liste);
+  var html = "";
+  for (var d = 0; d < g.dates.length; d++) {
+    var date = g.dates[d];
+    html += "<p style=\"color:#1e6fd9;font-size:13px;font-weight:bold;margin-top:14px;margin-bottom:8px;\">Depart du " + date + "</p>";
+    html += "<div class=\"grille-reservations\">";
+    var groupe = g.groupes[date];
+    for (var i = 0; i < groupe.length; i++) {
+      var r = groupe[i];
+      reservationsIndex[r.id] = r;
+      html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">" +
+                "<h3>Chaise " + r.siege + "</h3>" +
+              "</div>";
+    }
+    html += "</div>";
   }
-  html += "</div>";
   zone.innerHTML = html;
   attacherClicsCartes(zone);
 }
@@ -364,15 +386,22 @@ function afficherRetour(liste) {
     zone.innerHTML = "<p class=\"info\">Aucune reservation pour le moment.</p>";
     return;
   }
-  var html = "<div class=\"grille-reservations\">";
-  for (var i = 0; i < liste.length; i++) {
-    var r = liste[i];
-    reservationsIndex[r.id] = r;
-    html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">" +
-              "<h3>Chaise " + r.siege + "</h3>" +
-            "</div>";
+  var g = grouperParDate(liste);
+  var html = "";
+  for (var d = 0; d < g.dates.length; d++) {
+    var date = g.dates[d];
+    html += "<p style=\"color:#1e6fd9;font-size:13px;font-weight:bold;margin-top:14px;margin-bottom:8px;\">Depart du " + date + "</p>";
+    html += "<div class=\"grille-reservations\">";
+    var groupe = g.groupes[date];
+    for (var i = 0; i < groupe.length; i++) {
+      var r = groupe[i];
+      reservationsIndex[r.id] = r;
+      html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">" +
+                "<h3>Chaise " + r.siege + "</h3>" +
+              "</div>";
+    }
+    html += "</div>";
   }
-  html += "</div>";
   zone.innerHTML = html;
   attacherClicsCartes(zone);
 }
