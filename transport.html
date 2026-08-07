@@ -126,8 +126,10 @@
       </div>
 
       <div id="zoneDateRetour" style="display:none;">
-        <label>Date du voyage</label>
-        <input type="date" id="v_date">
+        <label>Date et heure de depart</label>
+        <select id="v_retour_select">
+          <option value="">Chargement...</option>
+        </select>
       </div>
 
       <p class="msg" style="background-color:#14223a;color:#6aa9ff;">Place : 12 500 FCFA (23kg de bagages inclus). Valise supplementaire au-dela de 23kg : +1 000 FCFA/valise.</p>
@@ -371,21 +373,22 @@ function afficherZoneDirection() {
         zoneRassemblement.innerHTML = "<p style=\"color:#ffb84d;font-size:12px;margin-bottom:12px;\">Point de rassemblement pas encore renseigne, contactez-nous.</p>";
       }
     });
-    chargerDepartsProgrammes();
+    chargerDepartsProgrammes("aller", "v_depart_select");
   } else {
     zoneRassemblement.innerHTML = "";
     zonePosition.style.display = "block";
     zoneVillage.style.display = "block";
     zoneDateAller.style.display = "none";
     zoneDateRetour.style.display = "block";
+    chargerDepartsProgrammes("retour", "v_retour_select");
   }
 }
 
-function chargerDepartsProgrammes() {
-  var select = document.getElementById("v_depart_select");
+function chargerDepartsProgrammes(dir, idSelect) {
+  var select = document.getElementById(idSelect);
   var aujourdHui = new Date().toISOString().split("T")[0];
   select.innerHTML = "<option value=\"\">Chargement...</option>";
-  sb.from("departs_programmes").select("*").eq("statut", "actif").gte("date_depart", aujourdHui).order("date_depart", { ascending: true }).then(function(reponse) {
+  sb.from("departs_programmes").select("*").eq("statut", "actif").eq("direction", dir).gte("date_depart", aujourdHui).order("date_depart", { ascending: true }).then(function(reponse) {
     var data = reponse.data || [];
     if (data.length === 0) {
       select.innerHTML = "<option value=\"\">Aucun depart programme, contactez-nous</option>";
@@ -418,7 +421,7 @@ document.getElementById("btnRetour").addEventListener("click", function() {
   chargerSieges();
 });
 
-document.getElementById("v_date").addEventListener("change", function() {
+document.getElementById("v_retour_select").addEventListener("change", function() {
   siegeSelectionne = null;
   chargerSieges();
 });
@@ -431,7 +434,7 @@ document.getElementById("v_depart_select").addEventListener("change", function()
 document.getElementById("v_valises").addEventListener("input", mettreAJourPrix);
 
 function dateVoyageActuelle() {
-  return direction === "aller" ? document.getElementById("v_depart_select").value : document.getElementById("v_date").value;
+  return direction === "aller" ? document.getElementById("v_depart_select").value : document.getElementById("v_retour_select").value;
 }
 
 function mettreAJourPrix() {
