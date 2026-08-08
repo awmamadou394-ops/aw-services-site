@@ -4,107 +4,118 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Catalogue</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; padding-bottom: 70px; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
-  header h1 { color: #1e6fd9; font-size: 22px; }
-  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
-  .content { padding: 15px; max-width: 700px; margin: 0 auto; }
-  .content h2 { font-size: 17px; margin-bottom: 12px; color: #1e6fd9; }
+  body { padding-bottom: 90px; }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
 
-  .bandeau-compte { background-color: #121826; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 13px; color: #b0b8c5; text-align: center; }
-  .bandeau-compte a { color: #1e6fd9; font-weight: bold; text-decoration: none; }
+  .aw-recherche { max-width: 100%; margin: 0 0 var(--espace-md); }
+
+  .categories { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: var(--espace-lg); scrollbar-width: none; }
+  .categories::-webkit-scrollbar { display: none; }
+  .puce-categorie {
+    flex: 0 0 auto;
+    background-color: var(--surface);
+    border: 1px solid var(--bordure);
+    color: var(--texte-doux);
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .puce-categorie.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
 
   .grille { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .produit-carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; overflow: hidden; }
-  .produit-carte img { width: 100%; height: 120px; object-fit: cover; background-color: #0a0e17; }
+  .produit-carte { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); overflow: hidden; }
+  .produit-carte img { width: 100%; height: 120px; object-fit: cover; background-color: var(--fond); display: block; }
   .produit-carte .infos { padding: 10px; }
-  .produit-carte h3 { font-size: 14px; margin-bottom: 4px; }
-  .produit-carte .prix { color: #d62828; font-weight: bold; font-size: 15px; }
-  .produit-carte .stock { color: #b0b8c5; font-size: 12px; margin-top: 3px; }
-  .produit-carte button { width: 100%; background-color: #1e6fd9; color: #ffffff; border: none; padding: 8px; font-size: 13px; font-weight: bold; margin-top: 8px; border-radius: 6px; }
-  .vide { text-align: center; color: #b0b8c5; padding: 40px; grid-column: 1 / -1; }
+  .produit-carte h3 { font-size: 13.5px; margin-bottom: 4px; font-family: var(--police-titre); }
+  .produit-carte .categorie-tag { font-size: 10px; color: var(--texte-discret); text-transform: uppercase; letter-spacing: 0.03em; }
+  .produit-carte .prix { color: var(--accent); font-weight: 700; font-size: 15px; font-family: var(--police-chiffres); margin-top: 4px; }
+  .produit-carte .stock { color: var(--texte-doux); font-size: 11.5px; margin-top: 2px; }
+  .produit-carte button { width: 100%; background-color: var(--accent); color: #1C1200; border: none; padding: 9px; font-size: 12.5px; font-weight: 700; margin-top: 8px; border-radius: var(--rayon-petit); }
+  .vide { text-align: center; color: var(--texte-doux); padding: 40px; grid-column: 1 / -1; }
 
-  #zonePanier { display: none; margin-top: 25px; }
+  #zonePanier { display: none; margin-top: var(--espace-lg); }
   #zonePanier.visible { display: block; }
-  .article-panier { display: flex; justify-content: space-between; align-items: center; background-color: #121826; border: 1px solid #2a3040; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .article-panier { display: flex; justify-content: space-between; align-items: center; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px 12px; margin-bottom: 8px; }
   .article-panier .nom { font-size: 13px; flex: 1; }
-  .article-panier .prix-unitaire { font-size: 11px; color: #b0b8c5; }
+  .article-panier .prix-unitaire { font-size: 11px; color: var(--texte-doux); }
   .article-panier .controles { display: flex; align-items: center; gap: 8px; }
-  .btn-qte { background-color: #0a0e17; border: 1px solid #1e6fd9; color: #ffffff; width: 28px; height: 28px; border-radius: 6px; font-size: 16px; font-weight: bold; }
-  .qte-valeur { font-size: 14px; font-weight: bold; min-width: 18px; text-align: center; }
-  .btn-retirer { background-color: transparent; border: none; color: #d62828; font-size: 13px; margin-left: 8px; }
-  .total-panier { text-align: right; font-size: 17px; font-weight: bold; color: #d62828; margin: 15px 0; }
-  #zonePanier > button { width: 100%; background-color: #1e6fd9; color: #ffffff; border: none; padding: 14px; border-radius: 6px; font-size: 15px; font-weight: bold; }
+  .btn-qte { background-color: var(--fond); border: 1px solid var(--accent); color: var(--texte); width: 28px; height: 28px; border-radius: 6px; font-size: 16px; font-weight: bold; }
+  .qte-valeur { font-size: 14px; font-weight: bold; min-width: 18px; text-align: center; font-family: var(--police-chiffres); }
+  .btn-retirer { background-color: transparent; border: none; color: var(--alerte); font-size: 13px; margin-left: 8px; }
+  .total-panier { text-align: right; font-size: 18px; font-weight: bold; color: var(--accent); margin: 15px 0; font-family: var(--police-chiffres); }
 
-  #zoneCommande { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-top: 25px; display: none; }
+  #zoneCommande { margin-top: var(--espace-lg); display: none; }
   #zoneCommande.visible { display: block; }
-  #zoneCommande h2 { font-size: 16px; margin-bottom: 12px; }
-  #zoneCommande form { display: flex; flex-direction: column; gap: 12px; }
-  label { font-size: 14px; color: #b0b8c5; }
-  input, select { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
-  button[type="submit"] { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; }
-  button[type="submit"]:disabled { opacity: 0.6; }
-  .btn-position { background-color: transparent; border: 1px solid #1e6fd9; color: #1e6fd9; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-  .msg-position { font-size: 12px; color: #b0b8c5; }
-  .msg-position.ok { color: #80ff9e; }
+  #zoneCommande form { display: flex; flex-direction: column; gap: 4px; }
+  select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
+  .msg-position { font-size: 12px; color: var(--texte-doux); }
+  .msg-position.ok { color: var(--succes); }
 
-  .panier-flottant { position: fixed; bottom: 0; left: 0; right: 0; background-color: #1e6fd9; padding: 14px 15px; display: none; justify-content: space-between; align-items: center; z-index: 10; }
+  .panier-flottant { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--accent); padding: 14px 15px; display: none; justify-content: space-between; align-items: center; z-index: 10; }
   .panier-flottant.visible { display: flex; }
-  .panier-flottant span { color: #ffffff; font-weight: bold; font-size: 14px; }
-  .panier-flottant button { background-color: #ffffff; color: #1e6fd9; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; }
-
-  footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
+  .panier-flottant span { color: #1C1200; font-weight: 700; font-size: 14px; font-family: var(--police-chiffres); }
+  .panier-flottant button { background-color: #1C1200; color: var(--accent); border: none; padding: 10px 16px; border-radius: var(--rayon-petit); font-weight: 700; font-size: 13px; font-family: var(--police-texte); }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>AW SERVICES — Catalogue</h1>
+<header class="aw-header">
+  <h1>Catalogue</h1>
+  <p>Electronique, parfums, mode et plus</p>
 </header>
 
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
-<div class="content">
-  <div class="bandeau-compte" id="bandeauCompte"></div>
+<div class="aw-conteneur">
+  <div class="aw-recherche">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <input type="text" id="champRecherche" placeholder="Rechercher un produit...">
+  </div>
 
-  <h2>Nos produits</h2>
+  <div class="categories" id="zoneCategories"></div>
+
+  <div class="bandeau-compte" id="bandeauCompte" style="background-color:var(--surface);border:1px solid var(--bordure);border-radius:var(--rayon-petit);padding:12px;margin-bottom:var(--espace-md);font-size:13px;color:var(--texte-doux);text-align:center;"></div>
+
+  <p class="aw-section-titre">Nos produits</p>
   <div class="grille" id="grilleProduits">
     <p class="vide">Chargement des produits...</p>
   </div>
 
   <div id="zonePanier">
-    <h2>Mon panier</h2>
+    <p class="aw-section-titre">Mon panier</p>
     <div id="listeArticlesPanier"></div>
     <div class="total-panier" id="totalPanier"></div>
-    <button type="button" id="btnPasserCommande">Passer la commande</button>
+    <button type="button" class="aw-btn aw-btn-primaire" id="btnPasserCommande" style="width:100%;">Passer la commande</button>
   </div>
 
-  <div id="zoneCommande">
-    <h2>Finaliser la commande</h2>
+  <div id="zoneCommande" class="aw-carte">
+    <p class="aw-section-titre">Finaliser la commande</p>
     <form id="formCommande">
-      <label>Nom complet</label>
-      <input type="text" id="cmd_nom" required>
+      <label class="aw-label">Nom complet</label>
+      <input class="aw-input" type="text" id="cmd_nom" required>
 
-      <label>Numero de telephone</label>
-      <input type="tel" id="cmd_tel" required>
+      <label class="aw-label">Numero de telephone</label>
+      <input class="aw-input" type="tel" id="cmd_tel" required>
 
-      <label>Mode de paiement</label>
+      <label class="aw-label">Mode de paiement</label>
       <select id="cmd_paiement" required>
         <option value="">Choisir...</option>
         <option value="Paiement en ligne (Wave/Orange Money)">Paiement en ligne (Wave/Orange Money)</option>
         <option value="Paiement en especes a la livraison">Paiement en especes a la livraison</option>
       </select>
 
-      <label>Adresse de livraison</label>
-      <input type="text" id="cmd_adresse" required>
+      <label class="aw-label">Adresse de livraison</label>
+      <input class="aw-input" type="text" id="cmd_adresse" required>
 
-      <button type="button" class="btn-position" id="btnPositionCmd">Utiliser ma position actuelle (pour le livreur)</button>
+      <button type="button" class="aw-btn aw-btn-secondaire" id="btnPositionCmd" style="width:100%;margin-top:10px;">&#128205; Utiliser ma position actuelle (pour le livreur)</button>
       <p class="msg-position" id="msgPositionCmd">Optionnel, mais aide le livreur a vous trouver facilement.</p>
 
-      <button type="submit" id="btn_commande">Confirmer la commande</button>
+      <button type="submit" class="aw-btn aw-btn-primaire" id="btn_commande" style="width:100%;margin-top:14px;">Confirmer la commande</button>
     </form>
   </div>
 </div>
@@ -114,7 +125,7 @@
   <button type="button" id="btnVoirPanier">Voir le panier</button>
 </div>
 
-<footer>
+<footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
   &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
@@ -127,6 +138,9 @@ var sb = supabase.createClient(
 var panier = [];
 var positionClient = null;
 var clientConnecte = null;
+var tousLesProduits = [];
+var categorieActive = "Tous";
+var termeRecherche = "";
 
 function remplirProfilLocal() {
   var nom = localStorage.getItem("aw_client_nom");
@@ -140,17 +154,17 @@ function verifierConnexion() {
   sb.auth.getUser().then(function(reponseUser) {
     var user = reponseUser.data.user;
     if (!user) {
-      bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\">connectez-vous ou creez un compte</a>.";
+      bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">connectez-vous ou creez un compte</a>.";
       return;
     }
     sb.from("clients").select("*").eq("user_id", user.id).single().then(function(reponse) {
       if (reponse.data) {
         clientConnecte = reponse.data;
-        bandeau.innerHTML = "Connecte : " + clientConnecte.nom + " - <a href=\"client-espace.html\">Mes commandes</a>";
+        bandeau.innerHTML = "Connecte : " + clientConnecte.nom + " - <a href=\"client-espace.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">Mes commandes</a>";
         document.getElementById("cmd_nom").value = clientConnecte.nom;
         document.getElementById("cmd_tel").value = clientConnecte.telephone;
       } else {
-        bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\">connectez-vous ou creez un compte</a>.";
+        bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">connectez-vous ou creez un compte</a>.";
       }
     });
   });
@@ -158,37 +172,83 @@ function verifierConnexion() {
 
 function chargerProduits() {
   sb.from("produits").select("*").eq("statut", "approuve").gt("stock", 0).then(function(reponse) {
-    var data = reponse.data;
-    var grille = document.getElementById("grilleProduits");
-
-    if (!data || data.length === 0) {
-      grille.innerHTML = "<p class=\"vide\">Aucun produit disponible pour le moment.</p>";
-      return;
-    }
-
-    var html = "";
-    for (var i = 0; i < data.length; i++) {
-      var p = data[i];
-      html += "<div class=\"produit-carte\">" +
-                "<img src=\"" + (p.image_url || "") + "\" alt=\"\">" +
-                "<div class=\"infos\">" +
-                  "<h3>" + p.nom + "</h3>" +
-                  "<div class=\"prix\">" + p.prix + " FCFA</div>" +
-                  "<div class=\"stock\">" + p.stock + " en stock</div>" +
-                  "<button class=\"btn-ajouter\" data-id=\"" + p.id + "\" data-nom=\"" + p.nom + "\" data-prix=\"" + p.prix + "\" data-stock=\"" + p.stock + "\">Ajouter au panier</button>" +
-                "</div>" +
-              "</div>";
-    }
-    grille.innerHTML = html;
-
-    var boutons = document.getElementsByClassName("btn-ajouter");
-    for (var b = 0; b < boutons.length; b++) {
-      boutons[b].addEventListener("click", function(e) {
-        var btn = e.target;
-        ajouterAuPanier(btn.getAttribute("data-id"), btn.getAttribute("data-nom"), parseFloat(btn.getAttribute("data-prix")), parseInt(btn.getAttribute("data-stock")));
-      });
-    }
+    tousLesProduits = reponse.data || [];
+    construireCategories();
+    afficherProduitsFiltres();
   });
+}
+
+function construireCategories() {
+  var categories = ["Tous"];
+  for (var i = 0; i < tousLesProduits.length; i++) {
+    var cat = tousLesProduits[i].categorie;
+    if (cat && categories.indexOf(cat) === -1) categories.push(cat);
+  }
+  var zone = document.getElementById("zoneCategories");
+  var html = "";
+  for (var c = 0; c < categories.length; c++) {
+    var actif = categories[c] === categorieActive ? " actif" : "";
+    html += "<button type=\"button\" class=\"puce-categorie" + actif + "\" data-cat=\"" + categories[c] + "\">" + categories[c] + "</button>";
+  }
+  zone.innerHTML = html;
+
+  var puces = zone.getElementsByClassName("puce-categorie");
+  for (var p = 0; p < puces.length; p++) {
+    puces[p].addEventListener("click", function() {
+      categorieActive = this.getAttribute("data-cat");
+      var tous = zone.getElementsByClassName("puce-categorie");
+      for (var t = 0; t < tous.length; t++) tous[t].classList.remove("actif");
+      this.classList.add("actif");
+      afficherProduitsFiltres();
+    });
+  }
+}
+
+document.getElementById("champRecherche").addEventListener("input", function() {
+  termeRecherche = this.value.trim().toLowerCase();
+  afficherProduitsFiltres();
+});
+
+function afficherProduitsFiltres() {
+  var filtres = tousLesProduits.filter(function(p) {
+    var matchCategorie = categorieActive === "Tous" || p.categorie === categorieActive;
+    var matchRecherche = !termeRecherche || (p.nom && p.nom.toLowerCase().indexOf(termeRecherche) !== -1) || (p.description && p.description.toLowerCase().indexOf(termeRecherche) !== -1);
+    return matchCategorie && matchRecherche;
+  });
+  afficherProduits(filtres);
+}
+
+function afficherProduits(data) {
+  var grille = document.getElementById("grilleProduits");
+
+  if (!data || data.length === 0) {
+    grille.innerHTML = "<p class=\"vide\">Aucun produit ne correspond a votre recherche.</p>";
+    return;
+  }
+
+  var html = "";
+  for (var i = 0; i < data.length; i++) {
+    var p = data[i];
+    html += "<div class=\"produit-carte\">" +
+              "<img src=\"" + (p.image_url || "") + "\" alt=\"\">" +
+              "<div class=\"infos\">" +
+                (p.categorie ? "<div class=\"categorie-tag\">" + p.categorie + "</div>" : "") +
+                "<h3>" + p.nom + "</h3>" +
+                "<div class=\"prix\">" + p.prix + " FCFA</div>" +
+                "<div class=\"stock\">" + p.stock + " en stock</div>" +
+                "<button class=\"btn-ajouter\" data-id=\"" + p.id + "\" data-nom=\"" + p.nom + "\" data-prix=\"" + p.prix + "\" data-stock=\"" + p.stock + "\">Ajouter au panier</button>" +
+              "</div>" +
+            "</div>";
+  }
+  grille.innerHTML = html;
+
+  var boutons = document.getElementsByClassName("btn-ajouter");
+  for (var b = 0; b < boutons.length; b++) {
+    boutons[b].addEventListener("click", function(e) {
+      var btn = e.target;
+      ajouterAuPanier(btn.getAttribute("data-id"), btn.getAttribute("data-nom"), parseFloat(btn.getAttribute("data-prix")), parseInt(btn.getAttribute("data-stock")));
+    });
+  }
 }
 
 function ajouterAuPanier(id, nom, prix, stock) {
