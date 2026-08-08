@@ -4,51 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Mon Espace Livreur</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; display: flex; justify-content: space-between; align-items: center; }
-  header h1 { color: #1e6fd9; font-size: 18px; }
-  .deconnexion { background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
-  .content { padding: 20px 15px; max-width: 500px; margin: 0 auto; }
-  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 15px; }
-  .carte h2 { font-size: 16px; margin-bottom: 10px; }
-  .statut { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-  .statut.en_attente { background-color: #3a2e14; color: #ffb84d; }
-  .statut.approuve { background-color: #143a1e; color: #80ff9e; }
-  .info { color: #b0b8c5; font-size: 14px; margin-top: 6px; }
-  .chargement { text-align: center; padding: 40px; color: #b0b8c5; }
-  .commande-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-  .commande-carte h3 { font-size: 14px; }
-  .date-commande { font-size: 11px; color: #6f7a8c; margin-bottom: 4px; }
-  .commande-carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
+  .aw-header { display: flex; justify-content: space-between; align-items: center; text-align: left; }
+  .aw-header h1 { font-size: 18px; }
+  .deconnexion { background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 8px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 600; font-family: var(--police-texte); }
+  .chargement { text-align: center; padding: 40px; color: var(--texte-doux); }
+
+  .commande-carte { background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; margin-bottom: 10px; }
+  .commande-carte h3 { font-size: 14px; font-family: var(--police-titre); }
+  .date-commande { font-size: 11px; color: var(--texte-discret); margin-bottom: 4px; }
+  .commande-carte p { font-size: 13px; color: var(--texte-doux); margin-top: 3px; }
   .badges { margin-top: 8px; }
-  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-right: 5px; margin-bottom: 4px; }
-  .badge-nouvelle { background-color: #3a2e14; color: #ffb84d; }
-  .badge-en_preparation { background-color: #14223a; color: #6aa9ff; }
-  .badge-prete { background-color: #143a1e; color: #80ff9e; }
-  .btn-maps { display: inline-block; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; margin-right: 6px; }
-  .btn-accepter { background-color: #143a1e; color: #80ff9e; border: 1px solid #80ff9e; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; }
-  .btn-recupere { background-color: #2a1a3a; color: #c08cff; border: 1px solid #c08cff; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; }
-  .btn-livree { background-color: #1e6fd9; color: #ffffff; border: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; }
-  .attente-vendeur { color: #ffb84d; font-size: 12px; margin-top: 8px; }
-  .sans-position { color: #ffb84d; font-size: 12px; margin-top: 8px; }
-  .btn-notif { background-color: #1e6fd9; color: #ffffff; border: none; padding: 12px; border-radius: 6px; font-size: 14px; font-weight: bold; width: 100%; }
-  .btn-notif:disabled { opacity: 0.6; }
-  .msg-notif { font-size: 12px; margin-top: 8px; color: #b0b8c5; }
-  .msg-notif.ok { color: #80ff9e; }
-  .msg-notif.err { color: #ff8080; }
+  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-right: 5px; margin-bottom: 4px; }
+  .badge-nouvelle { background-color: rgba(242,169,59,0.15); color: var(--accent); }
+  .badge-en_preparation { background-color: rgba(107,169,255,0.15); color: #6aa9ff; }
+  .badge-prete { background-color: rgba(63,163,77,0.15); color: var(--succes); }
+
+  .btn-maps { display: inline-block; background-color: var(--accent); color: #1C1200; text-decoration: none; padding: 9px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; margin-top: 8px; margin-right: 6px; }
+  .btn-accepter { background-color: rgba(63,163,77,0.15); color: var(--succes); border: 1px solid var(--succes); padding: 9px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; margin-top: 8px; font-family: var(--police-texte); }
+  .btn-recupere { background-color: rgba(192,140,255,0.15); color: #c08cff; border: 1px solid #c08cff; padding: 9px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; margin-top: 8px; font-family: var(--police-texte); }
+  .btn-livree { background-color: var(--accent); color: #1C1200; border: none; padding: 9px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; margin-top: 8px; font-family: var(--police-texte); }
+  .attente-vendeur { color: var(--accent); font-size: 12px; margin-top: 8px; }
+  .sans-position { color: var(--accent); font-size: 12px; margin-top: 8px; }
+
+  .msg-notif { font-size: 12px; margin-top: 8px; color: var(--texte-doux); }
+  .msg-notif.ok { color: var(--succes); }
+  .msg-notif.err { color: var(--alerte); }
 </style>
 </head>
 <body>
 
-<header>
+<header class="aw-header">
   <h1>Mon Espace Livreur</h1>
   <button class="deconnexion" id="btnDeconnexion">Deconnexion</button>
 </header>
 
-<div class="content">
+<div class="aw-conteneur">
   <div id="zoneContenu" class="chargement">Chargement...</div>
 </div>
 
@@ -85,40 +78,41 @@ function chargerEspace() {
       var livreur = reponse.data;
       var zone = document.getElementById("zoneContenu");
       if (reponse.error || !livreur) {
-        zone.innerHTML = "<div class=\"carte\"><p class=\"info\">Profil introuvable. Contactez AW SERVICES.</p></div>";
+        zone.innerHTML = "<div class=\"aw-carte\"><p>Profil introuvable. Contactez AW SERVICES.</p></div>";
         return;
       }
       livreurCourant = livreur;
       var statutLabel = livreur.statut === "approuve" ? "Approuve" : "En attente de validation";
+      var classeStatut = livreur.statut === "approuve" ? "aw-badge-succes" : "aw-badge-attente";
 
       zone.innerHTML =
-        "<div class=\"carte\">" +
-          "<h2>Bienvenue, " + livreur.nom + "</h2>" +
-          "<span class=\"statut " + livreur.statut + "\">" + statutLabel + "</span>" +
-          "<p class=\"info\">Telephone : " + livreur.telephone + "</p>" +
+        "<div class=\"aw-carte\">" +
+          "<p class=\"aw-section-titre\">Bienvenue, " + livreur.nom + "</p>" +
+          "<span class=\"aw-badge " + classeStatut + "\">" + statutLabel + "</span>" +
+          "<p style=\"margin-top:10px;color:var(--texte-doux);font-size:14px;\">Telephone : " + livreur.telephone + "</p>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Notifications</h2>" +
-          "<p class=\"info\">Recevez une alerte des qu'une nouvelle commande arrive.</p>" +
-          "<button class=\"btn-notif\" id=\"btnActiverNotif\">Activer les notifications</button>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Notifications</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13.5px;margin-bottom:10px;\">Recevez une alerte des qu'une nouvelle commande arrive.</p>" +
+          "<button class=\"aw-btn aw-btn-primaire\" id=\"btnActiverNotif\" style=\"width:100%;\">Activer les notifications</button>" +
           "<p class=\"msg-notif\" id=\"msgNotif\"></p>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Mes livraisons en cours</h2>" +
-          "<div id=\"listeMesCommandes\"><p class=\"info\">Chargement...</p></div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Mes livraisons en cours</p>" +
+          "<div id=\"listeMesCommandes\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Commandes disponibles</h2>" +
-          "<div id=\"listeDisponibles\"><p class=\"info\">Chargement...</p></div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Commandes disponibles</p>" +
+          "<div id=\"listeDisponibles\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Mes courses moto en cours</h2>" +
-          "<div id=\"listeMesCourses\"><p class=\"info\">Chargement...</p></div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Mes courses moto en cours</p>" +
+          "<div id=\"listeMesCourses\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Courses moto disponibles</h2>" +
-          "<p class=\"info\" id=\"infoPositionLivreur\">Localisation en cours pour trier par distance...</p>" +
-          "<div id=\"listeCoursesDisponibles\"><p class=\"info\">Chargement...</p></div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Courses moto disponibles</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13px;\" id=\"infoPositionLivreur\">Localisation en cours pour trier par distance...</p>" +
+          "<div id=\"listeCoursesDisponibles\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
         "</div>";
 
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
@@ -245,7 +239,7 @@ function chargerCommandes() {
 function afficherListe(idZone, liste, avecBoutonAccepter) {
   var zone = document.getElementById(idZone);
   if (liste.length === 0) {
-    zone.innerHTML = "<p class=\"info\">Aucune commande pour le moment.</p>";
+    zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucune commande pour le moment.</p>";
     return;
   }
   var html = "";
@@ -356,7 +350,7 @@ function chargerCourses() {
 function afficherMesCourses(liste) {
   var zone = document.getElementById("listeMesCourses");
   if (liste.length === 0) {
-    zone.innerHTML = "<p class=\"info\">Aucune course en cours.</p>";
+    zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucune course en cours.</p>";
     return;
   }
   var html = "";
@@ -398,7 +392,7 @@ function afficherMesCourses(liste) {
 function afficherCoursesDisponibles(liste) {
   var zone = document.getElementById("listeCoursesDisponibles");
   if (liste.length === 0) {
-    zone.innerHTML = "<p class=\"info\">Aucune course disponible pour le moment.</p>";
+    zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucune course disponible pour le moment.</p>";
     return;
   }
   var html = "";
