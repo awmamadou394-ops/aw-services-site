@@ -4,58 +4,46 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Mon Espace Vendeur</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; display: flex; justify-content: space-between; align-items: center; }
-  header h1 { color: #1e6fd9; font-size: 18px; }
-  .deconnexion { background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
-  .content { padding: 20px 15px; max-width: 500px; margin: 0 auto; }
-  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 15px; }
-  .carte h2 { font-size: 16px; margin-bottom: 10px; }
-  .statut { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-  .statut.en_attente { background-color: #3a2e14; color: #ffb84d; }
-  .statut.approuve { background-color: #143a1e; color: #80ff9e; }
-  .info { color: #b0b8c5; font-size: 14px; margin-top: 6px; }
-  .chargement { text-align: center; padding: 40px; color: #b0b8c5; }
-  form { display: flex; flex-direction: column; gap: 12px; }
-  label { font-size: 14px; color: #b0b8c5; }
-  input, textarea { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; font-family: Arial, sans-serif; }
-  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; margin-top: 10px; }
-  button:disabled { opacity: 0.6; }
-  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
-  .msg.erreur { background-color: #3a1414; color: #ff8080; }
-  .msg.succes { background-color: #143a1e; color: #80ff9e; }
-  .btn-notif { background-color: #1e6fd9; color: #ffffff; border: none; padding: 12px; border-radius: 6px; font-size: 14px; font-weight: bold; width: 100%; margin-top: 8px; }
-  .btn-notif:disabled { opacity: 0.6; }
-  .msg-notif { font-size: 12px; margin-top: 8px; color: #b0b8c5; }
-  .msg-notif.ok { color: #80ff9e; }
-  .msg-notif.err { color: #ff8080; }
-  .produit-carte { display: flex; gap: 12px; background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
-  .produit-carte img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background-color: #0a0e17; }
-  .produit-info h3 { font-size: 15px; }
-  .produit-info p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
-  .commande-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-  .commande-carte h3 { font-size: 14px; }
-  .commande-carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
-  .date-commande { font-size: 11px; color: #6f7a8c; margin-bottom: 4px; }
-  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-top: 6px; margin-right: 5px; }
-  .badge-nouvelle { background-color: #3a2e14; color: #ffb84d; }
-  .badge-en_preparation { background-color: #14223a; color: #6aa9ff; }
-  .badge-prete { background-color: #143a1e; color: #80ff9e; }
-  .badge-liv { background-color: #2a1a3a; color: #c08cff; }
-  .btn-etape { background-color: #1e6fd9; color: #ffffff; border: none; padding: 9px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 10px; }
+  .aw-header { display: flex; justify-content: space-between; align-items: center; text-align: left; }
+  .aw-header h1 { font-size: 18px; }
+  .deconnexion { background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 8px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 600; font-family: var(--police-texte); }
+  .chargement { text-align: center; padding: 40px; color: var(--texte-doux); }
+
+  .msg-notif { font-size: 12px; margin-top: 8px; color: var(--texte-doux); }
+  .msg-notif.ok { color: var(--succes); }
+  .msg-notif.err { color: var(--alerte); }
+
+  .produit-carte { display: flex; gap: 12px; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 12px; margin-bottom: 10px; }
+  .produit-carte img { width: 70px; height: 70px; border-radius: var(--rayon-petit); object-fit: cover; background-color: var(--surface); }
+  .produit-info h3 { font-size: 15px; font-family: var(--police-titre); }
+  .produit-info p { font-size: 13px; color: var(--texte-doux); margin-top: 3px; }
+  .produit-info .prix-p { color: var(--accent); font-family: var(--police-chiffres); font-weight: 700; }
+
+  .commande-carte { background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; margin-bottom: 10px; }
+  .commande-carte h3 { font-size: 14px; font-family: var(--police-titre); }
+  .commande-carte p { font-size: 13px; color: var(--texte-doux); margin-top: 3px; }
+  .date-commande { font-size: 11px; color: var(--texte-discret); margin-bottom: 4px; }
+  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 6px; margin-right: 5px; }
+  .badge-nouvelle { background-color: rgba(242,169,59,0.15); color: var(--accent); }
+  .badge-en_preparation { background-color: rgba(107,169,255,0.15); color: #6aa9ff; }
+  .badge-prete { background-color: rgba(63,163,77,0.15); color: var(--succes); }
+  .badge-liv { background-color: rgba(192,140,255,0.15); color: #c08cff; }
+  .msg { font-size: 13px; padding: 10px; border-radius: var(--rayon-petit); margin-top: 8px; }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
 </style>
 </head>
 <body>
 
-<header>
+<header class="aw-header">
   <h1>Mon Espace Vendeur</h1>
   <button class="deconnexion" id="btnDeconnexion">Deconnexion</button>
 </header>
 
-<div class="content">
+<div class="aw-conteneur">
   <div id="zoneContenu" class="chargement">Chargement...</div>
 </div>
 
@@ -97,63 +85,64 @@ function chargerEspace() {
       var vendeur = reponse.data;
       var zone = document.getElementById("zoneContenu");
       if (reponse.error || !vendeur) {
-        zone.innerHTML = "<div class=\"carte\"><p class=\"info\">Profil introuvable. Contactez AW SERVICES.</p></div>";
+        zone.innerHTML = "<div class=\"aw-carte\"><p>Profil introuvable. Contactez AW SERVICES.</p></div>";
         return;
       }
       vendeurCourant = vendeur;
       var statutLabel = vendeur.statut === "approuve" ? "Approuve" : "En attente de validation";
+      var classeStatut = vendeur.statut === "approuve" ? "aw-badge-succes" : "aw-badge-attente";
       var positionLabel = (vendeur.latitude && vendeur.longitude) ? "Position enregistree" : "Position non enregistree";
 
       zone.innerHTML =
-        "<div class=\"carte\">" +
-          "<h2>Bienvenue, " + vendeur.nom + "</h2>" +
-          "<span class=\"statut " + vendeur.statut + "\">" + statutLabel + "</span>" +
-          "<p class=\"info\">Telephone : " + vendeur.telephone + "</p>" +
-          "<p class=\"info\">Produits : " + vendeur.produits_categorie + "</p>" +
+        "<div class=\"aw-carte\">" +
+          "<p class=\"aw-section-titre\">Bienvenue, " + vendeur.nom + "</p>" +
+          "<span class=\"aw-badge " + classeStatut + "\">" + statutLabel + "</span>" +
+          "<p style=\"margin-top:10px;color:var(--texte-doux);font-size:14px;\">Telephone : " + vendeur.telephone + "</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:14px;\">Produits : " + vendeur.produits_categorie + "</p>" +
         "</div>" +
 
-        "<div class=\"carte\">" +
-          "<h2>Notifications</h2>" +
-          "<p class=\"info\">Soyez alerte des nouvelles commandes et de leur suivi.</p>" +
-          "<button class=\"btn-notif\" id=\"btnActiverNotif\">Activer les notifications</button>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Notifications</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13.5px;margin-bottom:10px;\">Soyez alerte des nouvelles commandes et de leur suivi.</p>" +
+          "<button class=\"aw-btn aw-btn-primaire\" id=\"btnActiverNotif\" style=\"width:100%;\">Activer les notifications</button>" +
           "<p class=\"msg-notif\" id=\"msgNotif\"></p>" +
         "</div>" +
 
-        "<div class=\"carte\">" +
-          "<h2>Commandes a traiter</h2>" +
-          "<div id=\"listeCommandes\"><p class=\"info\">Chargement...</p></div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Commandes a traiter</p>" +
+          "<div id=\"listeCommandes\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
         "</div>" +
 
-        "<div class=\"carte\">" +
-          "<h2>Localisation de ma boutique</h2>" +
-          "<p class=\"info\" id=\"statutPosition\">" + positionLabel + "</p>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Localisation de ma boutique</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13.5px;\" id=\"statutPosition\">" + positionLabel + "</p>" +
           "<div id=\"zoneMessagePosition\"></div>" +
-          "<button id=\"btnPosition\">Enregistrer ma position actuelle</button>" +
+          "<button class=\"aw-btn aw-btn-secondaire\" id=\"btnPosition\" style=\"width:100%;margin-top:10px;\">&#128205; Enregistrer ma position actuelle</button>" +
         "</div>" +
 
-        "<div class=\"carte\">" +
-          "<h2>Ajouter un produit</h2>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Ajouter un produit</p>" +
           "<div id=\"zoneMessageProduit\"></div>" +
           "<form id=\"formProduit\">" +
-            "<label>Nom du produit</label>" +
-            "<input type=\"text\" id=\"p_nom\" placeholder=\"Ex : Casque Bluetooth\" required>" +
-            "<label>Description</label>" +
-            "<textarea id=\"p_description\" rows=\"3\" placeholder=\"Decrivez votre produit\"></textarea>" +
-            "<label>Prix (FCFA)</label>" +
-            "<input type=\"number\" id=\"p_prix\" placeholder=\"Ex : 15000\" required>" +
-            "<label>Categorie</label>" +
-            "<input type=\"text\" id=\"p_categorie\" placeholder=\"Ex : Electronique\" required>" +
-            "<label>Quantite en stock</label>" +
-            "<input type=\"number\" id=\"p_stock\" placeholder=\"Ex : 10\" required>" +
-            "<label>Photo du produit</label>" +
-            "<input type=\"file\" id=\"p_photo\" accept=\"image/*\" required>" +
-            "<button type=\"submit\" id=\"btn_produit\">Publier le produit</button>" +
+            "<label class=\"aw-label\">Nom du produit</label>" +
+            "<input class=\"aw-input\" type=\"text\" id=\"p_nom\" placeholder=\"Ex : Casque Bluetooth\" required>" +
+            "<label class=\"aw-label\">Description</label>" +
+            "<textarea class=\"aw-textarea\" id=\"p_description\" rows=\"3\" placeholder=\"Decrivez votre produit\"></textarea>" +
+            "<label class=\"aw-label\">Prix (FCFA)</label>" +
+            "<input class=\"aw-input\" type=\"number\" id=\"p_prix\" placeholder=\"Ex : 15000\" required>" +
+            "<label class=\"aw-label\">Categorie</label>" +
+            "<input class=\"aw-input\" type=\"text\" id=\"p_categorie\" placeholder=\"Ex : Electronique\" required>" +
+            "<label class=\"aw-label\">Quantite en stock</label>" +
+            "<input class=\"aw-input\" type=\"number\" id=\"p_stock\" placeholder=\"Ex : 10\" required>" +
+            "<label class=\"aw-label\">Photo du produit</label>" +
+            "<input type=\"file\" id=\"p_photo\" accept=\"image/*\" required style=\"background-color:var(--fond);border:1px solid var(--bordure);border-radius:var(--rayon-petit);padding:10px;color:var(--texte-doux);font-size:12px;\">" +
+            "<button type=\"submit\" class=\"aw-btn aw-btn-primaire\" id=\"btn_produit\" style=\"width:100%;margin-top:10px;\">Publier le produit</button>" +
           "</form>" +
         "</div>" +
 
-        "<div class=\"carte\">" +
-          "<h2>Mes produits</h2>" +
-          "<div id=\"listeProduits\"><p class=\"info\">Chargement...</p></div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Mes produits</p>" +
+          "<div id=\"listeProduits\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
         "</div>";
 
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
@@ -247,7 +236,7 @@ function chargerCommandes() {
     var data = reponse.data;
     var zone = document.getElementById("listeCommandes");
     if (!data || data.length === 0) {
-      zone.innerHTML = "<p class=\"info\">Aucune commande pour le moment.</p>";
+      zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucune commande pour le moment.</p>";
       return;
     }
     var html = "";
@@ -274,9 +263,9 @@ function chargerCommandes() {
       }
 
       if (statutPrep === "nouvelle") {
-        html += "<br><button class=\"btn-etape btn-changer\" data-id=\"" + c.id + "\" data-statut=\"en_preparation\">Demarrer la preparation</button>";
+        html += "<br><button class=\"aw-btn aw-btn-primaire btn-changer\" data-id=\"" + c.id + "\" data-statut=\"en_preparation\" style=\"margin-top:10px;\">Demarrer la preparation</button>";
       } else if (statutPrep === "en_preparation") {
-        html += "<br><button class=\"btn-etape btn-changer\" data-id=\"" + c.id + "\" data-statut=\"prete\">Marquer prete a livrer</button>";
+        html += "<br><button class=\"aw-btn aw-btn-primaire btn-changer\" data-id=\"" + c.id + "\" data-statut=\"prete\" style=\"margin-top:10px;\">Marquer prete a livrer</button>";
       }
       html += "</div>";
     }
@@ -339,7 +328,7 @@ function chargerProduits() {
     var data = reponse.data;
     var zone = document.getElementById("listeProduits");
     if (!data || data.length === 0) {
-      zone.innerHTML = "<p class=\"info\">Aucun produit publie pour le moment.</p>";
+      zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucun produit publie pour le moment.</p>";
       return;
     }
     var html = "";
@@ -349,7 +338,8 @@ function chargerProduits() {
                 "<img src=\"" + (p.image_url || "") + "\" alt=\"\">" +
                 "<div class=\"produit-info\">" +
                   "<h3>" + p.nom + "</h3>" +
-                  "<p>" + p.prix + " FCFA - Stock : " + p.stock + "</p>" +
+                  "<p class=\"prix-p\">" + p.prix + " FCFA</p>" +
+                  "<p>Stock : " + p.stock + "</p>" +
                   "<p>" + (p.statut === "approuve" ? "Visible sur le site" : "En attente de validation") + "</p>" +
                 "</div>" +
               "</div>";
