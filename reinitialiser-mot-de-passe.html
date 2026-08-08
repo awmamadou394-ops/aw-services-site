@@ -4,43 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Nouveau mot de passe</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
-  header h1 { color: #1e6fd9; font-size: 20px; }
-  .content { padding: 20px 15px; max-width: 420px; margin: 0 auto; }
-  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-top: 20px; }
-  form { display: flex; flex-direction: column; gap: 12px; }
-  label { font-size: 14px; color: #b0b8c5; }
-  input { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
-  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 15px; font-weight: bold; margin-top: 8px; }
-  button:disabled { opacity: 0.6; }
-  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-top: 12px; }
-  .msg.erreur { background-color: #3a1414; color: #ff8080; }
-  .msg.succes { background-color: #143a1e; color: #80ff9e; }
-  .liens-espaces { margin-top: 15px; display: none; }
+  .aw-conteneur { max-width: 420px; }
+
+  .msg { font-size: 14px; padding: 10px; border-radius: var(--rayon-petit); margin-top: 12px; }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
+
+  .liens-espaces { margin-top: var(--espace-md); display: none; }
   .liens-espaces.visible { display: block; }
-  .liens-espaces p { font-size: 13px; color: #b0b8c5; margin-bottom: 10px; text-align: center; }
-  .liens-espaces a { display: block; text-align: center; background-color: #121826; border: 1px solid #1e6fd9; border-radius: 8px; padding: 12px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 14px; margin-bottom: 8px; }
+  .liens-espaces p { font-size: 13px; color: var(--texte-doux); margin-bottom: 10px; text-align: center; }
+  .liens-espaces a { display: block; text-align: center; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); text-decoration: none; font-weight: 700; font-size: 14px; margin-bottom: 8px; font-family: var(--police-titre); }
 </style>
 </head>
 <body>
 
-<header>
+<header class="aw-header">
   <h1>AW SERVICES</h1>
 </header>
 
-<div class="content">
-  <div class="carte">
-    <h2 style="font-size:16px; margin-bottom:10px;">Choisir un nouveau mot de passe</h2>
+<div class="aw-conteneur">
+  <div class="aw-carte" style="margin-top: var(--espace-lg);">
+    <p class="aw-section-titre">Choisir un nouveau mot de passe</p>
     <form id="formReset">
-      <label>Nouveau mot de passe</label>
-      <input type="password" id="nouveauMdp" required minlength="6">
-      <label>Confirmer le mot de passe</label>
-      <input type="password" id="confirmerMdp" required minlength="6">
-      <button type="submit" id="btnReset">Valider le nouveau mot de passe</button>
+      <label class="aw-label">Nouveau mot de passe</label>
+      <input class="aw-input" type="password" id="nouveauMdp" required minlength="6">
+      <label class="aw-label">Confirmer le mot de passe</label>
+      <input class="aw-input" type="password" id="confirmerMdp" required minlength="6">
+      <button type="submit" class="aw-btn aw-btn-primaire" id="btnReset" style="width:100%;margin-top:10px;">Valider le nouveau mot de passe</button>
     </form>
     <div id="zoneMsg"></div>
     <div class="liens-espaces" id="liensEspaces">
