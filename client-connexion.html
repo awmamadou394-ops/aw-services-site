@@ -4,79 +4,75 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Mon Compte</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
-  header h1 { color: #1e6fd9; font-size: 20px; }
-  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
-  .content { padding: 15px; max-width: 420px; margin: 0 auto; }
-  .onglets { display: flex; gap: 8px; margin-bottom: 15px; }
-  .onglet { flex: 1; background-color: #121826; border: 1px solid #2a3040; color: #b0b8c5; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; text-align: center; }
-  .onglet.actif { background-color: #1e6fd9; border-color: #1e6fd9; color: #ffffff; }
-  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; display: none; }
-  .carte.visible { display: block; }
-  form { display: flex; flex-direction: column; gap: 12px; }
-  label { font-size: 14px; color: #b0b8c5; }
-  input { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
-  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 15px; font-weight: bold; margin-top: 8px; }
-  button:disabled { opacity: 0.6; }
-  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
-  .msg.erreur { background-color: #3a1414; color: #ff8080; }
-  .msg.succes { background-color: #143a1e; color: #80ff9e; }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+  .aw-conteneur { max-width: 420px; }
+
+  .onglets { display: flex; gap: 8px; margin-bottom: var(--espace-md); }
+  .onglet { flex: 1; background-color: var(--surface); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 12px; border-radius: var(--rayon-petit); font-size: 14px; font-weight: 600; text-align: center; font-family: var(--police-titre); }
+  .onglet.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
+
+  .carte-form { display: none; }
+  .carte-form.visible { display: block; }
+
+  .msg { font-size: 14px; padding: 10px; border-radius: var(--rayon-petit); margin-bottom: 12px; }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
+
   .lien-oublie { text-align: center; margin-top: 12px; }
-  .lien-oublie a { color: #1e6fd9; font-size: 13px; text-decoration: none; }
-  #zoneOublie { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #2a3040; }
+  .lien-oublie a { color: var(--accent); font-size: 13px; text-decoration: none; font-weight: 600; }
+  #zoneOublie { display: none; margin-top: var(--espace-md); padding-top: var(--espace-md); border-top: 1px solid var(--bordure); }
   #zoneOublie.visible { display: block; }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>AW SERVICES — Mon Compte</h1>
+<header class="aw-header">
+  <h1>Mon Compte</h1>
 </header>
 
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
-<div class="content">
+<div class="aw-conteneur">
   <div class="onglets">
     <div class="onglet actif" id="ongletInscription">Creer un compte</div>
     <div class="onglet" id="ongletConnexion">Se connecter</div>
   </div>
 
-  <div class="carte visible" id="carteInscription">
+  <div class="aw-carte carte-form visible" id="carteInscription">
     <div id="msgInscription"></div>
     <form id="formInscription">
-      <label>Nom complet</label>
-      <input type="text" id="i_nom" required>
-      <label>Numero de telephone</label>
-      <input type="tel" id="i_telephone" required>
-      <label>Email</label>
-      <input type="email" id="i_email" required>
-      <label>Mot de passe</label>
-      <input type="password" id="i_password" required minlength="6">
-      <label>Confirmer le mot de passe</label>
-      <input type="password" id="i_password2" required minlength="6">
-      <button type="submit" id="btnInscription">Creer mon compte</button>
+      <label class="aw-label">Nom complet</label>
+      <input class="aw-input" type="text" id="i_nom" required>
+      <label class="aw-label">Numero de telephone</label>
+      <input class="aw-input" type="tel" id="i_telephone" required>
+      <label class="aw-label">Email</label>
+      <input class="aw-input" type="email" id="i_email" required>
+      <label class="aw-label">Mot de passe</label>
+      <input class="aw-input" type="password" id="i_password" required minlength="6">
+      <label class="aw-label">Confirmer le mot de passe</label>
+      <input class="aw-input" type="password" id="i_password2" required minlength="6">
+      <button type="submit" class="aw-btn aw-btn-primaire" id="btnInscription" style="width:100%;margin-top:14px;">Creer mon compte</button>
     </form>
   </div>
 
-  <div class="carte" id="carteConnexion">
+  <div class="aw-carte carte-form" id="carteConnexion">
     <div id="msgConnexion"></div>
     <form id="formConnexion">
-      <label>Email</label>
-      <input type="email" id="c_email" required>
-      <label>Mot de passe</label>
-      <input type="password" id="c_password" required>
-      <button type="submit" id="btnConnexion">Se connecter</button>
+      <label class="aw-label">Email</label>
+      <input class="aw-input" type="email" id="c_email" required>
+      <label class="aw-label">Mot de passe</label>
+      <input class="aw-input" type="password" id="c_password" required>
+      <button type="submit" class="aw-btn aw-btn-primaire" id="btnConnexion" style="width:100%;margin-top:14px;">Se connecter</button>
     </form>
     <div class="lien-oublie"><a href="#" id="lienOublie">Mot de passe oublie ?</a></div>
 
     <div id="zoneOublie">
-      <label>Votre email</label>
-      <input type="email" id="o_email" style="margin-top:8px;">
-      <button type="button" id="btnEnvoyerReset" style="margin-top:10px;">Envoyer le lien de reinitialisation</button>
+      <label class="aw-label">Votre email</label>
+      <input class="aw-input" type="email" id="o_email">
+      <button type="button" class="aw-btn aw-btn-secondaire" id="btnEnvoyerReset" style="width:100%;margin-top:10px;">Envoyer le lien de reinitialisation</button>
       <div id="msgOublie"></div>
     </div>
   </div>
