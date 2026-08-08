@@ -1,0 +1,223 @@
+/* ============================================
+   AW SERVICES — Design System
+   Palette, typographie et composants partages
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  /* Couleurs */
+  --fond: #12142B;
+  --surface: #1C1F45;
+  --surface-haute: #242867;
+  --bordure: #33366B;
+  --accent: #F2A93B;
+  --accent-fonce: #C6841F;
+  --alerte: #E8483A;
+  --succes: #3FA34D;
+  --texte: #F5F1E8;
+  --texte-doux: #9B98C4;
+  --texte-discret: #6E6B9A;
+
+  /* Typographie */
+  --police-titre: 'Space Grotesk', sans-serif;
+  --police-texte: 'Inter', sans-serif;
+  --police-chiffres: 'Space Mono', monospace;
+
+  /* Espacements */
+  --espace-xs: 6px;
+  --espace-sm: 10px;
+  --espace-md: 16px;
+  --espace-lg: 24px;
+  --espace-xl: 40px;
+
+  /* Rayons et ombres */
+  --rayon: 14px;
+  --rayon-petit: 8px;
+  --ombre-accent: 0 4px 20px rgba(242, 169, 59, 0.18);
+  --ombre-carte: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--police-texte);
+  background-color: var(--fond);
+  color: var(--texte);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--police-titre);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.chiffre, .prix, .montant {
+  font-family: var(--police-chiffres);
+  font-variant-numeric: tabular-nums;
+}
+
+a { color: inherit; }
+
+/* ---------- En-tete ---------- */
+.aw-header {
+  background-color: var(--surface);
+  padding: var(--espace-lg) var(--espace-md);
+  text-align: center;
+  border-bottom: 1px solid var(--bordure);
+  position: relative;
+}
+.aw-header h1 {
+  font-size: 22px;
+  color: var(--texte);
+}
+.aw-header p {
+  color: var(--accent);
+  font-size: 13px;
+  margin-top: var(--espace-xs);
+  font-weight: 500;
+}
+
+/* ---------- Separateur tisse (signature) ---------- */
+.diviseur-tisse {
+  height: 10px;
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--accent) 0px, var(--accent) 3px,
+    transparent 3px, transparent 9px
+  );
+  opacity: 0.35;
+  margin: var(--espace-lg) 0;
+}
+
+/* ---------- Cartes ---------- */
+.aw-carte {
+  background-color: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: var(--espace-lg);
+  box-shadow: var(--ombre-carte);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.aw-carte:active { transform: scale(0.98); }
+.aw-carte h2, .aw-carte h3 { color: var(--texte); margin-bottom: var(--espace-sm); }
+.aw-carte p { color: var(--texte-doux); font-size: 14px; }
+
+.aw-carte-module {
+  background-color: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: var(--espace-lg) var(--espace-md);
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.aw-carte-module:active { transform: scale(0.97); }
+.aw-carte-module h2 {
+  color: var(--texte);
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.aw-carte-module p {
+  color: var(--texte-doux);
+  font-size: 12.5px;
+}
+
+/* ---------- Boutons ---------- */
+.aw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--police-texte);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: var(--rayon-petit);
+  padding: 13px 20px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  text-decoration: none;
+}
+.aw-btn:active { transform: scale(0.97); }
+
+.aw-btn-primaire {
+  background-color: var(--accent);
+  color: #1C1200;
+  box-shadow: var(--ombre-accent);
+}
+.aw-btn-secondaire {
+  background-color: transparent;
+  color: var(--texte);
+  border: 1px solid var(--bordure);
+}
+.aw-btn-alerte {
+  background-color: transparent;
+  color: var(--alerte);
+  border: 1px solid var(--alerte);
+}
+.aw-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* ---------- Badges de statut ---------- */
+.aw-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--police-texte);
+}
+.aw-badge-attente { background-color: rgba(242, 169, 59, 0.15); color: var(--accent); }
+.aw-badge-succes { background-color: rgba(63, 163, 77, 0.15); color: var(--succes); }
+.aw-badge-alerte { background-color: rgba(232, 72, 58, 0.15); color: var(--alerte); }
+
+/* ---------- Formulaires ---------- */
+.aw-label {
+  display: block;
+  font-size: 13px;
+  color: var(--texte-doux);
+  margin-top: var(--espace-md);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.aw-input, .aw-select, .aw-textarea {
+  width: 100%;
+  background-color: var(--fond);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  padding: 12px;
+  color: var(--texte);
+  font-family: var(--police-texte);
+  font-size: 14px;
+  transition: border-color 0.15s ease;
+}
+.aw-input:focus, .aw-select:focus, .aw-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---------- Titres de section ---------- */
+.aw-section-titre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  color: var(--texte);
+  margin-bottom: var(--espace-md);
+}
+.aw-section-titre::before {
+  content: "";
+  width: 4px;
+  height: 18px;
+  background-color: var(--accent);
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* ---------- Utilitaires ---------- */
+.aw-conteneur { max-width: 600px; margin: 0 auto; padding: var(--espace-md); }
+.aw-texte-doux { color: var(--texte-doux); }
+.aw-texte-accent { color: var(--accent); }
