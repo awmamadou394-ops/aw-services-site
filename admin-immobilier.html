@@ -4,48 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Gestion Immobilier</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
-  header h1 { color: #1e6fd9; font-size: 20px; }
-  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
-  .content { padding: 15px; max-width: 500px; margin: 0 auto; }
-  .stat-carte { background-color: #121826; border: 1px solid #d62828; border-radius: 10px; padding: 18px; text-align: center; margin-bottom: 20px; }
-  .stat-carte .chiffre { color: #d62828; font-size: 28px; font-weight: bold; }
-  .stat-carte .label { color: #b0b8c5; font-size: 13px; margin-top: 4px; }
-  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-  .carte h2 { font-size: 16px; margin-bottom: 12px; color: #1e6fd9; }
-  form { display: flex; flex-direction: column; gap: 12px; }
-  label { font-size: 14px; color: #b0b8c5; }
-  input, select, textarea { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; font-family: Arial, sans-serif; }
-  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 15px; font-weight: bold; margin-top: 8px; }
-  button:disabled { opacity: 0.6; }
-  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
-  .msg.erreur { background-color: #3a1414; color: #ff8080; }
-  .msg.succes { background-color: #143a1e; color: #80ff9e; }
-  .bien-carte { display: flex; gap: 10px; background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
-  .bien-carte img { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+
+  .stat-carte { background-color: var(--surface); border: 1px solid var(--accent); border-radius: var(--rayon); padding: 18px; text-align: center; margin-bottom: var(--espace-lg); box-shadow: var(--ombre-accent); }
+  .stat-carte .chiffre { color: var(--accent); font-size: 30px; font-weight: 700; font-family: var(--police-chiffres); }
+  .stat-carte .label { color: var(--texte-doux); font-size: 13px; margin-top: 4px; }
+
+  .msg { font-size: 14px; padding: 10px; border-radius: var(--rayon-petit); margin-bottom: 12px; }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
+
+  .bien-carte { display: flex; gap: 10px; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; margin-bottom: 10px; }
+  .bien-carte img { width: 60px; height: 60px; border-radius: var(--rayon-petit); object-fit: cover; background-color: var(--surface); }
   .bien-info { flex: 1; }
-  .bien-info h3 { font-size: 14px; }
-  .bien-info p { font-size: 12px; color: #b0b8c5; margin-top: 2px; }
+  .bien-info h3 { font-size: 14px; font-family: var(--police-titre); }
+  .bien-info p { font-size: 12px; color: var(--texte-doux); margin-top: 2px; }
   .boutons-bien { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-  .btn-action { background-color: transparent; border: 1px solid #1e6fd9; color: #1e6fd9; padding: 6px 10px; border-radius: 6px; font-size: 12px; margin: 0; }
-  .btn-suppr { border-color: #d62828; color: #d62828; }
-  .badge-vendu { background-color: #3a1414; color: #ff8080; font-size: 11px; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 4px; }
-  .chargement { text-align: center; padding: 30px; color: #b0b8c5; }
+  .btn-action { background-color: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 6px 10px; border-radius: var(--rayon-petit); font-size: 12px; margin: 0; font-family: var(--police-texte); }
+  .btn-suppr { border-color: var(--alerte); color: var(--alerte); }
+  .badge-vendu { background-color: rgba(232,72,58,0.12); color: var(--alerte); font-size: 11px; padding: 2px 8px; border-radius: 999px; display: inline-block; margin-top: 4px; }
+  .chargement { text-align: center; padding: 30px; color: var(--texte-doux); }
+  select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
 </style>
 </head>
 <body>
 
-<header>
+<header class="aw-header">
   <h1>Gestion Immobilier</h1>
 </header>
 
-<a href="admin-espace.html" class="back">&#8592; Retour a l administration</a>
+<a href="admin-espace.html" class="back">&#8592; Retour a l'administration</a>
 
-<div class="content">
+<div class="aw-conteneur">
   <div id="zoneContenu" class="chargement">Verification des droits...</div>
 </div>
 
@@ -66,7 +59,7 @@ function verifierEtCharger() {
       var admin = reponseAdmin.data;
       var zone = document.getElementById("zoneContenu");
       if (!admin) {
-        zone.innerHTML = "<div class=\"carte\"><p>Acces refuse.</p></div>";
+        zone.innerHTML = "<div class=\"aw-carte\"><p>Acces refuse.</p></div>";
         return;
       }
       zone.innerHTML =
@@ -74,17 +67,17 @@ function verifierEtCharger() {
           "<div class=\"chiffre\" id=\"compteurVendus\">...</div>" +
           "<div class=\"label\">biens vendus sur la plateforme</div>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Ajouter un bien</h2>" +
+        "<div class=\"aw-carte\">" +
+          "<p class=\"aw-section-titre\">Ajouter un bien</p>" +
           "<div id=\"zoneMessage\"></div>" +
           "<form id=\"formBien\">" +
-            "<label>Titre</label>" +
-            "<input type=\"text\" id=\"b_titre\" placeholder=\"Ex : Terrain 300m2 Doumga\" required>" +
-            "<label>Description</label>" +
-            "<textarea id=\"b_description\" rows=\"3\" placeholder=\"Decrivez le bien\"></textarea>" +
-            "<label>Prix (FCFA)</label>" +
-            "<input type=\"number\" id=\"b_prix\" placeholder=\"Ex : 5000000\" required>" +
-            "<label>Type de bien</label>" +
+            "<label class=\"aw-label\">Titre</label>" +
+            "<input class=\"aw-input\" type=\"text\" id=\"b_titre\" placeholder=\"Ex : Terrain 300m2 Doumga\" required>" +
+            "<label class=\"aw-label\">Description</label>" +
+            "<textarea class=\"aw-textarea\" id=\"b_description\" rows=\"3\" placeholder=\"Decrivez le bien\"></textarea>" +
+            "<label class=\"aw-label\">Prix (FCFA)</label>" +
+            "<input class=\"aw-input\" type=\"number\" id=\"b_prix\" placeholder=\"Ex : 5000000\" required>" +
+            "<label class=\"aw-label\">Type de bien</label>" +
             "<select id=\"b_type\" required>" +
               "<option value=\"\">Choisir...</option>" +
               "<option value=\"Terrain\">Terrain</option>" +
@@ -92,16 +85,16 @@ function verifierEtCharger() {
               "<option value=\"Appartement\">Appartement</option>" +
               "<option value=\"Local commercial\">Local commercial</option>" +
             "</select>" +
-            "<label>Localisation</label>" +
-            "<input type=\"text\" id=\"b_localisation\" placeholder=\"Ville / quartier\" required>" +
-            "<label>Photos (plusieurs possibles)</label>" +
-            "<input type=\"file\" id=\"b_images\" accept=\"image/*\" multiple required>" +
-            "<button type=\"submit\" id=\"btn_bien\">Publier le bien</button>" +
+            "<label class=\"aw-label\">Localisation</label>" +
+            "<input class=\"aw-input\" type=\"text\" id=\"b_localisation\" placeholder=\"Ville / quartier\" required>" +
+            "<label class=\"aw-label\">Photos (plusieurs possibles)</label>" +
+            "<input type=\"file\" id=\"b_images\" accept=\"image/*\" multiple required style=\"background-color:var(--fond);border:1px solid var(--bordure);border-radius:var(--rayon-petit);padding:10px;color:var(--texte-doux);font-size:12px;\">" +
+            "<button type=\"submit\" class=\"aw-btn aw-btn-primaire\" id=\"btn_bien\" style=\"width:100%;margin-top:10px;\">Publier le bien</button>" +
           "</form>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Biens publies</h2>" +
-          "<div id=\"listeBiens\"><p class=\"label\">Chargement...</p></div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Biens publies</p>" +
+          "<div id=\"listeBiens\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
         "</div>";
 
       document.getElementById("formBien").addEventListener("submit", ajouterBien);
@@ -122,7 +115,7 @@ function chargerBiens() {
     var data = reponse.data;
     var zone = document.getElementById("listeBiens");
     if (!data || data.length === 0) {
-      zone.innerHTML = "<p class=\"label\">Aucun bien pour le moment.</p>";
+      zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucun bien pour le moment.</p>";
       return;
     }
     var html = "";
