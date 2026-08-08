@@ -4,124 +4,49 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Foyre Bamtaare</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #0a0e17;
-    color: #ffffff;
-    padding-bottom: 30px;
-  }
-  header {
-    background-color: #0d1220;
-    padding: 20px;
-    text-align: center;
-    border-bottom: 2px solid #d62828;
-  }
-  header h1 { color: #1e6fd9; font-size: 24px; }
-  .back {
-    display: inline-block;
-    margin: 15px;
-    color: #b0b8c5;
-    text-decoration: none;
-    font-size: 14px;
-  }
-  .content { padding: 20px 15px; max-width: 600px; margin: 0 auto; }
-  .content h2 { color: #ffffff; margin-bottom: 10px; }
-  .content > p.intro {
-    color: #b0b8c5;
-    margin-bottom: 20px;
-    line-height: 1.5;
-  }
+  body { padding-bottom: 30px; }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+  .intro { color: var(--texte-doux); margin-bottom: var(--espace-lg); line-height: 1.5; font-size: 13.5px; }
 
-  .bandeau-compte { background-color: #121826; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 13px; color: #b0b8c5; text-align: center; }
-  .bandeau-compte a { color: #1e6fd9; font-weight: bold; text-decoration: none; }
-
-  .offres {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 25px;
-  }
-  .offre {
-    background-color: #121826;
-    border: 1px solid #1e6fd9;
-    border-radius: 10px;
-    overflow: hidden;
-    text-align: center;
-    position: relative;
-  }
-  .offre.populaire { border-color: #d62828; border-width: 2px; }
-  .badge-populaire {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background-color: #d62828;
-    color: #ffffff;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 3px 8px;
-    border-radius: 10px;
-    z-index: 1;
-  }
-  .offre img {
-    width: 100%;
-    height: 100px;
-    object-fit: cover;
-    display: block;
-  }
+  .offres { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: var(--espace-lg); }
+  .offre { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); overflow: hidden; text-align: center; position: relative; }
+  .offre.populaire { border-color: var(--accent); border-width: 2px; box-shadow: var(--ombre-accent); }
+  .badge-populaire { position: absolute; top: 8px; right: 8px; background-color: var(--accent); color: #1C1200; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; z-index: 1; }
+  .offre img { width: 100%; height: 95px; object-fit: cover; display: block; }
   .offre .texte { padding: 12px; }
-  .offre h3 { color: #ffffff; font-size: 15px; }
-  .offre .prix {
-    color: #d62828;
-    font-size: 19px;
-    font-weight: bold;
-    margin: 6px 0;
-  }
-  .offre .parunite { color: #b0b8c5; font-size: 11px; margin-top: -4px; margin-bottom: 6px; }
-  .offre p.desc { color: #b0b8c5; font-size: 12px; }
+  .offre h3 { color: var(--texte); font-size: 14px; font-family: var(--police-titre); }
+  .offre .prix { color: var(--accent); font-size: 17px; font-weight: 700; margin: 5px 0; font-family: var(--police-chiffres); }
+  .offre .parunite { color: var(--texte-discret); font-size: 10.5px; margin-top: -4px; margin-bottom: 6px; }
+  .offre p.desc { color: var(--texte-doux); font-size: 11.5px; }
 
-  #zoneCommande { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; }
-  #zoneCommande h2 { font-size: 16px; margin-bottom: 12px; }
-  .qte-controles { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .btn-qte { background-color: #0a0e17; border: 1px solid #1e6fd9; color: #ffffff; width: 40px; height: 40px; border-radius: 8px; font-size: 20px; font-weight: bold; }
-  .qte-valeur { font-size: 20px; font-weight: bold; min-width: 40px; text-align: center; }
-  .recap-prix { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
-  .recap-prix p { font-size: 13px; color: #b0b8c5; margin-top: 4px; }
-  .recap-prix .total { font-size: 18px; font-weight: bold; color: #d62828; margin-top: 8px; }
+  .qte-controles { display: flex; align-items: center; gap: 10px; margin-bottom: var(--espace-md); }
+  .btn-qte { background-color: var(--fond); border: 1px solid var(--accent); color: var(--texte); width: 42px; height: 42px; border-radius: var(--rayon-petit); font-size: 20px; font-weight: bold; }
+  .qte-valeur { font-size: 20px; font-weight: bold; min-width: 40px; text-align: center; font-family: var(--police-chiffres); }
+  .recap-prix { background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; margin-bottom: var(--espace-md); }
+  .recap-prix p { font-size: 13px; color: var(--texte-doux); }
+  .recap-prix .total { font-size: 19px; font-weight: 700; color: var(--accent); margin-top: 6px; font-family: var(--police-chiffres); }
 
-  #zoneCommande form { display: flex; flex-direction: column; gap: 12px; }
-  label { font-size: 14px; color: #b0b8c5; }
-  input, select { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
-  button[type="submit"] { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; }
-  button[type="submit"]:disabled { opacity: 0.6; }
-  .btn-position { background-color: transparent; border: 1px solid #1e6fd9; color: #1e6fd9; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-  .msg-position { font-size: 12px; color: #b0b8c5; }
-  .msg-position.ok { color: #80ff9e; }
-
-  footer {
-    text-align: center;
-    padding: 20px;
-    color: #b0b8c5;
-    font-size: 12px;
-    border-top: 1px solid #d62828;
-    margin-top: 30px;
-  }
+  select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
+  .msg-position { font-size: 12px; color: var(--texte-doux); margin-top: 6px; }
+  .msg-position.ok { color: var(--succes); }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>AW SERVICES — Foyre Bamtaare</h1>
+<header class="aw-header">
+  <h1>Foyre Bamtaare</h1>
+  <p>Volaille fraiche livree chez vous</p>
 </header>
 
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
-<div class="content">
-  <div class="bandeau-compte" id="bandeauCompte"></div>
+<div class="aw-conteneur">
+  <div class="bandeau-compte" id="bandeauCompte" style="background-color:var(--surface);border:1px solid var(--bordure);border-radius:var(--rayon-petit);padding:12px;margin-bottom:var(--espace-md);font-size:13px;color:var(--texte-doux);text-align:center;"></div>
 
-  <h2>Volaille fraiche</h2>
+  <p class="aw-section-titre">Volaille fraiche</p>
   <p class="intro">Poulets de chair frais, livres directement chez vous. Plus vous commandez, moins c'est cher a l'unite.</p>
 
   <div class="offres">
@@ -167,10 +92,10 @@
     </div>
   </div>
 
-  <div id="zoneCommande">
-    <h2>Passer commande</h2>
+  <div class="aw-carte">
+    <p class="aw-section-titre">Passer commande</p>
 
-    <label>Nombre de poulets</label>
+    <label class="aw-label">Nombre de poulets</label>
     <div class="qte-controles">
       <button type="button" class="btn-qte" id="btnMoins">-</button>
       <span class="qte-valeur" id="qteValeur">1</span>
@@ -183,31 +108,31 @@
     </div>
 
     <form id="formCommande">
-      <label>Nom complet</label>
-      <input type="text" id="cmd_nom" required>
+      <label class="aw-label">Nom complet</label>
+      <input class="aw-input" type="text" id="cmd_nom" required>
 
-      <label>Numero de telephone</label>
-      <input type="tel" id="cmd_tel" required>
+      <label class="aw-label">Numero de telephone</label>
+      <input class="aw-input" type="tel" id="cmd_tel" required>
 
-      <label>Mode de paiement</label>
+      <label class="aw-label">Mode de paiement</label>
       <select id="cmd_paiement" required>
         <option value="">Choisir...</option>
         <option value="Paiement en ligne (Wave/Orange Money)">Paiement en ligne (Wave/Orange Money)</option>
         <option value="Paiement en especes a la livraison">Paiement en especes a la livraison</option>
       </select>
 
-      <label>Adresse de livraison</label>
-      <input type="text" id="cmd_adresse" required>
+      <label class="aw-label">Adresse de livraison</label>
+      <input class="aw-input" type="text" id="cmd_adresse" required>
 
-      <button type="button" class="btn-position" id="btnPositionCmd">Utiliser ma position actuelle (pour le livreur)</button>
+      <button type="button" class="aw-btn aw-btn-secondaire" id="btnPositionCmd" style="width:100%;margin-top:10px;">&#128205; Utiliser ma position actuelle (pour le livreur)</button>
       <p class="msg-position" id="msgPositionCmd">Optionnel, mais aide le livreur a vous trouver facilement.</p>
 
-      <button type="submit" id="btn_commande">Confirmer la commande</button>
+      <button type="submit" class="aw-btn aw-btn-primaire" id="btn_commande" style="width:100%;margin-top:14px;">Confirmer la commande</button>
     </form>
   </div>
 </div>
 
-<footer>
+<footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
   &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
@@ -257,17 +182,17 @@ function verifierConnexion() {
   sb.auth.getUser().then(function(reponseUser) {
     var user = reponseUser.data.user;
     if (!user) {
-      bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\">connectez-vous ou creez un compte</a>.";
+      bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">connectez-vous ou creez un compte</a>.";
       return;
     }
     sb.from("clients").select("*").eq("user_id", user.id).single().then(function(reponse) {
       if (reponse.data) {
         clientConnecte = reponse.data;
-        bandeau.innerHTML = "Connecte : " + clientConnecte.nom + " - <a href=\"client-espace.html\">Mes commandes</a>";
+        bandeau.innerHTML = "Connecte : " + clientConnecte.nom + " - <a href=\"client-espace.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">Mes commandes</a>";
         document.getElementById("cmd_nom").value = clientConnecte.nom;
         document.getElementById("cmd_tel").value = clientConnecte.telephone;
       } else {
-        bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\">connectez-vous ou creez un compte</a>.";
+        bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">connectez-vous ou creez un compte</a>.";
       }
     });
   });
