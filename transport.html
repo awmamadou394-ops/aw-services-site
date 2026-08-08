@@ -4,67 +4,106 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Transport</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; padding-bottom: 30px; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
-  header h1 { color: #1e6fd9; font-size: 22px; }
-  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
-  .content { padding: 15px; max-width: 600px; margin: 0 auto; }
+  body { padding-bottom: 30px; }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
 
-  .onglets { display: flex; gap: 8px; margin-bottom: 20px; }
-  .onglet { flex: 1; background-color: #121826; border: 1px solid #2a3040; color: #b0b8c5; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: bold; text-align: center; }
-  .onglet.actif { background-color: #1e6fd9; border-color: #1e6fd9; color: #ffffff; }
+  .onglets { display: flex; gap: 8px; margin-bottom: var(--espace-lg); }
+  .onglet {
+    flex: 1;
+    background-color: var(--surface);
+    border: 1px solid var(--bordure);
+    color: var(--texte-doux);
+    padding: 13px;
+    border-radius: var(--rayon-petit);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    font-family: var(--police-titre);
+  }
+  .onglet.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
 
   .panneau { display: none; }
   .panneau.visible { display: block; }
 
-  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 15px; }
-  .carte h2 { font-size: 16px; margin-bottom: 12px; }
-  .carte p.desc { color: #b0b8c5; font-size: 13px; margin-bottom: 15px; line-height: 1.5; }
+  .carte p.desc { color: var(--texte-doux); font-size: 13px; margin-bottom: var(--espace-md); line-height: 1.5; }
 
-  label { font-size: 14px; color: #b0b8c5; display: block; margin-top: 12px; margin-bottom: 6px; }
-  input, select { width: 100%; background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
-  button[type="submit"] { width: 100%; background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 16px; font-weight: bold; margin-top: 18px; }
-  button[type="submit"]:disabled { opacity: 0.6; }
-  .btn-position { width: 100%; background-color: transparent; border: 1px solid #1e6fd9; color: #1e6fd9; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 12px; }
-  .msg-position { font-size: 12px; color: #b0b8c5; margin-top: 6px; }
-  .msg-position.ok { color: #80ff9e; }
+  .direction-choix { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-direction {
+    flex: 1;
+    background-color: var(--fond);
+    border: 1px solid var(--bordure);
+    color: var(--texte-doux);
+    padding: 11px;
+    border-radius: var(--rayon-petit);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .btn-direction.actif { background-color: var(--accent-fonce); border-color: var(--accent); color: var(--texte); }
 
-  .direction-choix { display: flex; gap: 8px; margin-top: 12px; }
-  .btn-direction { flex: 1; background-color: #0a0e17; border: 1px solid #2a3040; color: #b0b8c5; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-  .btn-direction.actif { background-color: #1e6fd9; border-color: #1e6fd9; color: #ffffff; }
-
-  .plan-voiture { margin-top: 18px; }
-  .chauffeur-label { text-align: center; color: #6f7a8c; font-size: 12px; margin-bottom: 10px; border: 1px dashed #2a3040; border-radius: 6px; padding: 8px; }
-  .grille-sieges { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .siege { background-color: #0a0e17; border: 1px solid #1e6fd9; color: #ffffff; border-radius: 8px; padding: 14px 0; text-align: center; font-size: 14px; font-weight: bold; }
-  .siege.pris { background-color: #1a1a1a; border-color: #2a3040; color: #4a4f5a; }
-  .siege.selectionne { background-color: #d62828; border-color: #d62828; }
-  .legende { display: flex; gap: 15px; margin-top: 12px; font-size: 11px; color: #b0b8c5; flex-wrap: wrap; }
+  .plan-voiture { margin-top: var(--espace-lg); }
+  .chauffeur-label {
+    text-align: center;
+    color: var(--texte-discret);
+    font-size: 12px;
+    margin-bottom: var(--espace-sm);
+    border: 1px dashed var(--bordure);
+    border-radius: var(--rayon-petit);
+    padding: 8px;
+  }
+  .grille-sieges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .siege {
+    background-color: var(--fond);
+    border: 1px solid var(--bordure);
+    color: var(--texte);
+    border-radius: var(--rayon-petit);
+    padding: 13px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--police-chiffres);
+    transition: transform 0.1s ease;
+  }
+  .siege:active:not(:disabled) { transform: scale(0.94); }
+  .siege.pris { background-color: var(--surface); border-color: var(--bordure); color: var(--texte-discret); text-decoration: line-through; }
+  .siege.selectionne { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
+  .legende { display: flex; gap: 14px; margin-top: var(--espace-sm); font-size: 11px; color: var(--texte-doux); flex-wrap: wrap; }
   .legende span { display: inline-flex; align-items: center; gap: 5px; }
   .pastille { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-  .pastille.libre { background-color: #0a0e17; border: 1px solid #1e6fd9; }
-  .pastille.occupe { background-color: #1a1a1a; border: 1px solid #2a3040; }
-  .pastille.choisi { background-color: #d62828; }
+  .pastille.libre { background-color: var(--fond); border: 1px solid var(--bordure); }
+  .pastille.occupe { background-color: var(--surface); border: 1px solid var(--bordure); }
+  .pastille.choisi { background-color: var(--accent); }
 
-  .msg { font-size: 13px; padding: 10px; border-radius: 6px; margin-top: 12px; }
-  .msg.erreur { background-color: #3a1414; color: #ff8080; }
-  .msg.succes { background-color: #143a1e; color: #80ff9e; }
+  .recap-prix {
+    margin-top: var(--espace-md);
+    background-color: var(--fond);
+    border: 1px solid var(--bordure);
+    border-radius: var(--rayon-petit);
+    padding: var(--espace-md);
+  }
+  .recap-prix p { color: var(--texte-doux); font-size: 13px; }
+  .recap-prix .total { font-family: var(--police-chiffres); color: var(--accent); font-size: 19px; font-weight: 700; margin-top: 4px; }
 
-  footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
+  select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
+  .msg-position { font-size: 12px; color: var(--texte-doux); margin-top: 6px; }
+  .msg-position.ok { color: var(--succes); }
+  .msg { font-size: 13px; padding: 10px; border-radius: var(--rayon-petit); margin-top: 12px; }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>AW SERVICES — Transport</h1>
+<header class="aw-header">
+  <h1>Transport</h1>
+  <p>Course moto &amp; Dakar &#8596; Bokidiawe</p>
 </header>
 
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
-<div class="content">
+<div class="aw-conteneur">
 
   <div class="onglets">
     <div class="onglet actif" id="ongletMoto">Course moto</div>
@@ -72,27 +111,27 @@
   </div>
 
   <div class="panneau visible" id="panneauMoto">
-    <div class="carte">
-      <h2>Course moto seule</h2>
+    <div class="aw-carte">
+      <p class="aw-section-titre">Course moto seule</p>
       <p class="desc">Un moto-taxi rien que pour vous. Votre position sert de point de depart : les livreurs la voient et acceptent la course la plus proche.</p>
 
       <form id="formMoto">
-        <button type="button" class="btn-position" id="btnPositionMoto">Utiliser ma position actuelle (obligatoire)</button>
+        <button type="button" class="aw-btn aw-btn-secondaire" id="btnPositionMoto" style="width:100%;">&#128205; Utiliser ma position actuelle (obligatoire)</button>
         <p class="msg-position" id="msgPositionMoto">Le livreur en a besoin pour venir vous chercher.</p>
 
-        <label>Point de repere (optionnel)</label>
-        <input type="text" id="m_repere" placeholder="Ex : devant la pharmacie">
+        <label class="aw-label">Point de repere (optionnel)</label>
+        <input class="aw-input" type="text" id="m_repere" placeholder="Ex : devant la pharmacie">
 
-        <label>Destination</label>
-        <input type="text" id="m_arrivee" required>
+        <label class="aw-label">Destination</label>
+        <input class="aw-input" type="text" id="m_arrivee" required>
 
-        <label>Nom complet</label>
-        <input type="text" id="m_nom" required>
+        <label class="aw-label">Nom complet</label>
+        <input class="aw-input" type="text" id="m_nom" required>
 
-        <label>Numero de telephone</label>
-        <input type="tel" id="m_telephone" required>
+        <label class="aw-label">Numero de telephone</label>
+        <input class="aw-input" type="tel" id="m_telephone" required>
 
-        <label>Mode de paiement</label>
+        <label class="aw-label">Mode de paiement</label>
         <select id="m_paiement" required>
           <option value="">Choisir...</option>
           <option value="Wave">Wave</option>
@@ -101,45 +140,45 @@
           <option value="Especes">Especes au chauffeur</option>
         </select>
 
-        <button type="submit" id="btnMoto">Demander une course</button>
+        <button type="submit" class="aw-btn aw-btn-primaire" id="btnMoto" style="width:100%;margin-top:18px;">Demander une course</button>
         <div id="msgMoto"></div>
       </form>
     </div>
   </div>
 
   <div class="panneau" id="panneauVoiture">
-    <div class="carte">
-      <h2>Reservation Dakar &#8596; Bokidiawe</h2>
+    <div class="aw-carte">
+      <p class="aw-section-titre">Reservation Dakar &#8596; Bokidiawe</p>
       <p class="desc">Voiture 14 places, region de Matam. Choisissez votre trajet, votre date et votre chaise.</p>
 
-      <label>Trajet</label>
+      <label class="aw-label">Trajet</label>
       <div class="direction-choix">
         <button type="button" class="btn-direction actif" id="btnAller" data-direction="aller">Dakar &#8594; Bokidiawe</button>
         <button type="button" class="btn-direction" id="btnRetour" data-direction="retour">Bokidiawe &#8594; Dakar</button>
       </div>
 
       <div id="zoneDateAller">
-        <label>Date et heure de depart</label>
+        <label class="aw-label">Date et heure de depart</label>
         <select id="v_depart_select">
           <option value="">Chargement...</option>
         </select>
       </div>
 
       <div id="zoneDateRetour" style="display:none;">
-        <label>Date et heure de depart</label>
+        <label class="aw-label">Date et heure de depart</label>
         <select id="v_retour_select">
           <option value="">Chargement...</option>
         </select>
       </div>
 
-      <p class="msg" style="background-color:#14223a;color:#6aa9ff;">Place : 12 500 FCFA (23kg de bagages inclus). Valise supplementaire au-dela de 23kg : +1 000 FCFA/valise.</p>
+      <p class="aw-badge aw-badge-attente" style="display:block;margin-top:12px;">Place : 12 500 FCFA (23kg de bagages inclus) — +1 000 FCFA/valise au-dela</p>
 
       <div id="zoneRassemblement"></div>
 
       <div class="plan-voiture">
-        <div class="chauffeur-label">Chauffeur</div>
+        <div class="chauffeur-label">&#128663; Chauffeur</div>
         <div class="grille-sieges" id="grilleSieges">
-          <p style="color:#b0b8c5;font-size:13px;grid-column:1/-1;">Choisissez une date pour voir les chaises disponibles.</p>
+          <p style="color:var(--texte-doux);font-size:13px;grid-column:1/-1;">Choisissez une date pour voir les chaises disponibles.</p>
         </div>
         <div class="legende">
           <span><span class="pastille libre"></span> Libre</span>
@@ -148,38 +187,38 @@
         </div>
       </div>
 
-      <div class="recap-prix" style="margin-top:15px;">
+      <div class="recap-prix">
         <p id="prixDetailAffiche">1 place : 12 500 FCFA</p>
         <div class="total" id="prixTotalAffiche">Total : 12 500 FCFA</div>
       </div>
 
       <form id="formVoiture">
-        <label>Prenom</label>
-        <input type="text" id="v_prenom" required>
+        <label class="aw-label">Prenom</label>
+        <input class="aw-input" type="text" id="v_prenom" required>
 
-        <label>Nom</label>
-        <input type="text" id="v_nom_famille" required>
+        <label class="aw-label">Nom</label>
+        <input class="aw-input" type="text" id="v_nom_famille" required>
 
-        <label>Numero CNI ou passeport</label>
-        <input type="text" id="v_cni" required>
+        <label class="aw-label">Numero CNI ou passeport</label>
+        <input class="aw-input" type="text" id="v_cni" required>
 
-        <label>Numero de telephone</label>
-        <input type="tel" id="v_telephone" required>
+        <label class="aw-label">Numero de telephone</label>
+        <input class="aw-input" type="tel" id="v_telephone" required>
 
         <div id="zoneVillageDepart" style="display:none;">
-          <label>Village de depart</label>
-          <input type="text" id="v_village" placeholder="Nom du village">
+          <label class="aw-label">Village de depart</label>
+          <input class="aw-input" type="text" id="v_village" placeholder="Nom du village">
         </div>
 
         <div id="zonePositionRetour" style="display:none;">
-          <button type="button" class="btn-position" id="btnPositionVoiture">Utiliser ma position actuelle (obligatoire pour le retour)</button>
+          <button type="button" class="aw-btn aw-btn-secondaire" id="btnPositionVoiture" style="width:100%;margin-top:12px;">&#128205; Utiliser ma position actuelle (obligatoire pour le retour)</button>
           <p class="msg-position" id="msgPositionVoiture">Necessaire pour que le chauffeur vienne vous chercher a domicile.</p>
         </div>
 
-        <label>Valises supplementaires (au-dela de 23kg)</label>
-        <input type="number" id="v_valises" min="0" value="0">
+        <label class="aw-label">Valises supplementaires (au-dela de 23kg)</label>
+        <input class="aw-input" type="number" id="v_valises" min="0" value="0">
 
-        <label>Mode de paiement</label>
+        <label class="aw-label">Mode de paiement</label>
         <select id="v_paiement" required>
           <option value="">Choisir...</option>
           <option value="Wave">Wave</option>
@@ -188,7 +227,7 @@
           <option value="Especes">Especes au depart</option>
         </select>
 
-        <button type="submit" id="btnVoiture">Reserver ma chaise</button>
+        <button type="submit" class="aw-btn aw-btn-primaire" id="btnVoiture" style="width:100%;margin-top:18px;">Reserver ma chaise</button>
         <div id="msgVoiture"></div>
       </form>
     </div>
@@ -196,7 +235,7 @@
 
 </div>
 
-<footer>
+<footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
   &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
@@ -363,14 +402,14 @@ function afficherZoneDirection() {
     zoneVillage.style.display = "none";
     zoneDateAller.style.display = "block";
     zoneDateRetour.style.display = "none";
-    zoneRassemblement.innerHTML = "<p style=\"color:#b0b8c5;font-size:13px;margin-bottom:12px;\">Chargement du point de rassemblement...</p>";
+    zoneRassemblement.innerHTML = "<p style=\"color:var(--texte-doux);font-size:13px;margin-top:12px;\">Chargement du point de rassemblement...</p>";
     sb.from("chauffeurs").select("*").eq("statut", "approuve").not("lieu_rassemblement", "is", null).limit(1).then(function(reponse) {
       var c = reponse.data && reponse.data[0];
       if (c) {
-        var lienCarte = (c.latitude && c.longitude) ? " <a href=\"https://www.google.com/maps?q=" + c.latitude + "," + c.longitude + "\" target=\"_blank\" style=\"color:#1e6fd9;\">Voir sur la carte</a>" : "";
-        zoneRassemblement.innerHTML = "<p style=\"background-color:#121826;border:1px solid #2a3040;border-radius:8px;padding:10px;font-size:13px;color:#b0b8c5;margin-bottom:12px;\">Point de rassemblement : " + c.lieu_rassemblement + lienCarte + "</p>";
+        var lienCarte = (c.latitude && c.longitude) ? " <a href=\"https://www.google.com/maps?q=" + c.latitude + "," + c.longitude + "\" target=\"_blank\" style=\"color:var(--accent);\">Voir sur la carte</a>" : "";
+        zoneRassemblement.innerHTML = "<p style=\"background-color:var(--fond);border:1px solid var(--bordure);border-radius:8px;padding:10px;font-size:13px;color:var(--texte-doux);margin-top:12px;\">&#128205; Point de rassemblement : " + c.lieu_rassemblement + lienCarte + "</p>";
       } else {
-        zoneRassemblement.innerHTML = "<p style=\"color:#ffb84d;font-size:12px;margin-bottom:12px;\">Point de rassemblement pas encore renseigne, contactez-nous.</p>";
+        zoneRassemblement.innerHTML = "<p style=\"color:var(--accent);font-size:12px;margin-top:12px;\">Point de rassemblement pas encore renseigne, contactez-nous.</p>";
       }
     });
     chargerDepartsProgrammes("aller", "v_depart_select");
@@ -454,11 +493,11 @@ function chargerSieges() {
   var grille = document.getElementById("grilleSieges");
 
   if (!dateVoyage) {
-    grille.innerHTML = "<p style=\"color:#b0b8c5;font-size:13px;grid-column:1/-1;\">Choisissez une date pour voir les chaises disponibles.</p>";
+    grille.innerHTML = "<p style=\"color:var(--texte-doux);font-size:13px;grid-column:1/-1;\">Choisissez une date pour voir les chaises disponibles.</p>";
     return;
   }
 
-  grille.innerHTML = "<p style=\"color:#b0b8c5;font-size:13px;grid-column:1/-1;\">Chargement des chaises...</p>";
+  grille.innerHTML = "<p style=\"color:var(--texte-doux);font-size:13px;grid-column:1/-1;\">Chargement des chaises...</p>";
 
   sb.from("reservations_voiture").select("siege").eq("date_voyage", dateVoyage).eq("direction", direction).neq("statut", "annulee").then(function(reponse) {
     siegesPris = (reponse.data || []).map(function(r) { return r.siege; });
@@ -473,7 +512,7 @@ function afficherGrilleSieges() {
     var estPris = siegesPris.indexOf(i) !== -1;
     var estChoisi = siegeSelectionne === i;
     var classes = "siege" + (estPris ? " pris" : "") + (estChoisi ? " selectionne" : "");
-    html += "<button type=\"button\" class=\"" + classes + "\" data-siege=\"" + i + "\"" + (estPris ? " disabled" : "") + ">Chaise " + i + "</button>";
+    html += "<button type=\"button\" class=\"" + classes + "\" data-siege=\"" + i + "\"" + (estPris ? " disabled" : "") + ">" + i + "</button>";
   }
   grille.innerHTML = html;
 
