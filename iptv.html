@@ -4,114 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - IPTV</title>
+<link rel="stylesheet" href="style-global.css">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #0a0e17;
-    color: #ffffff;
-  }
-  header {
-    background-color: #0d1220;
-    padding: 20px;
-    text-align: center;
-    border-bottom: 2px solid #d62828;
-  }
-  header h1 { color: #1e6fd9; font-size: 24px; }
-  .back {
-    display: inline-block;
-    margin: 15px;
-    color: #b0b8c5;
-    text-decoration: none;
-    font-size: 14px;
-  }
-  .content { padding: 20px 15px; }
-  .content h2 { color: #ffffff; margin-bottom: 10px; }
-  .content > p {
-    color: #b0b8c5;
-    margin-bottom: 20px;
-    line-height: 1.5;
-  }
-  .offres {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  .offre {
-    background-color: #121826;
-    border: 1px solid #1e6fd9;
-    border-radius: 10px;
-    overflow: hidden;
-    text-align: center;
-    position: relative;
-  }
-  .offre.populaire { border-color: #d62828; border-width: 2px; }
-  .badge-populaire {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background-color: #d62828;
-    color: #ffffff;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 3px 8px;
-    border-radius: 10px;
-    z-index: 1;
-  }
-  .offre img {
-    width: 100%;
-    height: 80px;
-    object-fit: cover;
-    display: block;
-  }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+  .intro { color: var(--texte-doux); margin-bottom: var(--espace-lg); line-height: 1.5; font-size: 13.5px; }
+
+  .offres { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .offre { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); overflow: hidden; text-align: center; position: relative; }
+  .offre.populaire { border-color: var(--accent); border-width: 2px; box-shadow: var(--ombre-accent); }
+  .badge-populaire { position: absolute; top: 8px; right: 8px; background-color: var(--accent); color: #1C1200; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; z-index: 1; }
+  .offre img { width: 100%; height: 75px; object-fit: cover; display: block; }
   .offre .texte { padding: 12px; }
-  .offre h3 { color: #ffffff; font-size: 15px; }
-  .offre .prix {
-    color: #d62828;
-    font-size: 19px;
-    font-weight: bold;
-    margin: 6px 0;
-  }
-  .offre p.desc { color: #b0b8c5; font-size: 12px; margin-bottom: 10px; }
-  .offre a {
-    display: inline-block;
-    background-color: #1e6fd9;
-    color: #ffffff;
-    text-decoration: none;
-    padding: 9px;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 13px;
-    width: 100%;
-  }
-  .note-paiement {
-    text-align: center;
-    color: #b0b8c5;
-    font-size: 12px;
-    margin-top: 20px;
-    font-style: italic;
-  }
-  footer {
-    text-align: center;
-    padding: 20px;
-    color: #b0b8c5;
-    font-size: 12px;
-    border-top: 1px solid #d62828;
-    margin-top: 30px;
-  }
+  .offre h3 { color: var(--texte); font-size: 15px; font-family: var(--police-titre); }
+  .offre .prix { color: var(--accent); font-size: 18px; font-weight: 700; margin: 6px 0; font-family: var(--police-chiffres); }
+  .offre p.desc { color: var(--texte-doux); font-size: 11.5px; margin-bottom: 10px; }
+  .offre a { display: inline-block; background-color: var(--accent); color: #1C1200; text-decoration: none; padding: 9px; border-radius: var(--rayon-petit); font-weight: 700; font-size: 13px; width: 100%; }
+
+  .note-paiement { text-align: center; color: var(--texte-discret); font-size: 12px; margin-top: var(--espace-lg); font-style: italic; }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>AW SERVICES — IPTV</h1>
+<header class="aw-header">
+  <h1>IPTV</h1>
+  <p>Streaming illimite, toutes chaines</p>
 </header>
 
-<a href="index.html" class="back">&#8592; Retour à l'accueil</a>
+<a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
-<div class="content">
-  <h2>Nos formules IPTV</h2>
-  <p>Des centaines de chaînes en streaming. Choisissez votre durée et commandez directement sur WhatsApp.</p>
+<div class="aw-conteneur">
+  <p class="aw-section-titre">Nos formules IPTV</p>
+  <p class="intro">Des centaines de chaines en streaming. Choisissez votre duree et commandez directement sur WhatsApp.</p>
 
   <div class="offres">
     <div class="offre">
@@ -119,7 +42,7 @@
       <div class="texte">
         <h3>1 mois</h3>
         <div class="prix">4 000 FCFA</div>
-        <p class="desc">30 jours d'accès</p>
+        <p class="desc">30 jours d'acces</p>
         <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%201%20mois" target="_blank">Commander</a>
       </div>
     </div>
@@ -129,7 +52,7 @@
       <div class="texte">
         <h3>3 mois</h3>
         <div class="prix">10 000 FCFA</div>
-        <p class="desc">90 jours d'accès</p>
+        <p class="desc">90 jours d'acces</p>
         <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%203%20mois" target="_blank">Commander</a>
       </div>
     </div>
@@ -140,7 +63,7 @@
       <div class="texte">
         <h3>6 mois</h3>
         <div class="prix">16 000 FCFA</div>
-        <p class="desc">180 jours d'accès</p>
+        <p class="desc">180 jours d'acces</p>
         <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%206%20mois" target="_blank">Commander</a>
       </div>
     </div>
@@ -150,17 +73,17 @@
       <div class="texte">
         <h3>12 mois</h3>
         <div class="prix">28 000 FCFA</div>
-        <p class="desc">1 an d'accès</p>
+        <p class="desc">1 an d'acces</p>
         <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%2012%20mois" target="_blank">Commander</a>
       </div>
     </div>
   </div>
 
-  <p class="note-paiement">Paiement en ligne (Wave, Orange Money, carte) bientôt disponible directement sur cette page.</p>
+  <p class="note-paiement">Paiement en ligne (Wave, Orange Money, carte) bientot disponible directement sur cette page.</p>
 </div>
 
-<footer>
-  &copy; 2026 AW SERVICES — Tous droits réservés
+<footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
+  &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
 </body>
