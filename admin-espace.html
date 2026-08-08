@@ -4,36 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Administration</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; display: flex; justify-content: space-between; align-items: center; }
-  header h1 { color: #1e6fd9; font-size: 18px; }
-  .deconnexion { background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
-  .content { padding: 20px 15px; max-width: 600px; margin: 0 auto; }
-  .section { margin-bottom: 25px; }
-  .section h2 { font-size: 17px; margin-bottom: 12px; color: #1e6fd9; }
-  .lien-gestion { display: block; background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 15px; margin-bottom: 10px; color: #ffffff; text-decoration: none; font-weight: bold; }
-  .carte { background-color: #121826; border: 1px solid #2a3040; border-radius: 10px; padding: 15px; margin-bottom: 10px; }
-  .carte h3 { font-size: 15px; margin-bottom: 5px; }
-  .carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
+  .aw-header { display: flex; justify-content: space-between; align-items: center; text-align: left; }
+  .aw-header h1 { font-size: 17px; }
+  .deconnexion { background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 8px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 600; font-family: var(--police-texte); }
+  .chargement { text-align: center; padding: 40px; color: var(--texte-doux); }
+  .refus { text-align: center; padding: 40px; color: var(--alerte); }
+
+  .section { margin-bottom: var(--espace-xl); }
+  .lien-gestion { display: block; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 15px; margin-bottom: 10px; color: var(--texte); text-decoration: none; font-weight: 700; font-family: var(--police-titre); transition: border-color 0.15s ease; }
+  .lien-gestion:active { border-color: var(--accent); }
+
+  .carte-attente { background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 14px; margin-bottom: 10px; }
+  .carte-attente h3 { font-size: 15px; font-family: var(--police-titre); margin-bottom: 4px; }
+  .carte-attente p { font-size: 13px; color: var(--texte-doux); margin-top: 3px; }
   .boutons { display: flex; gap: 8px; margin-top: 12px; }
-  .btn-approuver { flex: 1; background-color: #1e6fd9; color: #ffffff; border: none; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-  .btn-refuser { flex: 1; background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-  .vide { color: #b0b8c5; font-size: 14px; padding: 15px; text-align: center; }
-  .chargement { text-align: center; padding: 40px; color: #b0b8c5; }
-  .refus { text-align: center; padding: 40px; color: #ff8080; }
+  .btn-approuver { flex: 1; background-color: var(--accent); color: #1C1200; border: none; padding: 10px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; font-family: var(--police-texte); }
+  .btn-refuser { flex: 1; background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 10px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; font-family: var(--police-texte); }
+  .vide { color: var(--texte-doux); font-size: 14px; padding: 15px; text-align: center; }
+  .date-commande { font-size: 11px; color: var(--texte-discret); margin-bottom: 4px; }
 </style>
 </head>
 <body>
 
-<header>
+<header class="aw-header">
   <h1>AW SERVICES — Administration</h1>
-  <button class="deconnexion" id="btnDeconnexion">Déconnexion</button>
+  <button class="deconnexion" id="btnDeconnexion">Deconnexion</button>
 </header>
 
-<div class="content">
+<div class="aw-conteneur">
   <div id="zoneContenu" class="chargement">Verification des droits...</div>
 </div>
 
@@ -65,28 +66,28 @@ function verifierEtCharger() {
       }
       zone.innerHTML =
         "<div class=\"section\">" +
-          "<h2>Gestion des catalogues</h2>" +
-          "<a href=\"admin-immobilier.html\" class=\"lien-gestion\">Gerer l Immobilier</a>" +
+          "<p class=\"aw-section-titre\">Gestion des catalogues</p>" +
+          "<a href=\"admin-immobilier.html\" class=\"lien-gestion\">Gerer l'Immobilier</a>" +
           "<a href=\"admin-boutique.html\" class=\"lien-gestion\">Gerer la Boutique</a>" +
         "</div>" +
         "<div class=\"section\">" +
-          "<h2>Vendeurs en attente</h2>" +
+          "<p class=\"aw-section-titre\">Vendeurs en attente</p>" +
           "<div id=\"listeVendeurs\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>" +
         "<div class=\"section\">" +
-          "<h2>Chauffeurs en attente (Dakar-Bokidiawe)</h2>" +
+          "<p class=\"aw-section-titre\">Chauffeurs en attente (Dakar-Bokidiawe)</p>" +
           "<div id=\"listeChauffeurs\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>" +
         "<div class=\"section\">" +
-          "<h2>Produits en attente (Boutique)</h2>" +
+          "<p class=\"aw-section-titre\">Produits en attente (Boutique)</p>" +
           "<div id=\"listeProduits\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>" +
         "<div class=\"section\">" +
-          "<h2>Livreurs en attente</h2>" +
+          "<p class=\"aw-section-titre\">Livreurs en attente</p>" +
           "<div id=\"listeLivreurs\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>" +
         "<div class=\"section\">" +
-          "<h2>Commandes recentes</h2>" +
+          "<p class=\"aw-section-titre\">Commandes recentes</p>" +
           "<div id=\"listeCommandes\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>";
 
@@ -107,7 +108,7 @@ function chargerVendeurs() {
     var html = "";
     for (var i = 0; i < data.length; i++) {
       var v = data[i];
-      html += "<div class=\"carte\">" +
+      html += "<div class=\"carte-attente\">" +
                 "<h3>" + v.nom + "</h3>" +
                 "<p>Telephone : " + v.telephone + "</p>" +
                 "<p>Produits : " + v.produits_categorie + "</p>" +
@@ -131,7 +132,7 @@ function chargerChauffeurs() {
     var html = "";
     for (var i = 0; i < data.length; i++) {
       var c = data[i];
-      html += "<div class=\"carte\">" +
+      html += "<div class=\"carte-attente\">" +
                 "<h3>" + c.nom + "</h3>" +
                 "<p>Telephone : " + c.telephone + "</p>" +
                 "<p>" + c.vehicule + "</p>" +
@@ -155,7 +156,7 @@ function chargerProduits() {
     var html = "";
     for (var i = 0; i < data.length; i++) {
       var p = data[i];
-      html += "<div class=\"carte\">" +
+      html += "<div class=\"carte-attente\">" +
                 "<h3>" + p.nom + "</h3>" +
                 "<p>" + p.prix + " FCFA - Stock : " + p.stock + "</p>" +
                 "<p>" + (p.description || "") + "</p>" +
@@ -179,7 +180,7 @@ function chargerLivreurs() {
     var html = "";
     for (var i = 0; i < data.length; i++) {
       var l = data[i];
-      html += "<div class=\"carte\">" +
+      html += "<div class=\"carte-attente\">" +
                 "<h3>" + l.nom + "</h3>" +
                 "<p>Telephone : " + l.telephone + "</p>" +
                 "<p>" + l.vehicule + " - " + l.zone + "</p>" +
@@ -204,8 +205,8 @@ function chargerCommandes() {
     for (var i = 0; i < data.length; i++) {
       var c = data[i];
       var dateAffichee = c.date_commande ? new Date(c.date_commande).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Date inconnue";
-      html += "<div class=\"carte\">" +
-                "<p style=\"font-size:11px;color:#6f7a8c;margin-bottom:4px;\">" + dateAffichee + "</p>" +
+      html += "<div class=\"carte-attente\">" +
+                "<p class=\"date-commande\">" + dateAffichee + "</p>" +
                 "<h3>" + c.client_nom + "</h3>" +
                 "<p>Telephone : " + c.client_telephone + "</p>" +
                 "<p>Produit : " + c.produit + "</p>" +
