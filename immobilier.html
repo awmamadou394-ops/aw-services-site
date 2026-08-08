@@ -4,81 +4,151 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Immobilier</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
-  header h1 { color: #1e6fd9; font-size: 24px; }
-  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
-  .content { padding: 20px 15px; }
-  .content h2 { color: #ffffff; margin-bottom: 10px; }
-  .content > p { color: #b0b8c5; margin-bottom: 20px; line-height: 1.5; }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+  .aw-recherche { max-width: 100%; margin: 0 0 var(--espace-md); }
+
+  .categories { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: var(--espace-lg); scrollbar-width: none; }
+  .categories::-webkit-scrollbar { display: none; }
+  .puce-categorie {
+    flex: 0 0 auto;
+    background-color: var(--surface);
+    border: 1px solid var(--bordure);
+    color: var(--texte-doux);
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .puce-categorie.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
+
   .grille { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .bien-carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; overflow: hidden; position: relative; }
-  .bien-carte img { width: 100%; height: 110px; object-fit: cover; background-color: #0a0e17; }
+  .bien-carte { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); overflow: hidden; position: relative; }
+  .bien-carte img { width: 100%; height: 110px; object-fit: cover; background-color: var(--fond); display: block; }
   .bien-carte .infos { padding: 10px; }
-  .bien-carte h3 { font-size: 13px; margin-bottom: 4px; }
-  .bien-carte .prix { color: #d62828; font-weight: bold; font-size: 14px; }
-  .bien-carte .loc { color: #b0b8c5; font-size: 11px; margin-top: 3px; }
-  .badge-vendu { position: absolute; top: 8px; right: 8px; background-color: #3a1414; color: #ff8080; font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 10px; }
-  .bien-carte a.btn-detail { display: block; text-align: center; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 7px; font-size: 12px; font-weight: bold; margin-top: 8px; border-radius: 6px; }
-  .vide { text-align: center; color: #b0b8c5; padding: 20px; grid-column: 1 / -1; }
-  footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
+  .bien-carte .type-tag { font-size: 10px; color: var(--texte-discret); text-transform: uppercase; letter-spacing: 0.03em; }
+  .bien-carte h3 { font-size: 13px; margin-bottom: 4px; font-family: var(--police-titre); margin-top: 2px; }
+  .bien-carte .prix { color: var(--accent); font-weight: 700; font-size: 14px; font-family: var(--police-chiffres); }
+  .bien-carte .loc { color: var(--texte-doux); font-size: 11px; margin-top: 3px; }
+  .badge-vendu { position: absolute; top: 8px; right: 8px; background-color: var(--alerte); color: var(--texte); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+  .bien-carte a.btn-detail { display: block; text-align: center; background-color: var(--accent); color: #1C1200; text-decoration: none; padding: 8px; font-size: 12px; font-weight: 700; margin-top: 8px; border-radius: var(--rayon-petit); }
+  .vide { text-align: center; color: var(--texte-doux); padding: 30px; grid-column: 1 / -1; }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>AW SERVICES — Immobilier</h1>
+<header class="aw-header">
+  <h1>Immobilier</h1>
+  <p>Terrains, maisons, appartements</p>
 </header>
 
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
-<div class="content">
-  <h2>Biens disponibles</h2>
-  <p>Decouvrez nos biens immobiliers proposes par AW SERVICES.</p>
+<div class="aw-conteneur">
+  <div class="aw-recherche">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <input type="text" id="champRecherche" placeholder="Rechercher un bien, une localisation...">
+  </div>
 
+  <div class="categories" id="zoneCategories"></div>
+
+  <p class="aw-section-titre">Biens disponibles</p>
   <div class="grille" id="grilleBiens">
     <p class="vide">Chargement...</p>
   </div>
 </div>
 
-<footer>
+<footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
   &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
 <script>
-const sb = supabase.createClient(
-  'https://vnceunqygoiwglnwpgcr.supabase.co',
-  'sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK'
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
-async function chargerBiens() {
-  const reponse = await sb.from('biens_immobiliers').select('*').order('date_ajout', { ascending: false });
-  const data = reponse.data;
-  const grille = document.getElementById('grilleBiens');
+var tousLesBiens = [];
+var typeActif = "Tous";
+var termeRecherche = "";
+
+function chargerBiens() {
+  sb.from("biens_immobiliers").select("*").order("date_ajout", { ascending: false }).then(function(reponse) {
+    tousLesBiens = reponse.data || [];
+    construireCategories();
+    afficherBiensFiltres();
+  });
+}
+
+function construireCategories() {
+  var types = ["Tous"];
+  for (var i = 0; i < tousLesBiens.length; i++) {
+    var t = tousLesBiens[i].type_bien;
+    if (t && types.indexOf(t) === -1) types.push(t);
+  }
+  var zone = document.getElementById("zoneCategories");
+  var html = "";
+  for (var c = 0; c < types.length; c++) {
+    var actif = types[c] === typeActif ? " actif" : "";
+    html += "<button type=\"button\" class=\"puce-categorie" + actif + "\" data-type=\"" + types[c] + "\">" + types[c] + "</button>";
+  }
+  zone.innerHTML = html;
+
+  var puces = zone.getElementsByClassName("puce-categorie");
+  for (var p = 0; p < puces.length; p++) {
+    puces[p].addEventListener("click", function() {
+      typeActif = this.getAttribute("data-type");
+      var tous = zone.getElementsByClassName("puce-categorie");
+      for (var t = 0; t < tous.length; t++) tous[t].classList.remove("actif");
+      this.classList.add("actif");
+      afficherBiensFiltres();
+    });
+  }
+}
+
+document.getElementById("champRecherche").addEventListener("input", function() {
+  termeRecherche = this.value.trim().toLowerCase();
+  afficherBiensFiltres();
+});
+
+function afficherBiensFiltres() {
+  var filtres = tousLesBiens.filter(function(b) {
+    var matchType = typeActif === "Tous" || b.type_bien === typeActif;
+    var matchRecherche = !termeRecherche ||
+      (b.titre && b.titre.toLowerCase().indexOf(termeRecherche) !== -1) ||
+      (b.localisation && b.localisation.toLowerCase().indexOf(termeRecherche) !== -1);
+    return matchType && matchRecherche;
+  });
+  afficherBiens(filtres);
+}
+
+function afficherBiens(data) {
+  var grille = document.getElementById("grilleBiens");
 
   if (!data || data.length === 0) {
-    grille.innerHTML = '<p class="vide">Aucun bien disponible pour le moment.</p>';
+    grille.innerHTML = "<p class=\"vide\">Aucun bien ne correspond a votre recherche.</p>";
     return;
   }
 
-  let html = '';
-  for (let i = 0; i < data.length; i++) {
-    const b = data[i];
-    const image = (b.images && b.images[0]) ? b.images[0] : '';
-    const prix = Number(b.prix).toLocaleString('fr-FR');
-    const badge = (b.statut === 'vendu') ? '<span class="badge-vendu">Deja vendu</span>' : '';
-    const lien = 'https://wa.me/221777589444?text=' + encodeURIComponent('Bonjour, je suis interesse par : ' + b.titre);
-    html += '<div class="bien-carte">' + badge +
-            '<img src="' + image + '" alt="' + b.titre + '">' +
-            '<div class="infos">' +
-            '<h3>' + b.titre + '</h3>' +
-            '<div class="prix">' + prix + ' FCFA</div>' +
-            '<div class="loc">' + b.localisation + '</div>' +
-            '<a class="btn-detail" href="' + lien + '" target="_blank">Contacter</a>' +
-            '</div></div>';
+  var html = "";
+  for (var i = 0; i < data.length; i++) {
+    var b = data[i];
+    var image = (b.images && b.images[0]) ? b.images[0] : "";
+    var prix = Number(b.prix).toLocaleString("fr-FR");
+    var badge = (b.statut === "vendu") ? "<span class=\"badge-vendu\">Deja vendu</span>" : "";
+    var lien = "https://wa.me/221777589444?text=" + encodeURIComponent("Bonjour, je suis interesse par : " + b.titre);
+    html += "<div class=\"bien-carte\">" + badge +
+            "<img src=\"" + image + "\" alt=\"" + b.titre + "\">" +
+            "<div class=\"infos\">" +
+            (b.type_bien ? "<div class=\"type-tag\">" + b.type_bien + "</div>" : "") +
+            "<h3>" + b.titre + "</h3>" +
+            "<div class=\"prix\">" + prix + " FCFA</div>" +
+            "<div class=\"loc\">" + b.localisation + "</div>" +
+            "<a class=\"btn-detail\" href=\"" + lien + "\" target=\"_blank\">Contacter</a>" +
+            "</div></div>";
   }
   grille.innerHTML = html;
 }
