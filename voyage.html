@@ -4,69 +4,61 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Agence de Voyage</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
-  header h1 { color: #1e6fd9; font-size: 22px; }
-  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
-  .content { padding: 20px 15px; }
-  .content h2 { color: #ffffff; margin-bottom: 10px; font-size: 20px; }
-  .content > p { color: #b0b8c5; margin-bottom: 20px; line-height: 1.5; }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+  .intro { color: var(--texte-doux); margin-bottom: var(--espace-lg); line-height: 1.5; font-size: 13.5px; }
 
   .offres { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .offre { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; overflow: hidden; text-align: center; }
-  .offre img { width: 100%; height: 90px; object-fit: cover; display: block; }
-  .offre .texte { padding: 10px; }
-  .offre h3 { color: #ffffff; font-size: 15px; }
-  .offre .highlight { color: #d62828; font-size: 12px; font-weight: bold; margin: 5px 0; }
-  .offre a.btn-voir { display: inline-block; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 8px; border-radius: 6px; font-weight: bold; font-size: 12px; width: 100%; margin-top: 5px; }
+  .offre { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); overflow: hidden; text-align: center; }
+  .offre .drapeau { font-size: 34px; padding: 18px 0 6px; }
+  .offre .texte { padding: 10px 10px 14px; }
+  .offre h3 { color: var(--texte); font-size: 15px; font-family: var(--police-titre); }
+  .offre .highlight { color: var(--accent); font-size: 11.5px; font-weight: 600; margin: 5px 0 10px; }
+  .offre a.btn-voir { display: inline-block; background-color: var(--accent); color: #1C1200; text-decoration: none; padding: 8px; border-radius: var(--rayon-petit); font-weight: 700; font-size: 12px; width: 100%; }
 
-  .separateur { border-top: 1px solid #2a3040; margin: 30px 0; }
+  .separateur { border-top: 1px solid var(--bordure); margin: var(--espace-xl) 0; }
 
   .zone-detail { display: none; }
   .zone-detail.actif { display: block; }
 
-  .retour-pays { display: inline-block; margin-bottom: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
+  .retour-pays { display: inline-block; margin-bottom: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
 
-  .detail-pays { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 18px; margin-bottom: 15px; scroll-margin-top: 15px; }
-  .detail-pays h3 { font-size: 18px; margin-bottom: 10px; }
-  .detail-pays p { color: #b0b8c5; font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+  .detail-pays h3 { font-size: 19px; margin-bottom: var(--espace-sm); font-family: var(--police-titre); }
+  .detail-pays p { color: var(--texte-doux); font-size: 13.5px; line-height: 1.6; margin-bottom: 8px; }
   .detail-pays ul { margin: 8px 0 8px 20px; }
-  .detail-pays li { color: #b0b8c5; font-size: 14px; line-height: 1.6; }
-  .prix-box { background-color: #0a0e17; border-left: 3px solid #d62828; padding: 10px; margin-top: 10px; font-size: 13px; }
-  .prix-box strong { color: #ffffff; }
+  .detail-pays li { color: var(--texte-doux); font-size: 13.5px; line-height: 1.6; }
+  .detail-pays strong { color: var(--texte); }
+  .prix-box { background-color: var(--fond); border-left: 3px solid var(--accent); border-radius: var(--rayon-petit); padding: 12px; margin-top: 10px; font-size: 13px; color: var(--texte-doux); }
+  .prix-box strong { color: var(--accent); font-family: var(--police-chiffres); }
 
-  form { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-  form h4 { color: #1e6fd9; font-size: 14px; }
-  label { font-size: 13px; color: #b0b8c5; }
-  input, select { background-color: #121826; border: 1px solid #2a3040; border-radius: 6px; padding: 9px; color: #ffffff; font-size: 14px; }
-  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 13px; font-size: 15px; font-weight: bold; margin-top: 8px; }
-  button:disabled { opacity: 0.6; }
-  .msg { font-size: 13px; padding: 8px; border-radius: 6px; }
-  .msg.erreur { background-color: #3a1414; color: #ff8080; }
-  .msg.succes { background-color: #143a1e; color: #80ff9e; }
-  .note-paiement { text-align: center; color: #b0b8c5; font-size: 11px; margin-top: 8px; font-style: italic; }
-
-  footer { text-align: center; padding: 20px; color: #b0b8c5; font-size: 12px; border-top: 1px solid #d62828; margin-top: 30px; }
+  form.form-preinscription, form.form-billet { background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: var(--espace-md); display: flex; flex-direction: column; gap: 4px; margin-top: var(--espace-md); }
+  form h4 { color: var(--accent); font-size: 14px; margin-bottom: 4px; font-family: var(--police-titre); }
+  select { width: 100%; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
+  input[type="file"] { width: 100%; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; color: var(--texte-doux); font-size: 12px; }
+  .msg { font-size: 13px; padding: 10px; border-radius: var(--rayon-petit); }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
+  .note-paiement { text-align: center; color: var(--texte-discret); font-size: 11px; margin-top: 8px; font-style: italic; }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>AW SERVICES — Agence de Voyage</h1>
+<header class="aw-header">
+  <h1>Agence de Voyage</h1>
+  <p>Etudes a l'etranger, billets, sejours</p>
 </header>
 
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
-<div class="content" id="zoneCatalogue">
-  <h2>Pre-inscription etudes a l'etranger</h2>
-  <p>Choisissez votre pays de destination pour voir la procedure, les frais, et postuler directement.</p>
+<div class="aw-conteneur" id="zoneCatalogue">
+  <p class="aw-section-titre">Pre-inscription etudes a l'etranger</p>
+  <p class="intro">Choisissez votre pays de destination pour voir la procedure, les frais, et postuler directement.</p>
 
   <div class="offres">
     <div class="offre">
-      <img src="file_00000000c0808246b92b463a3a15e4cd.png" alt="France">
+      <div class="drapeau">&#127467;&#127479;</div>
       <div class="texte">
         <h3>France</h3>
         <div class="highlight">Campus France</div>
@@ -74,7 +66,7 @@
       </div>
     </div>
     <div class="offre">
-      <img src="file_00000000c0808246b92b463a3a15e4cd.png" alt="Canada">
+      <div class="drapeau">&#127464;&#127462;</div>
       <div class="texte">
         <h3>Canada</h3>
         <div class="highlight">Permis d'etudes</div>
@@ -82,7 +74,7 @@
       </div>
     </div>
     <div class="offre">
-      <img src="file_00000000c0808246b92b463a3a15e4cd.png" alt="USA">
+      <div class="drapeau">&#127482;&#127480;</div>
       <div class="texte">
         <h3>USA</h3>
         <div class="highlight">Visa etudiant</div>
@@ -90,7 +82,7 @@
       </div>
     </div>
     <div class="offre">
-      <img src="file_00000000c0808246b92b463a3a15e4cd.png" alt="Maroc">
+      <div class="drapeau">&#127474;&#127462;</div>
       <div class="texte">
         <h3>Maroc</h3>
         <div class="highlight">Universites partenaires</div>
@@ -98,7 +90,7 @@
       </div>
     </div>
     <div class="offre">
-      <img src="file_00000000c0808246b92b463a3a15e4cd.png" alt="Russie">
+      <div class="drapeau">&#127479;&#127482;</div>
       <div class="texte">
         <h3>Russie</h3>
         <div class="highlight">Bourses gouvernementales</div>
@@ -106,7 +98,7 @@
       </div>
     </div>
     <div class="offre">
-      <img src="file_00000000c0808246b92b463a3a15e4cd.png" alt="Belgique">
+      <div class="drapeau">&#127463;&#127466;</div>
       <div class="texte">
         <h3>Belgique</h3>
         <div class="highlight">Toutes filieres</div>
@@ -116,12 +108,12 @@
   </div>
 </div>
 
-<div class="content zone-detail" id="france">
+<div class="aw-conteneur zone-detail" id="france">
   <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
-  <div class="detail-pays">
+  <div class="aw-carte detail-pays">
     <h3>&#127467;&#127479; France</h3>
     <p>Procedure Campus France. Pour eleves en terminale, bacheliers, etudiants en Licence jusqu'au Master 1, et doctorants souhaitant poursuivre leurs etudes en France (universite publique ou privee).</p>
-    <p><strong style="color:#fff;">Services offerts :</strong></p>
+    <p><strong>Services offerts :</strong></p>
     <ul>
       <li>Creation du compte Pastel</li>
       <li>Remplissage du panier de formation</li>
@@ -136,7 +128,7 @@
       <strong>Frais dossier :</strong> 75 000 FCFA (public) / 100 000 FCFA (prive)<br>
       <strong>Frais Campus France :</strong> 85 000 FCFA (a payer a la banque BICIS)
     </div>
-    <p style="margin-top:10px;"><strong style="color:#fff;">Documents a fournir :</strong></p>
+    <p style="margin-top:10px;"><strong>Documents a fournir :</strong></p>
     <ul>
       <li>Trois derniers bulletins de notes</li>
       <li>CV</li>
@@ -149,11 +141,11 @@
     <form class="form-preinscription" data-pays="France">
       <h4>Postuler pour la France</h4>
       <div class="zoneMessagePre"></div>
-      <label>Nom complet</label>
-      <input type="text" class="p_nom" placeholder="Votre nom" required>
-      <label>Numero de telephone</label>
-      <input type="tel" class="p_tel" placeholder="Votre numero" required>
-      <label>Niveau d'etude actuel</label>
+      <label class="aw-label">Nom complet</label>
+      <input class="aw-input p_nom" type="text" placeholder="Votre nom" required>
+      <label class="aw-label">Numero de telephone</label>
+      <input class="aw-input p_tel" type="tel" placeholder="Votre numero" required>
+      <label class="aw-label">Niveau d'etude actuel</label>
       <select class="p_niveau" required>
         <option value="">Choisir...</option>
         <option value="Terminale">Terminale</option>
@@ -162,19 +154,19 @@
         <option value="Master 1">Master 1</option>
         <option value="Doctorat">Doctorat</option>
       </select>
-      <label>Documents (releves, diplome, piece d'identite)</label>
+      <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
-      <button type="submit" class="btn_preinscription">Postuler pour la France</button>
+      <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour la France</button>
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
 </div>
 
-<div class="content zone-detail" id="canada">
+<div class="aw-conteneur zone-detail" id="canada">
   <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
-  <div class="detail-pays">
+  <div class="aw-carte detail-pays">
     <h3>&#127464;&#127462; Canada</h3>
-    <p><strong style="color:#fff;">Les etapes :</strong></p>
+    <p><strong>Les etapes :</strong></p>
     <ul>
       <li>Etape 1 : Ecole de formation professionnelle</li>
       <li>Etape 2 : Choix d'une formation adequate a votre projet</li>
@@ -194,11 +186,11 @@
     <form class="form-preinscription" data-pays="Canada">
       <h4>Postuler pour le Canada</h4>
       <div class="zoneMessagePre"></div>
-      <label>Nom complet</label>
-      <input type="text" class="p_nom" placeholder="Votre nom" required>
-      <label>Numero de telephone</label>
-      <input type="tel" class="p_tel" placeholder="Votre numero" required>
-      <label>Niveau d'etude actuel</label>
+      <label class="aw-label">Nom complet</label>
+      <input class="aw-input p_nom" type="text" placeholder="Votre nom" required>
+      <label class="aw-label">Numero de telephone</label>
+      <input class="aw-input p_tel" type="tel" placeholder="Votre numero" required>
+      <label class="aw-label">Niveau d'etude actuel</label>
       <select class="p_niveau" required>
         <option value="">Choisir...</option>
         <option value="Terminale">Terminale</option>
@@ -207,19 +199,19 @@
         <option value="Master 1">Master 1</option>
         <option value="Doctorat">Doctorat</option>
       </select>
-      <label>Documents (releves, diplome, piece d'identite)</label>
+      <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
-      <button type="submit" class="btn_preinscription">Postuler pour le Canada</button>
+      <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour le Canada</button>
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
 </div>
 
-<div class="content zone-detail" id="usa">
+<div class="aw-conteneur zone-detail" id="usa">
   <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
-  <div class="detail-pays">
+  <div class="aw-carte detail-pays">
     <h3>&#127482;&#127480; USA</h3>
-    <p><strong style="color:#fff;">Les etapes :</strong></p>
+    <p><strong>Les etapes :</strong></p>
     <ul>
       <li>Etape 1 : Ecole de formation professionnelle</li>
       <li>Etape 2 : Choix d'une formation adequate a votre projet</li>
@@ -235,11 +227,11 @@
     <form class="form-preinscription" data-pays="USA">
       <h4>Postuler pour les USA</h4>
       <div class="zoneMessagePre"></div>
-      <label>Nom complet</label>
-      <input type="text" class="p_nom" placeholder="Votre nom" required>
-      <label>Numero de telephone</label>
-      <input type="tel" class="p_tel" placeholder="Votre numero" required>
-      <label>Niveau d'etude actuel</label>
+      <label class="aw-label">Nom complet</label>
+      <input class="aw-input p_nom" type="text" placeholder="Votre nom" required>
+      <label class="aw-label">Numero de telephone</label>
+      <input class="aw-input p_tel" type="tel" placeholder="Votre numero" required>
+      <label class="aw-label">Niveau d'etude actuel</label>
       <select class="p_niveau" required>
         <option value="">Choisir...</option>
         <option value="Terminale">Terminale</option>
@@ -248,17 +240,17 @@
         <option value="Master 1">Master 1</option>
         <option value="Doctorat">Doctorat</option>
       </select>
-      <label>Documents (releves, diplome, piece d'identite)</label>
+      <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
-      <button type="submit" class="btn_preinscription">Postuler pour les USA</button>
+      <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour les USA</button>
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
 </div>
 
-<div class="content zone-detail" id="maroc">
+<div class="aw-conteneur zone-detail" id="maroc">
   <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
-  <div class="detail-pays">
+  <div class="aw-carte detail-pays">
     <h3>&#127474;&#127462; Maroc</h3>
     <p>Pour le Maroc, il ne s'agit pas d'un programme de bourse : ce sont des inscriptions directes aupres de nos universites partenaires marocaines.</p>
 
@@ -271,11 +263,11 @@
     <form class="form-preinscription" data-pays="Maroc">
       <h4>Postuler pour le Maroc</h4>
       <div class="zoneMessagePre"></div>
-      <label>Nom complet</label>
-      <input type="text" class="p_nom" placeholder="Votre nom" required>
-      <label>Numero de telephone</label>
-      <input type="tel" class="p_tel" placeholder="Votre numero" required>
-      <label>Niveau d'etude actuel</label>
+      <label class="aw-label">Nom complet</label>
+      <input class="aw-input p_nom" type="text" placeholder="Votre nom" required>
+      <label class="aw-label">Numero de telephone</label>
+      <input class="aw-input p_tel" type="tel" placeholder="Votre numero" required>
+      <label class="aw-label">Niveau d'etude actuel</label>
       <select class="p_niveau" required>
         <option value="">Choisir...</option>
         <option value="Terminale">Terminale</option>
@@ -284,20 +276,20 @@
         <option value="Master 1">Master 1</option>
         <option value="Doctorat">Doctorat</option>
       </select>
-      <label>Documents (releves, diplome, piece d'identite)</label>
+      <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
-      <button type="submit" class="btn_preinscription">Postuler pour le Maroc</button>
+      <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour le Maroc</button>
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
 </div>
 
-<div class="content zone-detail" id="russie">
+<div class="aw-conteneur zone-detail" id="russie">
   <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
-  <div class="detail-pays">
+  <div class="aw-carte detail-pays">
     <h3>&#127479;&#127482; Russie</h3>
     <p>Le gouvernement russe, via Rossotrudnichestvo, met chaque annee des bourses a la disposition des etudiants senegalais pour les cycles Licence, Master et Doctorat. Ces bourses couvrent la scolarite et une allocation mensuelle, mais pas le transport ni le logement.</p>
-    <p><strong style="color:#fff;">A savoir :</strong></p>
+    <p><strong>A savoir :</strong></p>
     <ul>
       <li>Inscription en ligne sur la plateforme officielle, puis selection nationale</li>
       <li>Limite d'age indicative : moins de 25 ans (Licence), 30 ans (Master), 35 ans (Doctorat)</li>
@@ -311,11 +303,11 @@
     <form class="form-preinscription" data-pays="Russie">
       <h4>Postuler pour la Russie</h4>
       <div class="zoneMessagePre"></div>
-      <label>Nom complet</label>
-      <input type="text" class="p_nom" placeholder="Votre nom" required>
-      <label>Numero de telephone</label>
-      <input type="tel" class="p_tel" placeholder="Votre numero" required>
-      <label>Niveau d'etude actuel</label>
+      <label class="aw-label">Nom complet</label>
+      <input class="aw-input p_nom" type="text" placeholder="Votre nom" required>
+      <label class="aw-label">Numero de telephone</label>
+      <input class="aw-input p_tel" type="tel" placeholder="Votre numero" required>
+      <label class="aw-label">Niveau d'etude actuel</label>
       <select class="p_niveau" required>
         <option value="">Choisir...</option>
         <option value="Terminale">Terminale</option>
@@ -324,21 +316,21 @@
         <option value="Master 1">Master 1</option>
         <option value="Doctorat">Doctorat</option>
       </select>
-      <label>Documents (releves, diplome, piece d'identite)</label>
+      <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
-      <button type="submit" class="btn_preinscription">Postuler pour la Russie</button>
+      <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour la Russie</button>
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
 </div>
 
-<div class="content zone-detail" id="belgique">
+<div class="aw-conteneur zone-detail" id="belgique">
   <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
-  <div class="detail-pays">
+  <div class="aw-carte detail-pays">
     <h3>&#127463;&#127466; Belgique</h3>
     <p>Documents requis selon votre niveau d'etude :</p>
 
-    <p style="margin-top:12px;"><strong style="color:#fff;">Baccalaureat :</strong></p>
+    <p style="margin-top:12px;"><strong>Baccalaureat :</strong></p>
     <ul>
       <li>Releves de notes du secondaire</li>
       <li>Lettre de motivation (fournie par nos services)</li>
@@ -347,7 +339,7 @@
       <li>Copie du passeport</li>
     </ul>
 
-    <p style="margin-top:12px;"><strong style="color:#fff;">Licence :</strong></p>
+    <p style="margin-top:12px;"><strong>Licence :</strong></p>
     <ul>
       <li>Diplome de baccalaureat</li>
       <li>Releves de notes de l'enseignement superieur</li>
@@ -357,7 +349,7 @@
       <li>Copie du passeport</li>
     </ul>
 
-    <p style="margin-top:12px;"><strong style="color:#fff;">Master :</strong></p>
+    <p style="margin-top:12px;"><strong>Master :</strong></p>
     <ul>
       <li>Diplome de licence</li>
       <li>Releves de notes de la licence</li>
@@ -368,7 +360,7 @@
       <li>Copie du passeport</li>
     </ul>
 
-    <p style="margin-top:12px;"><strong style="color:#fff;">Nos services :</strong></p>
+    <p style="margin-top:12px;"><strong>Nos services :</strong></p>
     <ul>
       <li>Aide a la constitution du dossier de candidature</li>
       <li>Conseils personnalises pour chaque profil</li>
@@ -383,11 +375,11 @@
     <form class="form-preinscription" data-pays="Belgique">
       <h4>Postuler pour la Belgique</h4>
       <div class="zoneMessagePre"></div>
-      <label>Nom complet</label>
-      <input type="text" class="p_nom" placeholder="Votre nom" required>
-      <label>Numero de telephone</label>
-      <input type="tel" class="p_tel" placeholder="Votre numero" required>
-      <label>Niveau d'etude actuel</label>
+      <label class="aw-label">Nom complet</label>
+      <input class="aw-input p_nom" type="text" placeholder="Votre nom" required>
+      <label class="aw-label">Numero de telephone</label>
+      <input class="aw-input p_tel" type="tel" placeholder="Votre numero" required>
+      <label class="aw-label">Niveau d'etude actuel</label>
       <select class="p_niveau" required>
         <option value="">Choisir...</option>
         <option value="Terminale">Terminale</option>
@@ -396,9 +388,9 @@
         <option value="Master 1">Master 1</option>
         <option value="Doctorat">Doctorat</option>
       </select>
-      <label>Documents (releves, diplome, piece d'identite)</label>
+      <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
-      <button type="submit" class="btn_preinscription">Postuler pour la Belgique</button>
+      <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour la Belgique</button>
       <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
     </form>
   </div>
@@ -406,31 +398,31 @@
 
 <div class="separateur"></div>
 
-<div class="content">
-  <h2>Reservation de billets &amp; voyages</h2>
-  <p>Pour un simple billet d'avion, un sejour ou un hebergement, remplissez ce formulaire.</p>
+<div class="aw-conteneur">
+  <p class="aw-section-titre">Reservation de billets &amp; voyages</p>
+  <p class="intro">Pour un simple billet d'avion, un sejour ou un hebergement, remplissez ce formulaire.</p>
 
-  <form action="https://wa.me/221777589444" method="get" target="_blank">
-    <label>Nom complet</label>
-    <input type="text" name="nom" placeholder="Votre nom" required>
+  <form class="form-billet" action="https://wa.me/221777589444" method="get" target="_blank">
+    <label class="aw-label">Nom complet</label>
+    <input class="aw-input" type="text" name="nom" placeholder="Votre nom" required>
 
-    <label>Numero de telephone</label>
-    <input type="tel" name="telephone" placeholder="Votre numero" required>
+    <label class="aw-label">Numero de telephone</label>
+    <input class="aw-input" type="tel" name="telephone" placeholder="Votre numero" required>
 
-    <label>Destination</label>
-    <input type="text" name="destination" placeholder="Ville ou pays" required>
+    <label class="aw-label">Destination</label>
+    <input class="aw-input" type="text" name="destination" placeholder="Ville ou pays" required>
 
-    <label>Date de depart souhaitee</label>
-    <input type="date" name="date" required>
+    <label class="aw-label">Date de depart souhaitee</label>
+    <input class="aw-input" type="date" name="date" required>
 
-    <label>Nombre de personnes</label>
-    <input type="number" name="personnes" min="1" value="1" required>
+    <label class="aw-label">Nombre de personnes</label>
+    <input class="aw-input" type="number" name="personnes" min="1" value="1" required>
 
-    <button type="submit">Envoyer la demande</button>
+    <button type="submit" class="aw-btn aw-btn-primaire" style="width:100%;margin-top:10px;">Envoyer la demande</button>
   </form>
 </div>
 
-<footer>
+<footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
   &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
@@ -535,4 +527,4 @@ function envoyerPreinscription(event) {
 </script>
 
 </body>
- </html>
+</html>
