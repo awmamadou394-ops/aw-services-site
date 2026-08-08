@@ -4,61 +4,62 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Mon Espace Chauffeur</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; display: flex; justify-content: space-between; align-items: center; }
-  header h1 { color: #1e6fd9; font-size: 18px; }
-  .deconnexion { background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
-  .content { padding: 20px 15px; max-width: 500px; margin: 0 auto; }
-  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 15px; }
-  .carte h2 { font-size: 16px; margin-bottom: 10px; }
-  .statut { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-  .statut.en_attente { background-color: #3a2e14; color: #ffb84d; }
-  .statut.approuve { background-color: #143a1e; color: #80ff9e; }
-  .info { color: #b0b8c5; font-size: 14px; margin-top: 6px; }
-  .chargement { text-align: center; padding: 40px; color: #b0b8c5; }
-  label { font-size: 14px; color: #b0b8c5; display: block; margin-top: 10px; margin-bottom: 6px; }
-  input, textarea { width: 100%; background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; }
-  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 12px; font-size: 14px; font-weight: bold; margin-top: 10px; width: 100%; }
-  button:disabled { opacity: 0.6; }
-  .btn-position { background-color: transparent; border: 1px solid #1e6fd9; color: #1e6fd9; }
+  .aw-header { display: flex; justify-content: space-between; align-items: center; text-align: left; }
+  .aw-header h1 { font-size: 18px; }
+  .deconnexion { background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 8px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 600; font-family: var(--police-texte); }
+  .chargement { text-align: center; padding: 40px; color: var(--texte-doux); }
+
   .msg-zone { font-size: 13px; margin-top: 8px; }
-  .msg-zone.ok { color: #80ff9e; }
-  .msg-zone.err { color: #ff8080; }
-  .reservation-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; cursor: pointer; }
-  .reservation-carte h3 { font-size: 14px; }
-  .reservation-carte p { font-size: 13px; color: #b0b8c5; margin-top: 3px; }
+  .msg-zone.ok { color: var(--succes); }
+  .msg-zone.err { color: var(--alerte); }
+
+  .reservation-carte {
+    background-color: var(--fond);
+    border: 1px solid var(--bordure);
+    border-radius: var(--rayon-petit);
+    padding: 12px;
+    cursor: pointer;
+    text-align: center;
+    font-family: var(--police-chiffres);
+    font-weight: 700;
+    transition: transform 0.1s ease, border-color 0.1s ease;
+  }
+  .reservation-carte:active { transform: scale(0.96); border-color: var(--accent); }
   .grille-reservations { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .details-reservation { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a3040; }
-  .reservation-carte.ouvert .details-reservation { display: block; }
-  .btn-maps { display: inline-block; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-top: 8px; }
+
+  .btn-maps { display: inline-block; background-color: var(--accent); color: #1C1200; text-decoration: none; padding: 10px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; margin-top: 10px; }
   .direction-choix { display: flex; gap: 8px; margin-top: 8px; margin-bottom: 8px; }
-  .btn-direction { flex: 1; background-color: #0a0e17; border: 1px solid #2a3040; color: #b0b8c5; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-top: 0; }
-  .btn-direction.actif { background-color: #1e6fd9; border-color: #1e6fd9; color: #ffffff; }
-  .fenetre-fond { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); z-index: 20; align-items: center; justify-content: center; padding: 20px; }
+  .btn-direction { flex: 1; background-color: var(--fond); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 11px; border-radius: var(--rayon-petit); font-size: 12px; font-weight: 600; }
+  .btn-direction.actif { background-color: var(--accent-fonce); border-color: var(--accent); color: var(--texte); }
+
+  .titre-date { color: var(--accent); font-size: 13px; font-weight: 700; margin-top: 14px; margin-bottom: 8px; font-family: var(--police-titre); }
+
+  .btn-supprimer-depart { background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); margin-top: 8px; padding: 8px; border-radius: var(--rayon-petit); font-size: 12px; font-weight: 600; width: 100%; }
+
+  .fenetre-fond { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(10,10,25,0.75); z-index: 20; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px); }
   .fenetre-fond.visible { display: flex; }
-  .fenetre-contenu { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; max-width: 400px; width: 100%; max-height: 80vh; overflow-y: auto; }
-  .fenetre-contenu h3 { font-size: 16px; margin-bottom: 12px; }
-  .fenetre-contenu p { font-size: 14px; color: #b0b8c5; margin-top: 6px; }
-  .btn-fermer-fenetre { background-color: transparent; border: 1px solid #d62828; color: #d62828; margin-top: 15px; }
+  .fenetre-contenu { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: var(--espace-lg); max-width: 400px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: var(--ombre-carte); }
+  .fenetre-contenu p { color: var(--texte-doux); font-size: 14px; margin-top: 6px; }
+  .btn-fermer-fenetre { background-color: transparent; border: 1px solid var(--bordure); color: var(--texte); margin-top: var(--espace-md); width: 100%; padding: 12px; border-radius: var(--rayon-petit); font-weight: 600; font-family: var(--police-texte); }
 </style>
 </head>
 <body>
 
-<header>
+<header class="aw-header">
   <h1>Mon Espace Chauffeur</h1>
   <button class="deconnexion" id="btnDeconnexion">Deconnexion</button>
 </header>
 
-<div class="content">
+<div class="aw-conteneur">
   <div id="zoneContenu" class="chargement">Chargement...</div>
 </div>
 
 <div class="fenetre-fond" id="fenetreFond">
   <div class="fenetre-contenu">
-    <h3>Details de la reservation</h3>
+    <p class="aw-section-titre">Details de la reservation</p>
     <div id="fenetreDetails"></div>
     <button type="button" class="btn-fermer-fenetre" id="btnFermerFenetre">Fermer</button>
   </div>
@@ -89,54 +90,55 @@ function chargerEspace() {
       var chauffeur = reponse.data;
       var zone = document.getElementById("zoneContenu");
       if (reponse.error || !chauffeur) {
-        zone.innerHTML = "<div class=\"carte\"><p class=\"info\">Profil introuvable. Contactez AW SERVICES.</p></div>";
+        zone.innerHTML = "<div class=\"aw-carte\"><p>Profil introuvable. Contactez AW SERVICES.</p></div>";
         return;
       }
       chauffeurCourant = chauffeur;
       var statutLabel = chauffeur.statut === "approuve" ? "Approuve" : "En attente de validation";
+      var classeStatut = chauffeur.statut === "approuve" ? "aw-badge-succes" : "aw-badge-attente";
 
       zone.innerHTML =
-        "<div class=\"carte\">" +
-          "<h2>Bienvenue, " + chauffeur.nom + "</h2>" +
-          "<span class=\"statut " + chauffeur.statut + "\">" + statutLabel + "</span>" +
-          "<p class=\"info\">Telephone : " + chauffeur.telephone + "</p>" +
-          "<p class=\"info\">" + chauffeur.vehicule + "</p>" +
+        "<div class=\"aw-carte\">" +
+          "<p class=\"aw-section-titre\">Bienvenue, " + chauffeur.nom + "</p>" +
+          "<span class=\"aw-badge " + classeStatut + "\">" + statutLabel + "</span>" +
+          "<p style=\"margin-top:10px;\">Telephone : " + chauffeur.telephone + "</p>" +
+          "<p>" + chauffeur.vehicule + "</p>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Point de rassemblement (Dakar &#8594; Bokidiawe)</h2>" +
-          "<p class=\"info\">Les clients qui prennent ce trajet verront ce point comme lieu de depart, sans avoir a partager leur position.</p>" +
-          "<label>Description du lieu</label>" +
-          "<textarea id=\"lieuRassemblement\" rows=\"2\" placeholder=\"Ex : Gare routiere de Baux Maraichers, devant le hangar 3\">" + (chauffeur.lieu_rassemblement || "") + "</textarea>" +
-          "<button type=\"button\" class=\"btn-position\" id=\"btnPositionRassemblement\">Utiliser ma position actuelle (optionnel)</button>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Point de rassemblement (Dakar &#8594; Bokidiawe)</p>" +
+          "<p>Les clients qui prennent ce trajet verront ce point comme lieu de depart, sans avoir a partager leur position.</p>" +
+          "<label class=\"aw-label\">Description du lieu</label>" +
+          "<textarea class=\"aw-textarea\" id=\"lieuRassemblement\" rows=\"2\" placeholder=\"Ex : Gare routiere de Baux Maraichers, devant le hangar 3\">" + (chauffeur.lieu_rassemblement || "") + "</textarea>" +
+          "<button type=\"button\" class=\"aw-btn aw-btn-secondaire\" id=\"btnPositionRassemblement\" style=\"width:100%;margin-top:10px;\">&#128205; Utiliser ma position actuelle (optionnel)</button>" +
           "<p class=\"msg-zone\" id=\"msgPosition\"></p>" +
-          "<button type=\"button\" id=\"btnEnregistrerRassemblement\">Enregistrer le point de rassemblement</button>" +
+          "<button type=\"button\" class=\"aw-btn aw-btn-primaire\" id=\"btnEnregistrerRassemblement\" style=\"width:100%;margin-top:10px;\">Enregistrer le point de rassemblement</button>" +
           "<p class=\"msg-zone\" id=\"msgRassemblement\"></p>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Departs programmes</h2>" +
-          "<p class=\"info\">Les clients ne pourront reserver que sur ces dates/heures precises.</p>" +
-          "<label>Trajet</label>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Departs programmes</p>" +
+          "<p>Les clients ne pourront reserver que sur ces dates/heures precises.</p>" +
+          "<label class=\"aw-label\">Trajet</label>" +
           "<div class=\"direction-choix\">" +
             "<button type=\"button\" class=\"btn-direction actif\" id=\"btnDirAller\" data-direction=\"aller\">Dakar &#8594; Bokidiawe</button>" +
             "<button type=\"button\" class=\"btn-direction\" id=\"btnDirRetour\" data-direction=\"retour\">Bokidiawe &#8594; Dakar</button>" +
           "</div>" +
-          "<label>Date</label>" +
-          "<input type=\"date\" id=\"nouvelleDate\">" +
-          "<label>Heure</label>" +
-          "<input type=\"time\" id=\"nouvelleHeure\">" +
-          "<button type=\"button\" id=\"btnAjouterDepart\">Ajouter ce depart</button>" +
+          "<label class=\"aw-label\">Date</label>" +
+          "<input class=\"aw-input\" type=\"date\" id=\"nouvelleDate\">" +
+          "<label class=\"aw-label\">Heure</label>" +
+          "<input class=\"aw-input\" type=\"time\" id=\"nouvelleHeure\">" +
+          "<button type=\"button\" class=\"aw-btn aw-btn-primaire\" id=\"btnAjouterDepart\" style=\"width:100%;margin-top:10px;\">Ajouter ce depart</button>" +
           "<p class=\"msg-zone\" id=\"msgDepart\"></p>" +
-          "<div id=\"listeDeparts\" style=\"margin-top:12px;\"><p class=\"info\">Chargement...</p></div>" +
+          "<div id=\"listeDeparts\" style=\"margin-top:12px;\"><p>Chargement...</p></div>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Aller - Dakar &#8594; Bokidiawe</h2>" +
-          "<p class=\"info\">Passagers qui rejoignent le point de rassemblement.</p>" +
-          "<div id=\"listeAller\"><p class=\"info\">Chargement...</p></div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Aller - Dakar &#8594; Bokidiawe</p>" +
+          "<p>Passagers qui rejoignent le point de rassemblement.</p>" +
+          "<div id=\"listeAller\"><p>Chargement...</p></div>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Retour - Bokidiawe &#8594; Dakar</h2>" +
-          "<p class=\"info\">Tournee a domicile : chaque client doit etre recupere a sa position.</p>" +
-          "<div id=\"listeRetour\"><p class=\"info\">Chargement...</p></div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Retour - Bokidiawe &#8594; Dakar</p>" +
+          "<p>Tournee a domicile : chaque client doit etre recupere a sa position.</p>" +
+          "<div id=\"listeRetour\"><p>Chargement...</p></div>" +
         "</div>";
 
       document.getElementById("btnPositionRassemblement").addEventListener("click", capturerPositionRassemblement);
@@ -265,16 +267,16 @@ function chargerDeparts() {
     var data = reponse.data || [];
     var zone = document.getElementById("listeDeparts");
     if (data.length === 0) {
-      zone.innerHTML = "<p class=\"info\">Aucun depart programme.</p>";
+      zone.innerHTML = "<p>Aucun depart programme.</p>";
       return;
     }
     var html = "<div class=\"grille-reservations\">";
     for (var i = 0; i < data.length; i++) {
       var d = data[i];
-      html += "<div class=\"reservation-carte\">" +
-                "<h3>" + d.date_depart + "</h3>" +
-                "<p>" + d.heure_depart + "</p>" +
-                "<button type=\"button\" class=\"btn-supprimer-depart\" data-id=\"" + d.id + "\" style=\"background-color:transparent;border:1px solid #d62828;color:#d62828;margin-top:8px;\">Supprimer</button>" +
+      html += "<div class=\"reservation-carte\" style=\"cursor:default;\">" +
+                "<div style=\"font-size:14px;\">" + d.date_depart + "</div>" +
+                "<div style=\"font-size:12px;color:var(--texte-doux);font-weight:400;margin-top:2px;\">" + d.heure_depart + "</div>" +
+                "<button type=\"button\" class=\"btn-supprimer-depart\" data-id=\"" + d.id + "\">Supprimer</button>" +
               "</div>";
     }
     html += "</div>";
@@ -327,12 +329,12 @@ function ouvrirFenetre(id) {
   if (r.direction === "retour" && r.village_depart) html += "<p>Village de depart : " + r.village_depart + "</p>";
   html += "<p>Telephone : " + r.client_telephone + "</p>";
   html += "<p>Paiement : " + r.mode_paiement + "</p>";
-  if (r.prix_total) html += "<p>Prix : " + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</p>";
+  if (r.prix_total) html += "<p style=\"font-family:var(--police-chiffres);color:var(--accent);font-weight:700;\">Prix : " + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</p>";
   if (r.direction === "retour") {
     if (r.latitude && r.longitude) {
       html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + r.latitude + "," + r.longitude + "\" target=\"_blank\">Itineraire vers le client</a>";
     } else {
-      html += "<p style=\"color:#ffb84d;\">Position non fournie par le client.</p>";
+      html += "<p style=\"color:var(--accent);\">Position non fournie par le client.</p>";
     }
   }
   document.getElementById("fenetreDetails").innerHTML = html;
@@ -357,22 +359,20 @@ function grouperParDate(liste) {
 function afficherAller(liste) {
   var zone = document.getElementById("listeAller");
   if (liste.length === 0) {
-    zone.innerHTML = "<p class=\"info\">Aucune reservation pour le moment.</p>";
+    zone.innerHTML = "<p>Aucune reservation pour le moment.</p>";
     return;
   }
   var g = grouperParDate(liste);
   var html = "";
   for (var d = 0; d < g.dates.length; d++) {
     var date = g.dates[d];
-    html += "<p style=\"color:#1e6fd9;font-size:13px;font-weight:bold;margin-top:14px;margin-bottom:8px;\">Depart du " + date + "</p>";
+    html += "<p class=\"titre-date\">Depart du " + date + "</p>";
     html += "<div class=\"grille-reservations\">";
     var groupe = g.groupes[date];
     for (var i = 0; i < groupe.length; i++) {
       var r = groupe[i];
       reservationsIndex[r.id] = r;
-      html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">" +
-                "<h3>Chaise " + r.siege + "</h3>" +
-              "</div>";
+      html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">Chaise " + r.siege + "</div>";
     }
     html += "</div>";
   }
@@ -383,22 +383,20 @@ function afficherAller(liste) {
 function afficherRetour(liste) {
   var zone = document.getElementById("listeRetour");
   if (liste.length === 0) {
-    zone.innerHTML = "<p class=\"info\">Aucune reservation pour le moment.</p>";
+    zone.innerHTML = "<p>Aucune reservation pour le moment.</p>";
     return;
   }
   var g = grouperParDate(liste);
   var html = "";
   for (var d = 0; d < g.dates.length; d++) {
     var date = g.dates[d];
-    html += "<p style=\"color:#1e6fd9;font-size:13px;font-weight:bold;margin-top:14px;margin-bottom:8px;\">Depart du " + date + "</p>";
+    html += "<p class=\"titre-date\">Depart du " + date + "</p>";
     html += "<div class=\"grille-reservations\">";
     var groupe = g.groupes[date];
     for (var i = 0; i < groupe.length; i++) {
       var r = groupe[i];
       reservationsIndex[r.id] = r;
-      html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">" +
-                "<h3>Chaise " + r.siege + "</h3>" +
-              "</div>";
+      html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">Chaise " + r.siege + "</div>";
     }
     html += "</div>";
   }
