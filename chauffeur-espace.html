@@ -35,7 +35,17 @@
   .btn-direction { flex: 1; background-color: var(--fond); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 11px; border-radius: var(--rayon-petit); font-size: 12px; font-weight: 600; }
   .btn-direction.actif { background-color: var(--accent-fonce); border-color: var(--accent); color: var(--texte); }
 
-  .titre-date { color: var(--accent); font-size: 13px; font-weight: 700; margin-top: 14px; margin-bottom: 8px; font-family: var(--police-titre); }
+  .titre-date { color: var(--accent); font-size: 13px; font-weight: 700; margin-top: 14px; margin-bottom: 8px; font-family: var(--police-titre); cursor: pointer; display: flex; align-items: center; justify-content: space-between; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px 12px; }
+
+  .accordeon-contenu { display: none; margin-top: 10px; }
+  .accordeon-contenu.ouvert { display: block; }
+  .accordeon-titre .fleche { display: inline-block; transition: transform 0.15s ease; color: var(--accent); }
+  .accordeon-titre.ouvert .fleche { transform: rotate(180deg); }
+
+  .groupe-date-contenu { display: none; margin-top: 8px; margin-bottom: 4px; }
+  .groupe-date-contenu.ouvert { display: block; }
+  .titre-date .fleche-date { transition: transform 0.15s ease; }
+  .titre-date.ouvert .fleche-date { transform: rotate(180deg); }
 
   .btn-supprimer-depart { background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); margin-top: 8px; padding: 8px; border-radius: var(--rayon-petit); font-size: 12px; font-weight: 600; width: 100%; }
 
@@ -131,16 +141,18 @@ function chargerEspace() {
           "<div id=\"listeDeparts\" style=\"margin-top:12px;\"><p>Chargement...</p></div>" +
         "</div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
-          "<p class=\"aw-section-titre\">Aller - Dakar &#8594; Bokidiawe</p>" +
+          "<p class=\"aw-section-titre accordeon-titre\" id=\"titreAller\" style=\"cursor:pointer;\">Aller - Dakar &#8594; Bokidiawe <span class=\"fleche\">&#9662;</span></p>" +
           "<p>Passagers qui rejoignent le point de rassemblement.</p>" +
-          "<div id=\"listeAller\"><p>Chargement...</p></div>" +
+          "<div id=\"listeAller\" class=\"accordeon-contenu\"><p>Chargement...</p></div>" +
         "</div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
-          "<p class=\"aw-section-titre\">Retour - Bokidiawe &#8594; Dakar</p>" +
+          "<p class=\"aw-section-titre accordeon-titre\" id=\"titreRetour\" style=\"cursor:pointer;\">Retour - Bokidiawe &#8594; Dakar <span class=\"fleche\">&#9662;</span></p>" +
           "<p>Tournee a domicile : chaque client doit etre recupere a sa position.</p>" +
-          "<div id=\"listeRetour\"><p>Chargement...</p></div>" +
+          "<div id=\"listeRetour\" class=\"accordeon-contenu\"><p>Chargement...</p></div>" +
         "</div>";
 
+      document.getElementById("titreAller").addEventListener("click", function() { basculerAccordeon("titreAller", "listeAller"); });
+      document.getElementById("titreRetour").addEventListener("click", function() { basculerAccordeon("titreRetour", "listeRetour"); });
       document.getElementById("btnPositionRassemblement").addEventListener("click", capturerPositionRassemblement);
       document.getElementById("btnEnregistrerRassemblement").addEventListener("click", enregistrerRassemblement);
       document.getElementById("btnAjouterDepart").addEventListener("click", ajouterDepart);
@@ -356,6 +368,11 @@ function grouperParDate(liste) {
   return { groupes: groupes, dates: dates };
 }
 
+function basculerAccordeon(idTitre, idContenu) {
+  document.getElementById(idTitre).classList.toggle("ouvert");
+  document.getElementById(idContenu).classList.toggle("ouvert");
+}
+
 function afficherAller(liste) {
   var zone = document.getElementById("listeAller");
   if (liste.length === 0) {
@@ -366,8 +383,9 @@ function afficherAller(liste) {
   var html = "";
   for (var d = 0; d < g.dates.length; d++) {
     var date = g.dates[d];
-    html += "<p class=\"titre-date\">Depart du " + date + "</p>";
-    html += "<div class=\"grille-reservations\">";
+    var idGroupe = "grpAller" + d;
+    html += "<p class=\"titre-date\" data-cible=\"" + idGroupe + "\">Depart du " + date + " <span class=\"fleche-date\">&#9662;</span></p>";
+    html += "<div class=\"grille-reservations groupe-date-contenu\" id=\"" + idGroupe + "\">";
     var groupe = g.groupes[date];
     for (var i = 0; i < groupe.length; i++) {
       var r = groupe[i];
@@ -378,6 +396,7 @@ function afficherAller(liste) {
   }
   zone.innerHTML = html;
   attacherClicsCartes(zone);
+  attacherClicsDates(zone);
 }
 
 function afficherRetour(liste) {
@@ -390,8 +409,9 @@ function afficherRetour(liste) {
   var html = "";
   for (var d = 0; d < g.dates.length; d++) {
     var date = g.dates[d];
-    html += "<p class=\"titre-date\">Depart du " + date + "</p>";
-    html += "<div class=\"grille-reservations\">";
+    var idGroupe = "grpRetour" + d;
+    html += "<p class=\"titre-date\" data-cible=\"" + idGroupe + "\">Depart du " + date + " <span class=\"fleche-date\">&#9662;</span></p>";
+    html += "<div class=\"grille-reservations groupe-date-contenu\" id=\"" + idGroupe + "\">";
     var groupe = g.groupes[date];
     for (var i = 0; i < groupe.length; i++) {
       var r = groupe[i];
@@ -402,6 +422,17 @@ function afficherRetour(liste) {
   }
   zone.innerHTML = html;
   attacherClicsCartes(zone);
+  attacherClicsDates(zone);
+}
+
+function attacherClicsDates(zone) {
+  var titres = zone.getElementsByClassName("titre-date");
+  for (var i = 0; i < titres.length; i++) {
+    titres[i].addEventListener("click", function() {
+      this.classList.toggle("ouvert");
+      document.getElementById(this.getAttribute("data-cible")).classList.toggle("ouvert");
+    });
+  }
 }
 
 function attacherClicsCartes(zone) {
