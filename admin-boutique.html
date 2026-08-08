@@ -4,42 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Gestion Boutique</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; text-align: center; border-bottom: 2px solid #d62828; }
-  header h1 { color: #1e6fd9; font-size: 20px; }
-  .back { display: inline-block; margin: 15px; color: #b0b8c5; text-decoration: none; font-size: 14px; }
-  .content { padding: 15px; max-width: 500px; margin: 0 auto; }
-  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-  .carte h2 { font-size: 16px; margin-bottom: 12px; color: #1e6fd9; }
-  form { display: flex; flex-direction: column; gap: 12px; }
-  label { font-size: 14px; color: #b0b8c5; }
-  input, select, textarea { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 6px; padding: 10px; color: #ffffff; font-size: 14px; font-family: Arial, sans-serif; }
-  button { background-color: #1e6fd9; color: #ffffff; border: none; border-radius: 6px; padding: 14px; font-size: 15px; font-weight: bold; margin-top: 8px; }
-  button:disabled { opacity: 0.6; }
-  .msg { font-size: 14px; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
-  .msg.erreur { background-color: #3a1414; color: #ff8080; }
-  .msg.succes { background-color: #143a1e; color: #80ff9e; }
-  .prod-carte { display: flex; gap: 10px; background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
-  .prod-carte img { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+
+  .msg { font-size: 14px; padding: 10px; border-radius: var(--rayon-petit); margin-bottom: 12px; }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
+
+  .prod-carte { display: flex; gap: 10px; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; margin-bottom: 10px; }
+  .prod-carte img { width: 60px; height: 60px; border-radius: var(--rayon-petit); object-fit: cover; background-color: var(--surface); }
   .prod-info { flex: 1; }
-  .prod-info h3 { font-size: 14px; }
-  .prod-info p { font-size: 12px; color: #b0b8c5; margin-top: 2px; }
-  .btn-suppr { background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 6px 10px; border-radius: 6px; font-size: 12px; margin-top: 6px; }
-  .chargement { text-align: center; padding: 30px; color: #b0b8c5; }
+  .prod-info h3 { font-size: 14px; font-family: var(--police-titre); }
+  .prod-info p { font-size: 12px; color: var(--texte-doux); margin-top: 2px; }
+  .btn-suppr { background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 6px 10px; border-radius: var(--rayon-petit); font-size: 12px; margin-top: 6px; font-family: var(--police-texte); }
+  .chargement { text-align: center; padding: 30px; color: var(--texte-doux); }
 </style>
 </head>
 <body>
 
-<header>
+<header class="aw-header">
   <h1>Gestion Boutique</h1>
 </header>
 
-<a href="admin-espace.html" class="back">&#8592; Retour a l administration</a>
+<a href="admin-espace.html" class="back">&#8592; Retour a l'administration</a>
 
-<div class="content">
+<div class="aw-conteneur">
   <div id="zoneContenu" class="chargement">Verification des droits...</div>
 </div>
 
@@ -60,32 +51,32 @@ function verifierEtCharger() {
       var admin = reponseAdmin.data;
       var zone = document.getElementById("zoneContenu");
       if (!admin) {
-        zone.innerHTML = "<div class=\"carte\"><p>Acces refuse.</p></div>";
+        zone.innerHTML = "<div class=\"aw-carte\"><p>Acces refuse.</p></div>";
         return;
       }
       zone.innerHTML =
-        "<div class=\"carte\">" +
-          "<h2>Ajouter un produit AW SERVICES</h2>" +
+        "<div class=\"aw-carte\">" +
+          "<p class=\"aw-section-titre\">Ajouter un produit AW SERVICES</p>" +
           "<div id=\"zoneMessage\"></div>" +
           "<form id=\"formProduit\">" +
-            "<label>Nom du produit</label>" +
-            "<input type=\"text\" id=\"p_nom\" placeholder=\"Ex : Casque Bluetooth\" required>" +
-            "<label>Description</label>" +
-            "<textarea id=\"p_description\" rows=\"3\" placeholder=\"Decrivez le produit\"></textarea>" +
-            "<label>Prix (FCFA)</label>" +
-            "<input type=\"number\" id=\"p_prix\" placeholder=\"Ex : 15000\" required>" +
-            "<label>Categorie</label>" +
-            "<input type=\"text\" id=\"p_categorie\" placeholder=\"Ex : Electronique\" required>" +
-            "<label>Quantite en stock</label>" +
-            "<input type=\"number\" id=\"p_stock\" placeholder=\"Ex : 10\" required>" +
-            "<label>Photo</label>" +
-            "<input type=\"file\" id=\"p_photo\" accept=\"image/*\" required>" +
-            "<button type=\"submit\" id=\"btn_produit\">Publier le produit</button>" +
+            "<label class=\"aw-label\">Nom du produit</label>" +
+            "<input class=\"aw-input\" type=\"text\" id=\"p_nom\" placeholder=\"Ex : Casque Bluetooth\" required>" +
+            "<label class=\"aw-label\">Description</label>" +
+            "<textarea class=\"aw-textarea\" id=\"p_description\" rows=\"3\" placeholder=\"Decrivez le produit\"></textarea>" +
+            "<label class=\"aw-label\">Prix (FCFA)</label>" +
+            "<input class=\"aw-input\" type=\"number\" id=\"p_prix\" placeholder=\"Ex : 15000\" required>" +
+            "<label class=\"aw-label\">Categorie</label>" +
+            "<input class=\"aw-input\" type=\"text\" id=\"p_categorie\" placeholder=\"Ex : Electronique\" required>" +
+            "<label class=\"aw-label\">Quantite en stock</label>" +
+            "<input class=\"aw-input\" type=\"number\" id=\"p_stock\" placeholder=\"Ex : 10\" required>" +
+            "<label class=\"aw-label\">Photo</label>" +
+            "<input type=\"file\" id=\"p_photo\" accept=\"image/*\" required style=\"background-color:var(--fond);border:1px solid var(--bordure);border-radius:var(--rayon-petit);padding:10px;color:var(--texte-doux);font-size:12px;\">" +
+            "<button type=\"submit\" class=\"aw-btn aw-btn-primaire\" id=\"btn_produit\" style=\"width:100%;margin-top:10px;\">Publier le produit</button>" +
           "</form>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Tous les produits</h2>" +
-          "<div id=\"listeProduits\"><p>Chargement...</p></div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Tous les produits</p>" +
+          "<div id=\"listeProduits\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
         "</div>";
 
       document.getElementById("formProduit").addEventListener("submit", ajouterProduit);
@@ -98,7 +89,7 @@ function chargerProduits() {
   sb.from("produits").select("*").order("date_ajout", { ascending: false }).then(function(reponse) {
     var data = reponse.data;
     var zone = document.getElementById("listeProduits");
-    if (!data || data.length === 0) { zone.innerHTML = "<p>Aucun produit.</p>"; return; }
+    if (!data || data.length === 0) { zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucun produit.</p>"; return; }
     var html = "";
     for (var i = 0; i < data.length; i++) {
       var p = data[i];
