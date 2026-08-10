@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Transport</title>
 <link rel="stylesheet" href="style-global.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   body { padding-bottom: 30px; }
@@ -92,6 +94,13 @@
   .msg { font-size: 13px; padding: 10px; border-radius: var(--rayon-petit); margin-top: 12px; }
   .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
   .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
+
+  .fenetre-fond { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(10,10,25,0.75); z-index: 30; align-items: center; justify-content: center; padding: 20px; }
+  .fenetre-fond.visible { display: flex; }
+  .fenetre-contenu { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: var(--espace-lg); width: 100%; box-shadow: var(--ombre-carte); }
+  .btn-fermer-fenetre { background-color: transparent; border: 1px solid var(--bordure); color: var(--texte); width: 100%; padding: 12px; border-radius: var(--rayon-petit); font-weight: 600; font-family: var(--police-texte); }
+  .marqueur-client { background-color: var(--accent); width: 16px; height: 16px; border-radius: 50%; border: 2px solid #1C1200; }
+  .marqueur-livreur { background-color: var(--succes); width: 16px; height: 16px; border-radius: 50%; border: 2px solid #08210c; }
 </style>
 </head>
 <body>
@@ -123,7 +132,9 @@
         <input class="aw-input" type="text" id="m_repere" placeholder="Ex : devant la pharmacie">
 
         <label class="aw-label">Destination</label>
-        <input class="aw-input" type="text" id="m_arrivee" required>
+        <input class="aw-input" type="text" id="m_arrivee" placeholder="Ecrivez l'adresse, ou choisissez sur la carte">
+        <button type="button" class="aw-btn aw-btn-secondaire" id="btnChoisirDestination" style="width:100%;margin-top:8px;">&#128506; Choisir la destination sur la carte</button>
+        <p class="msg-position" id="msgDestinationChoisie"></p>
 
         <label class="aw-label">Nom complet</label>
         <input class="aw-input" type="text" id="m_nom" required>
@@ -143,6 +154,27 @@
         <button type="submit" class="aw-btn aw-btn-primaire" id="btnMoto" style="width:100%;margin-top:18px;">Demander une course</button>
         <div id="msgMoto"></div>
       </form>
+    </div>
+
+    <div class="aw-carte" id="carteSuivi" style="display:none;">
+      <p class="aw-section-titre">Suivi de ma course</p>
+      <p class="desc" id="texteSuiviStatut">En attente qu'un livreur accepte votre course...</p>
+      <div id="carteLeafletSuivi" style="width:100%;height:260px;border-radius:var(--rayon-petit);overflow:hidden;background-color:var(--fond);"></div>
+      <div class="recap-prix" id="recapSuivi" style="display:none;">
+        <p id="texteDistanceLivreur"></p>
+        <div class="total" id="texteEtaLivreur"></div>
+      </div>
+      <button type="button" class="aw-btn aw-btn-secondaire" id="btnNouvelleCourse" style="width:100%;margin-top:12px;">Demander une autre course</button>
+    </div>
+  </div>
+
+  <div class="fenetre-fond" id="fenetreCarte">
+    <div class="fenetre-contenu" style="max-width:480px;">
+      <p class="aw-section-titre">Choisir la destination</p>
+      <p class="desc" style="margin-bottom:10px;">Deplacez la carte ou tapez pour placer le repere sur votre destination.</p>
+      <div id="carteLeafletChoix" style="width:100%;height:320px;border-radius:var(--rayon-petit);overflow:hidden;"></div>
+      <button type="button" class="aw-btn aw-btn-primaire" id="btnConfirmerDestination" style="width:100%;margin-top:12px;">Confirmer cette destination</button>
+      <button type="button" class="btn-fermer-fenetre" id="btnFermerCarte" style="margin-top:8px;">Annuler</button>
     </div>
   </div>
 
@@ -267,6 +299,39 @@ function remplirProfilLocal() {
 }
 remplirProfilLocal();
 
+var destinationChoisie = null;
+var carteChoix = null;
+var marqueurChoix = null;
+
+document.getElementById("btnChoisirDestination").addEventListener("click", function() {
+  document.getElementById("fenetreCarte").classList.add("visible");
+  setTimeout(function() {
+    if (!carteChoix) {
+      var centre = positionMoto ? [positionMoto.lat, positionMoto.lng] : [15.6556, -13.2554];
+      carteChoix = L.map("carteLeafletChoix").setView(centre, 14);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap" }).addTo(carteChoix);
+      marqueurChoix = L.marker(centre, { draggable: true }).addTo(carteChoix);
+      carteChoix.on("click", function(e) {
+        marqueurChoix.setLatLng(e.latlng);
+      });
+    } else {
+      carteChoix.invalidateSize();
+    }
+  }, 150);
+});
+
+document.getElementById("btnFermerCarte").addEventListener("click", function() {
+  document.getElementById("fenetreCarte").classList.remove("visible");
+});
+
+document.getElementById("btnConfirmerDestination").addEventListener("click", function() {
+  var pos = marqueurChoix.getLatLng();
+  destinationChoisie = { lat: pos.lat, lng: pos.lng };
+  document.getElementById("msgDestinationChoisie").className = "msg-position ok";
+  document.getElementById("msgDestinationChoisie").textContent = "Destination choisie sur la carte.";
+  document.getElementById("fenetreCarte").classList.remove("visible");
+});
+
 document.getElementById("btnPositionMoto").addEventListener("click", function() {
   var msg = document.getElementById("msgPositionMoto");
   var btn = document.getElementById("btnPositionMoto");
@@ -304,9 +369,7 @@ document.getElementById("ongletVoiture").addEventListener("click", function() {
   document.getElementById("ongletMoto").classList.remove("actif");
   document.getElementById("panneauVoiture").classList.add("visible");
   document.getElementById("panneauMoto").classList.remove("visible");
-});
-
-document.getElementById("formMoto").addEventListener("submit", function(event) {
+});document.getElementById("formMoto").addEventListener("submit", function(event) {
   event.preventDefault();
   var btn = document.getElementById("btnMoto");
   var msg = document.getElementById("msgMoto");
@@ -316,48 +379,141 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
     return;
   }
 
+  var arrivee = document.getElementById("m_arrivee").value;
+  if (!arrivee && !destinationChoisie) {
+    msg.innerHTML = "<div class=\"msg erreur\">Ecrivez une destination ou choisissez-la sur la carte.</div>";
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = "Envoi en cours...";
   msg.innerHTML = "";
 
   var repere = document.getElementById("m_repere").value;
-  var arrivee = document.getElementById("m_arrivee").value;
   var nom = document.getElementById("m_nom").value;
   var telephone = document.getElementById("m_telephone").value;
   var paiement = document.getElementById("m_paiement").value;
   localStorage.setItem("aw_client_nom", nom);
   localStorage.setItem("aw_client_telephone", telephone);
 
-  sb.from("courses_moto").insert([{
+  var donneesCourse = {
     client_nom: nom,
     client_telephone: telephone,
     lieu_depart: repere || "Position GPS",
-    lieu_arrivee: arrivee,
+    lieu_arrivee: arrivee || "Choisie sur la carte",
     latitude: positionMoto.lat,
     longitude: positionMoto.lng,
     mode_paiement: paiement,
     statut: "nouvelle"
-  }]).then(function(reponse) {
+  };
+  if (destinationChoisie) {
+    donneesCourse.destination_latitude = destinationChoisie.lat;
+    donneesCourse.destination_longitude = destinationChoisie.lng;
+  }
+
+  var positionClientPourSuivi = { lat: positionMoto.lat, lng: positionMoto.lng };
+
+  sb.from("courses_moto").insert([donneesCourse]).select().then(function(reponse) {
     btn.disabled = false;
     btn.textContent = "Demander une course";
 
-    if (reponse.error) {
+    if (reponse.error || !reponse.data || !reponse.data[0]) {
       msg.innerHTML = "<div class=\"msg erreur\">Erreur : la course n'a pas pu etre enregistree. Reessayez.</div>";
       return;
     }
 
-    msg.innerHTML = "<div class=\"msg succes\">Course demandee ! Un livreur va la recuperer sous peu.</div>";
+    var courseCreee = reponse.data[0];
+
     var message = "Bonjour, je demande une course moto :\nDestination : " + arrivee +
                    "\nNom : " + nom + "\nTelephone : " + telephone + "\nPaiement : " + paiement +
                    "\nPosition : https://www.google.com/maps?q=" + positionMoto.lat + "," + positionMoto.lng;
     window.open("https://wa.me/" + NUMERO_WHATSAPP + "?text=" + encodeURIComponent(message), "_blank");
-    document.getElementById("formMoto").reset();
-    positionMoto = null;
-    document.getElementById("btnPositionMoto").textContent = "Utiliser ma position actuelle (obligatoire)";
-    document.getElementById("msgPositionMoto").textContent = "Le livreur en a besoin pour venir vous chercher.";
-    document.getElementById("msgPositionMoto").className = "msg-position";
+
+    document.getElementById("formMoto").style.display = "none";
+    document.getElementById("carteSuivi").style.display = "block";
+    demarrerSuivi(courseCreee.id, positionClientPourSuivi);
   });
 });
+
+document.getElementById("btnNouvelleCourse").addEventListener("click", function() {
+  clearInterval(minuteurSuivi);
+  if (marqueurLivreurSuivi) { marqueurLivreurSuivi = null; }
+  if (carteSuiviLeaflet) { carteSuiviLeaflet.remove(); carteSuiviLeaflet = null; }
+  document.getElementById("carteSuivi").style.display = "none";
+  document.getElementById("formMoto").style.display = "block";
+  document.getElementById("formMoto").reset();
+  positionMoto = null;
+  destinationChoisie = null;
+  document.getElementById("btnPositionMoto").textContent = "Utiliser ma position actuelle (obligatoire)";
+  document.getElementById("msgPositionMoto").textContent = "Le livreur en a besoin pour venir vous chercher.";
+  document.getElementById("msgPositionMoto").className = "msg-position";
+  document.getElementById("msgDestinationChoisie").textContent = "";
+});
+
+var carteSuiviLeaflet = null;
+var marqueurClientSuivi = null;
+var marqueurLivreurSuivi = null;
+var minuteurSuivi = null;
+
+function demarrerSuivi(idCourse, positionClient) {
+  setTimeout(function() {
+    carteSuiviLeaflet = L.map("carteLeafletSuivi").setView([positionClient.lat, positionClient.lng], 14);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap" }).addTo(carteSuiviLeaflet);
+    var iconeClient = L.divIcon({ className: "marqueur-client", iconSize: [16, 16] });
+    marqueurClientSuivi = L.marker([positionClient.lat, positionClient.lng], { icon: iconeClient }).addTo(carteSuiviLeaflet).bindPopup("Vous");
+  }, 150);
+
+  function actualiser() {
+    sb.from("courses_moto").select("*").eq("id", idCourse).single().then(function(reponse) {
+      var c = reponse.data;
+      if (!c) return;
+
+      if (c.statut === "nouvelle") {
+        document.getElementById("texteSuiviStatut").textContent = "En attente qu'un livreur accepte votre course...";
+      } else if (c.statut === "acceptee") {
+        document.getElementById("texteSuiviStatut").textContent = "Un livreur a accepte votre course et arrive.";
+      } else if (c.statut === "en_cours") {
+        document.getElementById("texteSuiviStatut").textContent = "Vous etes en route vers votre destination.";
+      } else if (c.statut === "terminee") {
+        document.getElementById("texteSuiviStatut").textContent = "Course terminee. Merci d'avoir utilise AW SERVICES !";
+        clearInterval(minuteurSuivi);
+        return;
+      }
+
+      if (c.livreur_latitude && c.livreur_longitude && carteSuiviLeaflet) {
+        var pos = [c.livreur_latitude, c.livreur_longitude];
+        if (!marqueurLivreurSuivi) {
+          var iconeLivreur = L.divIcon({ className: "marqueur-livreur", iconSize: [16, 16] });
+          marqueurLivreurSuivi = L.marker(pos, { icon: iconeLivreur }).addTo(carteSuiviLeaflet).bindPopup("Votre livreur");
+        } else {
+          marqueurLivreurSuivi.setLatLng(pos);
+        }
+        var groupe = L.featureGroup([marqueurClientSuivi, marqueurLivreurSuivi]);
+        carteSuiviLeaflet.fitBounds(groupe.getBounds().pad(0.3));
+
+        var distanceKmVal = distanceEntrePoints(positionClient.lat, positionClient.lng, c.livreur_latitude, c.livreur_longitude);
+        var etaMinutes = Math.max(1, Math.round((distanceKmVal / 25) * 60));
+        document.getElementById("recapSuivi").style.display = "block";
+        document.getElementById("texteDistanceLivreur").textContent = "Distance du livreur : " + distanceKmVal.toFixed(1) + " km";
+        document.getElementById("texteEtaLivreur").textContent = "Arrivee estimee : ~" + etaMinutes + " min";
+      }
+    });
+  }
+
+  actualiser();
+  minuteurSuivi = setInterval(actualiser, 8000);
+}
+
+function distanceEntrePoints(lat1, lon1, lat2, lon2) {
+  var R = 6371;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLon = (lon2 - lon1) * Math.PI / 180;
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 var NB_SIEGES = 14;
 var direction = "aller";
