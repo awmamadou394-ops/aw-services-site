@@ -22,7 +22,7 @@
 
   <div class="aw-recherche">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-    <input type="text" placeholder="Que recherchez-vous aujourd'hui ?" disabled>
+    <input type="text" id="champRechercheAccueil" placeholder="Que recherchez-vous aujourd'hui ?">
   </div>
 </section>
 
@@ -107,6 +107,30 @@
   <a href="transport.html" class="aw-nav-item"><span class="icone">&#128664;</span>Transport</a>
   <a href="https://wa.me/221777589444" target="_blank" class="aw-nav-item"><span class="icone">&#128172;</span>Contact</a>
 </nav>
+
+<script>
+document.getElementById("champRechercheAccueil").addEventListener("input", function() {
+  var terme = this.value.trim().toLowerCase();
+  var tuiles = document.querySelectorAll(".modules .aw-carte-module");
+  var uneVisible = false;
+  for (var i = 0; i < tuiles.length; i++) {
+    var texte = tuiles[i].textContent.toLowerCase();
+    var correspond = !terme || texte.indexOf(terme) !== -1;
+    tuiles[i].style.display = correspond ? "" : "none";
+    if (correspond) uneVisible = true;
+  }
+});
+
+document.getElementById("champRechercheAccueil").addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    var terme = this.value.trim();
+    if (terme) {
+      window.location.href = "catalogue.html?q=" + encodeURIComponent(terme);
+    }
+  }
+});
+</script>
 
 </body>
 </html>
