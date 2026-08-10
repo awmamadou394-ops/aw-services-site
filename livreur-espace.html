@@ -120,6 +120,7 @@ function chargerEspace() {
       localiserLivreur();
       chargerCommandes();
       chargerCourses();
+      reprendrePartageSiCourseActive();
       setInterval(chargerCommandes, 20000);
       setInterval(chargerCourses, 20000);
     });
@@ -428,6 +429,8 @@ function accepterCourse(id) {
   sb.from("courses_moto").update({ livreur_id: livreurCourant.id, statut: "acceptee" }).eq("id", id).eq("statut", "nouvelle").then(function(reponse) {
     if (reponse.error) {
       alert("Erreur : cette course a peut-etre deja ete prise par un autre livreur.");
+    } else {
+      demarrerPartagePosition(id);
     }
     chargerCourses();
   });
@@ -438,7 +441,48 @@ function majCourse(id, nouveauStatut) {
     if (reponse.error) {
       alert("Erreur : " + reponse.error.message);
     }
+    if (nouveauStatut === "terminee") {
+      arreterPartagePosition();
+    }
     chargerCourses();
+  });
+}
+
+var minuteurPartagePosition = null;
+var idCourseSuivie = null;
+
+function demarrerPartagePosition(idCourse) {
+  if (!navigator.geolocation) return;
+  arreterPartagePosition();
+  idCourseSuivie = idCourse;
+
+  function envoyerPosition() {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      sb.from("courses_moto").update({
+        livreur_latitude: position.coords.latitude,
+        livreur_longitude: position.coords.longitude,
+        livreur_position_maj: new Date().toISOString()
+      }).eq("id", idCourseSuivie).then(function() {});
+    }, function() {});
+  }
+
+  envoyerPosition();
+  minuteurPartagePosition = setInterval(envoyerPosition, 10000);
+}
+
+function arreterPartagePosition() {
+  if (minuteurPartagePosition) {
+    clearInterval(minuteurPartagePosition);
+    minuteurPartagePosition = null;
+  }
+  idCourseSuivie = null;
+}
+
+function reprendrePartageSiCourseActive() {
+  sb.from("courses_moto").select("id, statut").eq("livreur_id", livreurCourant.id).in("statut", ["acceptee", "en_cours"]).limit(1).then(function(reponse) {
+    if (reponse.data && reponse.data[0]) {
+      demarrerPartagePosition(reponse.data[0].id);
+    }
   });
 }
 
