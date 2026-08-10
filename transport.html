@@ -171,8 +171,13 @@
   <div class="fenetre-fond" id="fenetreCarte">
     <div class="fenetre-contenu" style="max-width:480px;">
       <p class="aw-section-titre">Choisir la destination</p>
-      <p class="desc" style="margin-bottom:10px;">Deplacez la carte ou tapez pour placer le repere sur votre destination.</p>
-      <div id="carteLeafletChoix" style="width:100%;height:320px;border-radius:var(--rayon-petit);overflow:hidden;"></div>
+      <p class="desc" style="margin-bottom:10px;">Recherchez un lieu, ou deplacez la carte / tapez pour placer le repere.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input class="aw-input" type="text" id="rechercheDestination" placeholder="Rechercher un lieu, un quartier..." style="flex:1;">
+        <button type="button" class="aw-btn aw-btn-secondaire" id="btnRechercherDestination" style="width:auto;padding:0 16px;">OK</button>
+      </div>
+      <p class="msg-position" id="msgRechercheDestination"></p>
+      <div id="carteLeafletChoix" style="width:100%;height:280px;border-radius:var(--rayon-petit);overflow:hidden;"></div>
       <button type="button" class="aw-btn aw-btn-primaire" id="btnConfirmerDestination" style="width:100%;margin-top:12px;">Confirmer cette destination</button>
       <button type="button" class="btn-fermer-fenetre" id="btnFermerCarte" style="margin-top:8px;">Annuler</button>
     </div>
@@ -305,6 +310,8 @@ var marqueurChoix = null;
 
 document.getElementById("btnChoisirDestination").addEventListener("click", function() {
   document.getElementById("fenetreCarte").classList.add("visible");
+  document.getElementById("rechercheDestination").value = "";
+  document.getElementById("msgRechercheDestination").textContent = "";
   setTimeout(function() {
     if (!carteChoix) {
       var centre = positionMoto ? [positionMoto.lat, positionMoto.lng] : [15.6556, -13.2554];
@@ -323,6 +330,42 @@ document.getElementById("btnChoisirDestination").addEventListener("click", funct
 document.getElementById("btnFermerCarte").addEventListener("click", function() {
   document.getElementById("fenetreCarte").classList.remove("visible");
 });
+
+document.getElementById("btnRechercherDestination").addEventListener("click", rechercherDestinationSurCarte);
+document.getElementById("rechercheDestination").addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    rechercherDestinationSurCarte();
+  }
+});
+
+function rechercherDestinationSurCarte() {
+  var terme = document.getElementById("rechercheDestination").value.trim();
+  var msg = document.getElementById("msgRechercheDestination");
+  if (!terme) return;
+
+  msg.className = "msg-position";
+  msg.textContent = "Recherche en cours...";
+
+  var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=sn&q=" + encodeURIComponent(terme);
+
+  fetch(url).then(function(reponse) { return reponse.json(); }).then(function(resultats) {
+    if (!resultats || resultats.length === 0) {
+      msg.className = "msg-position";
+      msg.textContent = "Aucun lieu trouve. Essayez un autre nom, ou placez le repere manuellement.";
+      return;
+    }
+    var lieu = resultats[0];
+    var latLng = [parseFloat(lieu.lat), parseFloat(lieu.lon)];
+    carteChoix.setView(latLng, 15);
+    marqueurChoix.setLatLng(latLng);
+    msg.className = "msg-position ok";
+    msg.textContent = "Lieu trouve : " + lieu.display_name;
+  }).catch(function() {
+    msg.className = "msg-position";
+    msg.textContent = "Recherche impossible pour le moment. Placez le repere manuellement.";
+  });
+}
 
 document.getElementById("btnConfirmerDestination").addEventListener("click", function() {
   var pos = marqueurChoix.getLatLng();
@@ -369,7 +412,7 @@ document.getElementById("ongletVoiture").addEventListener("click", function() {
   document.getElementById("ongletMoto").classList.remove("actif");
   document.getElementById("panneauVoiture").classList.add("visible");
   document.getElementById("panneauMoto").classList.remove("visible");
-});document.getElementById("formMoto").addEventListener("submit", function(event) {
+  document.getElementById("formMoto").addEventListener("submit", function(event) {
   event.preventDefault();
   var btn = document.getElementById("btnMoto");
   var msg = document.getElementById("msgMoto");
@@ -785,3 +828,4 @@ afficherZoneDirection();
 
 </body>
 </html>
+});
