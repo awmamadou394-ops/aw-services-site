@@ -412,7 +412,7 @@ document.getElementById("ongletVoiture").addEventListener("click", function() {
   document.getElementById("ongletMoto").classList.remove("actif");
   document.getElementById("panneauVoiture").classList.add("visible");
   document.getElementById("panneauMoto").classList.remove("visible");
-  document.getElementById("formMoto").addEventListener("submit", function(event) {
+});document.getElementById("formMoto").addEventListener("submit", function(event) {
   event.preventDefault();
   var btn = document.getElementById("btnMoto");
   var msg = document.getElementById("msgMoto");
@@ -828,4 +828,3 @@ afficherZoneDirection();
 
 </body>
 </html>
-});
