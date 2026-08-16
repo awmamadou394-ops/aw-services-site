@@ -364,9 +364,17 @@ function afficherMesCourses(liste) {
               (c.lieu_depart ? "<p>Repere : " + c.lieu_depart + "</p>" : "") +
               "<p>Paiement : " + c.mode_paiement + "</p>" +
               "<div class=\"badges\"><span class=\"badge-statut badge-en_preparation\">" + (LIBELLES_COURSE[c.statut] || c.statut) + "</span></div>";
-    if (c.latitude && c.longitude) {
+
+    if (c.statut === "en_cours") {
+      if (c.destination_latitude && c.destination_longitude) {
+        html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + c.destination_latitude + "," + c.destination_longitude + "\" target=\"_blank\">Itineraire vers la destination</a>";
+      } else {
+        html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(c.lieu_arrivee) + "\" target=\"_blank\">Itineraire vers la destination</a>";
+      }
+    } else if (c.latitude && c.longitude) {
       html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + c.latitude + "," + c.longitude + "\" target=\"_blank\">Itineraire vers le client</a>";
     }
+
     if (c.statut === "acceptee") {
       html += "<br><button class=\"btn-recupere btn-recupere-course\" data-id=\"" + c.id + "\">J'ai recupere le client</button>";
     } else if (c.statut === "en_cours") {
