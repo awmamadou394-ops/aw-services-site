@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Transport</title>
 <link rel="stylesheet" href="style-global.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDpAban2vaVHcHUO9GJnW6MNbA6vWJst6M&libraries=places"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   body { padding-bottom: 30px; }
@@ -99,8 +98,6 @@
   .fenetre-fond.visible { display: flex; }
   .fenetre-contenu { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: var(--espace-lg); width: 100%; box-shadow: var(--ombre-carte); }
   .btn-fermer-fenetre { background-color: transparent; border: 1px solid var(--bordure); color: var(--texte); width: 100%; padding: 12px; border-radius: var(--rayon-petit); font-weight: 600; font-family: var(--police-texte); }
-  .marqueur-client { background-color: var(--accent); width: 16px; height: 16px; border-radius: 50%; border: 2px solid #1C1200; }
-  .marqueur-livreur { background-color: var(--succes); width: 16px; height: 16px; border-radius: 50%; border: 2px solid #08210c; }
 </style>
 </head>
 <body>
@@ -159,7 +156,7 @@
     <div class="aw-carte" id="carteSuivi" style="display:none;">
       <p class="aw-section-titre">Suivi de ma course</p>
       <p class="desc" id="texteSuiviStatut">En attente qu'un livreur accepte votre course...</p>
-      <div id="carteLeafletSuivi" style="width:100%;height:260px;border-radius:var(--rayon-petit);overflow:hidden;background-color:var(--fond);"></div>
+      <div id="carteGoogleSuivi" style="width:100%;height:260px;border-radius:var(--rayon-petit);overflow:hidden;background-color:var(--fond);"></div>
       <div class="recap-prix" id="recapSuivi" style="display:none;">
         <p id="texteDistanceLivreur"></p>
         <div class="total" id="texteEtaLivreur"></div>
@@ -171,13 +168,10 @@
   <div class="fenetre-fond" id="fenetreCarte">
     <div class="fenetre-contenu" style="max-width:480px;">
       <p class="aw-section-titre">Choisir la destination</p>
-      <p class="desc" style="margin-bottom:10px;">Recherchez un lieu, ou deplacez la carte / tapez pour placer le repere.</p>
-      <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <input class="aw-input" type="text" id="rechercheDestination" placeholder="Rechercher un lieu, un quartier..." style="flex:1;">
-        <button type="button" class="aw-btn aw-btn-secondaire" id="btnRechercherDestination" style="width:auto;padding:0 16px;">OK</button>
-      </div>
+      <p class="desc" style="margin-bottom:10px;">Tapez pour rechercher un lieu (suggestions automatiques), ou deplacez le repere sur la carte.</p>
+      <input class="aw-input" type="text" id="rechercheDestination" placeholder="Rechercher un lieu, un quartier..." style="margin-bottom:10px;">
       <p class="msg-position" id="msgRechercheDestination"></p>
-      <div id="carteLeafletChoix" style="width:100%;height:280px;border-radius:var(--rayon-petit);overflow:hidden;"></div>
+      <div id="carteGoogleChoix" style="width:100%;height:280px;border-radius:var(--rayon-petit);overflow:hidden;"></div>
       <button type="button" class="aw-btn aw-btn-primaire" id="btnConfirmerDestination" style="width:100%;margin-top:12px;">Confirmer cette destination</button>
       <button type="button" class="btn-fermer-fenetre" id="btnFermerCarte" style="margin-top:8px;">Annuler</button>
     </div>
@@ -208,7 +202,7 @@
         </select>
       </div>
 
-      <p class="aw-badge aw-badge-attente" style="display:block;margin-top:12px;">Place : 12 500 FCFA (23kg de bagages inclus) — +1 000 FCFA/valise au-dela</p>
+      <p class="aw-badge aw-badge-attente" style="display:block;margin-top:12px;">Place : 12 500 FCFA (23kg de bagages inclus) 鈥� +1 000 FCFA/valise au-dela</p>
 
       <div id="zoneRassemblement"></div>
 
@@ -273,7 +267,7 @@
 </div>
 
 <footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
-  &copy; 2026 AW SERVICES — Tous droits reserves
+  &copy; 2026 AW SERVICES 鈥� Tous droits reserves
 </footer>
 
 <script>
@@ -307,22 +301,46 @@ remplirProfilLocal();
 var destinationChoisie = null;
 var carteChoix = null;
 var marqueurChoix = null;
+var autocompleteDestination = null;
 
 document.getElementById("btnChoisirDestination").addEventListener("click", function() {
   document.getElementById("fenetreCarte").classList.add("visible");
-  document.getElementById("rechercheDestination").value = "";
   document.getElementById("msgRechercheDestination").textContent = "";
   setTimeout(function() {
+    var centre = positionMoto ? { lat: positionMoto.lat, lng: positionMoto.lng } : { lat: 15.6556, lng: -13.2554 };
     if (!carteChoix) {
-      var centre = positionMoto ? [positionMoto.lat, positionMoto.lng] : [15.6556, -13.2554];
-      carteChoix = L.map("carteLeafletChoix").setView(centre, 14);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap" }).addTo(carteChoix);
-      marqueurChoix = L.marker(centre, { draggable: true }).addTo(carteChoix);
-      carteChoix.on("click", function(e) {
-        marqueurChoix.setLatLng(e.latlng);
+      carteChoix = new google.maps.Map(document.getElementById("carteGoogleChoix"), {
+        center: centre,
+        zoom: 14
+      });
+      marqueurChoix = new google.maps.Marker({
+        position: centre,
+        map: carteChoix,
+        draggable: true
+      });
+      carteChoix.addListener("click", function(e) {
+        marqueurChoix.setPosition(e.latLng);
+      });
+
+      autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("rechercheDestination"), {
+        componentRestrictions: { country: "sn" }
+      });
+      autocompleteDestination.bindTo("bounds", carteChoix);
+      autocompleteDestination.addListener("place_changed", function() {
+        var lieu = autocompleteDestination.getPlace();
+        if (!lieu.geometry) {
+          document.getElementById("msgRechercheDestination").textContent = "Choisissez un lieu dans la liste de suggestions.";
+          return;
+        }
+        carteChoix.setCenter(lieu.geometry.location);
+        carteChoix.setZoom(16);
+        marqueurChoix.setPosition(lieu.geometry.location);
+        document.getElementById("msgRechercheDestination").className = "msg-position ok";
+        document.getElementById("msgRechercheDestination").textContent = "Lieu trouve : " + (lieu.formatted_address || lieu.name);
       });
     } else {
-      carteChoix.invalidateSize();
+      carteChoix.setCenter(centre);
+      google.maps.event.trigger(carteChoix, "resize");
     }
   }, 150);
 });
@@ -331,45 +349,9 @@ document.getElementById("btnFermerCarte").addEventListener("click", function() {
   document.getElementById("fenetreCarte").classList.remove("visible");
 });
 
-document.getElementById("btnRechercherDestination").addEventListener("click", rechercherDestinationSurCarte);
-document.getElementById("rechercheDestination").addEventListener("keydown", function(event) {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    rechercherDestinationSurCarte();
-  }
-});
-
-function rechercherDestinationSurCarte() {
-  var terme = document.getElementById("rechercheDestination").value.trim();
-  var msg = document.getElementById("msgRechercheDestination");
-  if (!terme) return;
-
-  msg.className = "msg-position";
-  msg.textContent = "Recherche en cours...";
-
-  var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=sn&q=" + encodeURIComponent(terme);
-
-  fetch(url).then(function(reponse) { return reponse.json(); }).then(function(resultats) {
-    if (!resultats || resultats.length === 0) {
-      msg.className = "msg-position";
-      msg.textContent = "Aucun lieu trouve. Essayez un autre nom, ou placez le repere manuellement.";
-      return;
-    }
-    var lieu = resultats[0];
-    var latLng = [parseFloat(lieu.lat), parseFloat(lieu.lon)];
-    carteChoix.setView(latLng, 15);
-    marqueurChoix.setLatLng(latLng);
-    msg.className = "msg-position ok";
-    msg.textContent = "Lieu trouve : " + lieu.display_name;
-  }).catch(function() {
-    msg.className = "msg-position";
-    msg.textContent = "Recherche impossible pour le moment. Placez le repere manuellement.";
-  });
-}
-
 document.getElementById("btnConfirmerDestination").addEventListener("click", function() {
-  var pos = marqueurChoix.getLatLng();
-  destinationChoisie = { lat: pos.lat, lng: pos.lng };
+  var pos = marqueurChoix.getPosition();
+  destinationChoisie = { lat: pos.lat(), lng: pos.lng() };
   document.getElementById("msgDestinationChoisie").className = "msg-position ok";
   document.getElementById("msgDestinationChoisie").textContent = "Destination choisie sur la carte.";
   document.getElementById("fenetreCarte").classList.remove("visible");
@@ -412,7 +394,9 @@ document.getElementById("ongletVoiture").addEventListener("click", function() {
   document.getElementById("ongletMoto").classList.remove("actif");
   document.getElementById("panneauVoiture").classList.add("visible");
   document.getElementById("panneauMoto").classList.remove("visible");
-});document.getElementById("formMoto").addEventListener("submit", function(event) {
+});
+
+document.getElementById("formMoto").addEventListener("submit", function(event) {
   event.preventDefault();
   var btn = document.getElementById("btnMoto");
   var msg = document.getElementById("msgMoto");
@@ -480,8 +464,9 @@ document.getElementById("ongletVoiture").addEventListener("click", function() {
 
 document.getElementById("btnNouvelleCourse").addEventListener("click", function() {
   clearInterval(minuteurSuivi);
-  if (marqueurLivreurSuivi) { marqueurLivreurSuivi = null; }
-  if (carteSuiviLeaflet) { carteSuiviLeaflet.remove(); carteSuiviLeaflet = null; }
+  marqueurLivreurSuivi = null;
+  marqueurClientSuivi = null;
+  carteGoogleSuivi = null;
   document.getElementById("carteSuivi").style.display = "none";
   document.getElementById("formMoto").style.display = "block";
   document.getElementById("formMoto").reset();
@@ -493,17 +478,23 @@ document.getElementById("btnNouvelleCourse").addEventListener("click", function(
   document.getElementById("msgDestinationChoisie").textContent = "";
 });
 
-var carteSuiviLeaflet = null;
+var carteGoogleSuivi = null;
 var marqueurClientSuivi = null;
 var marqueurLivreurSuivi = null;
 var minuteurSuivi = null;
 
 function demarrerSuivi(idCourse, positionClient) {
   setTimeout(function() {
-    carteSuiviLeaflet = L.map("carteLeafletSuivi").setView([positionClient.lat, positionClient.lng], 14);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap" }).addTo(carteSuiviLeaflet);
-    var iconeClient = L.divIcon({ className: "marqueur-client", iconSize: [16, 16] });
-    marqueurClientSuivi = L.marker([positionClient.lat, positionClient.lng], { icon: iconeClient }).addTo(carteSuiviLeaflet).bindPopup("Vous");
+    carteGoogleSuivi = new google.maps.Map(document.getElementById("carteGoogleSuivi"), {
+      center: positionClient,
+      zoom: 14
+    });
+    marqueurClientSuivi = new google.maps.Marker({
+      position: positionClient,
+      map: carteGoogleSuivi,
+      label: "V",
+      title: "Vous"
+    });
   }, 150);
 
   function actualiser() {
@@ -523,16 +514,22 @@ function demarrerSuivi(idCourse, positionClient) {
         return;
       }
 
-      if (c.livreur_latitude && c.livreur_longitude && carteSuiviLeaflet) {
-        var pos = [c.livreur_latitude, c.livreur_longitude];
+      if (c.livreur_latitude && c.livreur_longitude && carteGoogleSuivi) {
+        var pos = { lat: c.livreur_latitude, lng: c.livreur_longitude };
         if (!marqueurLivreurSuivi) {
-          var iconeLivreur = L.divIcon({ className: "marqueur-livreur", iconSize: [16, 16] });
-          marqueurLivreurSuivi = L.marker(pos, { icon: iconeLivreur }).addTo(carteSuiviLeaflet).bindPopup("Votre livreur");
+          marqueurLivreurSuivi = new google.maps.Marker({
+            position: pos,
+            map: carteGoogleSuivi,
+            label: "L",
+            title: "Votre livreur"
+          });
         } else {
-          marqueurLivreurSuivi.setLatLng(pos);
+          marqueurLivreurSuivi.setPosition(pos);
         }
-        var groupe = L.featureGroup([marqueurClientSuivi, marqueurLivreurSuivi]);
-        carteSuiviLeaflet.fitBounds(groupe.getBounds().pad(0.3));
+        var bounds = new google.maps.LatLngBounds();
+        bounds.extend(marqueurClientSuivi.getPosition());
+        bounds.extend(marqueurLivreurSuivi.getPosition());
+        carteGoogleSuivi.fitBounds(bounds, 60);
 
         var distanceKmVal = distanceEntrePoints(positionClient.lat, positionClient.lng, c.livreur_latitude, c.livreur_longitude);
         var etaMinutes = Math.max(1, Math.round((distanceKmVal / 25) * 60));
