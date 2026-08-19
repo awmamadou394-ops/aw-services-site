@@ -153,6 +153,9 @@ document.getElementById("formConnexion").addEventListener("submit", function(eve
     var user = reponse.data.user;
     sb.from("clients").select("*").eq("user_id", user.id).maybeSingle().then(function(reponseProfil) {
       if (reponseProfil.data) {
+        if (!reponseProfil.data.email) {
+          sb.from("clients").update({ email: user.email }).eq("user_id", user.id).then(function() {});
+        }
         window.location.href = "client-espace.html";
         return;
       }
@@ -161,6 +164,7 @@ document.getElementById("formConnexion").addEventListener("submit", function(eve
       sb.from("clients").insert([{
         nom: nomStocke,
         telephone: telStocke,
+        email: user.email,
         user_id: user.id
       }]).then(function(reponseInsert) {
         btn.disabled = false;
