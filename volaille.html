@@ -121,7 +121,16 @@
         <option value="Paiement en especes a la livraison">Paiement en especes a la livraison</option>
       </select>
 
-      <label class="aw-label">Adresse de livraison</label>
+      <label class="aw-label">Votre village / zone</label>
+      <select id="cmd_village" required>
+        <option value="">Choisir...</option>
+        <option value="Doumga Ouro Alpha">Doumga Ouro Alpha</option>
+        <option value="Ourossogui">Ourossogui</option>
+        <option value="Matam ville">Matam ville</option>
+      </select>
+      <p class="msg-position" style="margin-top:4px;">Livraison disponible uniquement dans ces zones pour le moment.</p>
+
+      <label class="aw-label">Adresse precise (quartier, repere...)</label>
       <input class="aw-input" type="text" id="cmd_adresse" required>
 
       <button type="button" class="aw-btn aw-btn-secondaire" id="btnPositionCmd" style="width:100%;margin-top:10px;">&#128205; Utiliser ma position actuelle (pour le livreur)</button>
@@ -133,7 +142,7 @@
 </div>
 
 <footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
-  &copy; 2026 AW SERVICES — Tous droits reserves
+  &copy; 2026 AW SERVICES 鈥� Tous droits reserves
 </footer>
 
 <script>
@@ -236,7 +245,9 @@ function envoyerCommande(event) {
   localStorage.setItem("aw_client_nom", nom);
   localStorage.setItem("aw_client_telephone", tel);
   var paiement = document.getElementById("cmd_paiement").value;
+  var village = document.getElementById("cmd_village").value;
   var adresse = document.getElementById("cmd_adresse").value;
+  var adresseComplete = village + " - " + adresse;
   var pu = prixUnitaire(quantite);
   var total = pu * quantite;
 
@@ -247,7 +258,7 @@ function envoyerCommande(event) {
     produits: [{ nom: "Poulet de chair", prix: pu, quantite: quantite }],
     total: total,
     mode_paiement: paiement,
-    adresse_livraison: adresse,
+    adresse_livraison: adresseComplete,
     statut: "nouvelle"
   };
 
@@ -271,7 +282,7 @@ function envoyerCommande(event) {
 
     var message = "Bonjour, je passe une commande :\n- Poulet de chair x" + quantite +
                    " (" + total.toLocaleString("fr-FR") + " FCFA)" +
-                   "\nNom : " + nom + "\nTelephone : " + tel + "\nPaiement : " + paiement + "\nAdresse : " + adresse;
+                   "\nNom : " + nom + "\nTelephone : " + tel + "\nPaiement : " + paiement + "\nAdresse : " + adresseComplete;
     window.open("https://wa.me/221777589444?text=" + encodeURIComponent(message), "_blank");
 
     document.getElementById("formCommande").reset();
