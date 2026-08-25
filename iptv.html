@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - IPTV</title>
 <link rel="stylesheet" href="style-global.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
   .intro { color: var(--texte-doux); margin-bottom: var(--espace-lg); line-height: 1.5; font-size: 13.5px; }
@@ -12,15 +13,23 @@
   .offres { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .offre { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); overflow: hidden; text-align: center; position: relative; }
   .offre.populaire { border-color: var(--accent); border-width: 2px; box-shadow: var(--ombre-accent); }
+  .offre.selectionne { border-color: var(--accent); border-width: 2px; }
   .badge-populaire { position: absolute; top: 8px; right: 8px; background-color: var(--accent); color: #1C1200; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; z-index: 1; }
   .offre img { width: 100%; height: 75px; object-fit: cover; display: block; }
   .offre .texte { padding: 12px; }
   .offre h3 { color: var(--texte); font-size: 15px; font-family: var(--police-titre); }
   .offre .prix { color: var(--accent); font-size: 18px; font-weight: 700; margin: 6px 0; font-family: var(--police-chiffres); }
   .offre p.desc { color: var(--texte-doux); font-size: 11.5px; margin-bottom: 10px; }
-  .offre a { display: inline-block; background-color: var(--accent); color: #1C1200; text-decoration: none; padding: 9px; border-radius: var(--rayon-petit); font-weight: 700; font-size: 13px; width: 100%; }
+  .offre button { display: inline-block; background-color: var(--accent); color: #1C1200; text-decoration: none; padding: 9px; border: none; border-radius: var(--rayon-petit); font-weight: 700; font-size: 13px; width: 100%; }
 
   .note-paiement { text-align: center; color: var(--texte-discret); font-size: 12px; margin-top: var(--espace-lg); font-style: italic; }
+
+  #zoneCommande { margin-top: var(--espace-lg); display: none; }
+  #zoneCommande.visible { display: block; }
+  #zoneCommande form { display: flex; flex-direction: column; gap: 4px; }
+  .recap-formule { background-color: var(--surface); border: 1px solid var(--accent); border-radius: var(--rayon-petit); padding: 12px; margin-bottom: 14px; text-align: center; }
+  .recap-formule .nom-formule { font-family: var(--police-titre); font-size: 15px; }
+  .recap-formule .prix-formule { color: var(--accent); font-weight: 700; font-size: 18px; margin-top: 4px; font-family: var(--police-chiffres); }
 </style>
 </head>
 <body>
@@ -34,57 +43,171 @@
 
 <div class="aw-conteneur">
   <p class="aw-section-titre">Nos formules IPTV</p>
-  <p class="intro">Des centaines de chaines en streaming. Choisissez votre duree et commandez directement sur WhatsApp.</p>
+  <p class="intro">Des centaines de chaines en streaming. Paiement en ligne securise, identifiants de connexion envoyes automatiquement par email des la confirmation du paiement.</p>
 
   <div class="offres">
-    <div class="offre">
+    <div class="offre" data-formule="1 mois" data-prix="4000">
       <img src="imageiptv.png" alt="IPTV">
       <div class="texte">
         <h3>1 mois</h3>
         <div class="prix">4 000 FCFA</div>
         <p class="desc">30 jours d'acces</p>
-        <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%201%20mois" target="_blank">Commander</a>
+        <button type="button" class="btn-choisir">Choisir</button>
       </div>
     </div>
 
-    <div class="offre">
+    <div class="offre" data-formule="3 mois" data-prix="10000">
       <img src="imageiptv.png" alt="IPTV">
       <div class="texte">
         <h3>3 mois</h3>
         <div class="prix">10 000 FCFA</div>
         <p class="desc">90 jours d'acces</p>
-        <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%203%20mois" target="_blank">Commander</a>
+        <button type="button" class="btn-choisir">Choisir</button>
       </div>
     </div>
 
-    <div class="offre populaire">
+    <div class="offre populaire" data-formule="6 mois" data-prix="16000">
       <div class="badge-populaire">TOP</div>
       <img src="imageiptv.png" alt="IPTV">
       <div class="texte">
         <h3>6 mois</h3>
         <div class="prix">16 000 FCFA</div>
         <p class="desc">180 jours d'acces</p>
-        <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%206%20mois" target="_blank">Commander</a>
+        <button type="button" class="btn-choisir">Choisir</button>
       </div>
     </div>
 
-    <div class="offre">
+    <div class="offre" data-formule="12 mois" data-prix="28000">
       <img src="imageiptv.png" alt="IPTV">
       <div class="texte">
         <h3>12 mois</h3>
         <div class="prix">28 000 FCFA</div>
         <p class="desc">1 an d'acces</p>
-        <a href="https://wa.me/221777589444?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20la%20formule%20IPTV%2012%20mois" target="_blank">Commander</a>
+        <button type="button" class="btn-choisir">Choisir</button>
       </div>
     </div>
   </div>
 
-  <p class="note-paiement">Paiement en ligne (Wave, Orange Money, carte) bientot disponible directement sur cette page.</p>
+  <div id="zoneCommande" class="aw-carte">
+    <p class="aw-section-titre">Finaliser la commande</p>
+    <div class="recap-formule">
+      <div class="nom-formule" id="recapNomFormule"></div>
+      <div class="prix-formule" id="recapPrixFormule"></div>
+    </div>
+    <form id="formCommande">
+      <label class="aw-label">Nom complet</label>
+      <input class="aw-input" type="text" id="cmd_nom" required>
+
+      <label class="aw-label">Numero de telephone</label>
+      <input class="aw-input" type="tel" id="cmd_tel" required>
+
+      <label class="aw-label">Email (vos identifiants y seront envoyes)</label>
+      <input class="aw-input" type="email" id="cmd_email" required>
+
+      <p style="color:var(--texte-doux);font-size:13px;margin:10px 0 4px;">Paiement en ligne securise (Wave, Orange Money, carte bancaire) a l'etape suivante.</p>
+
+      <button type="submit" class="aw-btn aw-btn-primaire" id="btn_commande" style="width:100%;margin-top:14px;">Payer maintenant</button>
+    </form>
+  </div>
+
+  <p class="note-paiement">Vos identifiants de connexion sont generes et envoyes automatiquement par email des que le paiement est confirme.</p>
 </div>
 
 <footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
   &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+var formuleChoisie = null;
+var prixChoisi = null;
+
+var boutonsChoisir = document.getElementsByClassName("btn-choisir");
+for (var i = 0; i < boutonsChoisir.length; i++) {
+  boutonsChoisir[i].addEventListener("click", function(e) {
+    var carte = e.target.closest(".offre");
+    formuleChoisie = carte.getAttribute("data-formule");
+    prixChoisi = parseFloat(carte.getAttribute("data-prix"));
+
+    var toutesLesCartes = document.getElementsByClassName("offre");
+    for (var c = 0; c < toutesLesCartes.length; c++) toutesLesCartes[c].classList.remove("selectionne");
+    carte.classList.add("selectionne");
+
+    document.getElementById("recapNomFormule").textContent = "Formule " + formuleChoisie;
+    document.getElementById("recapPrixFormule").textContent = prixChoisi.toLocaleString("fr-FR") + " FCFA";
+
+    var zone = document.getElementById("zoneCommande");
+    zone.classList.add("visible");
+    zone.scrollIntoView({ behavior: "smooth" });
+  });
+}
+
+document.getElementById("formCommande").addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  if (!formuleChoisie) {
+    alert("Veuillez choisir une formule.");
+    return;
+  }
+
+  var btn = document.getElementById("btn_commande");
+  btn.disabled = true;
+  btn.textContent = "Envoi en cours...";
+
+  var nom = document.getElementById("cmd_nom").value;
+  var tel = document.getElementById("cmd_tel").value;
+  var email = document.getElementById("cmd_email").value;
+  var idAbonnement = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
+
+  var donneesAbonnement = {
+    id: idAbonnement,
+    client_nom: nom,
+    client_telephone: tel,
+    client_email: email,
+    formule: formuleChoisie,
+    prix: prixChoisi,
+    statut_paiement: "non_paye"
+  };
+
+  sb.from("abonnements_iptv").insert([donneesAbonnement]).then(function(reponse) {
+    if (reponse.error) {
+      btn.disabled = false;
+      btn.textContent = "Payer maintenant";
+      alert("Erreur : " + reponse.error.message);
+      return;
+    }
+
+    fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table: "abonnements_iptv",
+        id: idAbonnement,
+        item_name: "IPTV " + formuleChoisie,
+        item_price: prixChoisi,
+        telephone: tel,
+        nom: nom
+      })
+    }).then(function(r) { return r.json(); }).then(function(resultatPaiement) {
+      if (resultatPaiement.success === 1 && resultatPaiement.redirect_url) {
+        window.location.href = resultatPaiement.redirect_url;
+      } else {
+        btn.disabled = false;
+        btn.textContent = "Payer maintenant";
+        alert("Erreur lors de la creation du paiement. Reessayez.");
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = "Payer maintenant";
+      alert("Erreur de connexion au service de paiement. Reessayez.");
+    });
+  });
+});
+</script>
 
 </body>
 </html>
