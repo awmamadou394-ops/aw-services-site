@@ -102,12 +102,7 @@
       <label class="aw-label">Numero de telephone</label>
       <input class="aw-input" type="tel" id="cmd_tel" required>
 
-      <label class="aw-label">Mode de paiement</label>
-      <select id="cmd_paiement" required>
-        <option value="">Choisir...</option>
-        <option value="Paiement en ligne (Wave/Orange Money)">Paiement en ligne (Wave/Orange Money)</option>
-        <option value="Paiement en especes a la livraison">Paiement en especes a la livraison</option>
-      </select>
+      <p style="color:var(--texte-doux);font-size:13px;margin:4px 0 14px;">Paiement en ligne securise (Wave, Orange Money, carte bancaire) a l'etape suivante.</p>
 
       <label class="aw-label">Votre village / zone</label>
       <select id="cmd_village" required>
@@ -135,7 +130,7 @@
 </div>
 
 <footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
-  &copy; 2026 AW SERVICES 鈥� Tous droits reserves
+  &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
 <script>
@@ -406,7 +401,6 @@ function envoyerCommande(event) {
   var tel = document.getElementById("cmd_tel").value;
   localStorage.setItem("aw_client_nom", nom);
   localStorage.setItem("aw_client_telephone", tel);
-  var paiement = document.getElementById("cmd_paiement").value;
   var village = document.getElementById("cmd_village").value;
   var adresse = document.getElementById("cmd_adresse").value;
   var adresseComplete = village + " - " + adresse;
@@ -428,9 +422,10 @@ function envoyerCommande(event) {
     produit: resumeArticles.join(", "),
     produits: produitsStructures,
     total: total,
-    mode_paiement: paiement,
+    mode_paiement: "Paiement en ligne (PayTech)",
     adresse_livraison: adresseComplete,
-    statut: "nouvelle"
+    statut: "nouvelle",
+    statut_paiement: "non_paye"
   };
 
   if (clientConnecte) {
@@ -442,28 +437,42 @@ function envoyerCommande(event) {
     donneesCommande.longitude = positionClient.lng;
   }
 
-  sb.from("commandes").insert([donneesCommande]).then(function(reponse) {
-    btn.disabled = false;
-    btn.textContent = "Confirmer la commande";
-
-    if (reponse.error) {
+  sb.from("commandes").insert([donneesCommande]).select().then(function(reponse) {
+    if (reponse.error || !reponse.data || !reponse.data[0]) {
+      btn.disabled = false;
+      btn.textContent = "Confirmer la commande";
       alert("Erreur : la commande n'a pas pu etre enregistree. Reessayez.");
       return;
     }
 
-    var message = "Bonjour, je passe une commande :\n" + messageArticles.join("\n") +
-                   "\nTotal : " + total.toLocaleString("fr-FR") + " FCFA" +
-                   "\nNom : " + nom + "\nTelephone : " + tel + "\nPaiement : " + paiement + "\nAdresse : " + adresseComplete;
-    window.open("https://wa.me/221777589444?text=" + encodeURIComponent(message), "_blank");
+    var commandeCreee = reponse.data[0];
 
-    panier = [];
-    mettreAJourAffichagePanier();
-    document.getElementById("formCommande").reset();
-    positionClient = null;
-
-    if (clientConnecte) {
-      window.location.href = "client-espace.html";
-    }
+    fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table: "commandes",
+        id: commandeCreee.id,
+        item_name: resumeArticles.join(", "),
+        item_price: total,
+        telephone: tel,
+        nom: nom
+      })
+    }).then(function(r) { return r.json(); }).then(function(resultatPaiement) {
+      if (resultatPaiement.success === 1 && resultatPaiement.redirect_url) {
+        panier = [];
+        mettreAJourAffichagePanier();
+        window.location.href = resultatPaiement.redirect_url;
+      } else {
+        btn.disabled = false;
+        btn.textContent = "Confirmer la commande";
+        alert("Erreur lors de la creation du paiement. Reessayez.");
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = "Confirmer la commande";
+      alert("Erreur de connexion au service de paiement. Reessayez.");
+    });
   });
 }
 
