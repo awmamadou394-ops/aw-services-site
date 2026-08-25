@@ -415,8 +415,10 @@ function envoyerCommande(event) {
     produitsStructures.push({ nom: a.nom, prix: a.prix, quantite: a.quantite });
   }
   var total = calculerTotal();
+  var idCommande = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
 
   var donneesCommande = {
+    id: idCommande,
     client_nom: nom,
     client_telephone: tel,
     produit: resumeArticles.join(", "),
@@ -437,22 +439,20 @@ function envoyerCommande(event) {
     donneesCommande.longitude = positionClient.lng;
   }
 
-  sb.from("commandes").insert([donneesCommande]).select().then(function(reponse) {
-    if (reponse.error || !reponse.data || !reponse.data[0]) {
+  sb.from("commandes").insert([donneesCommande]).then(function(reponse) {
+    if (reponse.error) {
       btn.disabled = false;
       btn.textContent = "Confirmer la commande";
       alert("Erreur : la commande n'a pas pu etre enregistree. Reessayez.");
       return;
     }
 
-    var commandeCreee = reponse.data[0];
-
     fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-init", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         table: "commandes",
-        id: commandeCreee.id,
+        id: idCommande,
         item_name: resumeArticles.join(", "),
         item_price: total,
         telephone: tel,
