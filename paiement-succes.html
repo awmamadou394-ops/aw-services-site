@@ -6,8 +6,32 @@
 <title>AW SERVICES - Paiement reussi</title>
 <link rel="stylesheet" href="style-global.css">
 <style>
-  .zone-confirmation { max-width: 480px; margin: 60px auto; text-align: center; padding: 0 var(--espace-md); }
-  .icone-succes { font-size: 64px; margin-bottom: 16px; }
+  .zone-confirmation { max-width: 480px; margin: 40px auto; text-align: center; padding: 0 var(--espace-md); }
+  .icone-succes { font-size: 56px; margin-bottom: 10px; }
+
+  .billet {
+    background-color: var(--surface);
+    border: 1px solid var(--bordure);
+    border-radius: var(--rayon);
+    padding: var(--espace-lg);
+    text-align: left;
+    margin-top: var(--espace-lg);
+    box-shadow: var(--ombre-carte);
+  }
+  .billet-entete { text-align: center; border-bottom: 1px dashed var(--bordure); padding-bottom: 12px; margin-bottom: 12px; }
+  .billet-entete .marque { color: var(--accent); font-family: var(--police-titre); font-weight: 700; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .billet-entete .trajet { font-size: 19px; font-weight: 700; margin-top: 4px; }
+  .billet-ligne { display: flex; justify-content: space-between; padding: 7px 0; font-size: 14px; border-bottom: 1px solid var(--bordure); }
+  .billet-ligne:last-of-type { border-bottom: none; }
+  .billet-ligne .label { color: var(--texte-doux); }
+  .billet-ligne .valeur { color: var(--texte); font-weight: 600; text-align: right; }
+  .billet-siege { text-align: center; margin: 14px 0; }
+  .billet-siege .num { font-family: var(--police-chiffres); font-size: 40px; font-weight: 700; color: var(--accent); }
+  .billet-siege .txt { font-size: 11px; color: var(--texte-doux); text-transform: uppercase; letter-spacing: 0.05em; }
+  .billet-qr { text-align: center; margin-top: 14px; }
+  .billet-qr img { border-radius: var(--rayon-petit); background-color: #fff; padding: 8px; }
+  .billet-ref { text-align: center; font-family: var(--police-chiffres); font-size: 13px; color: var(--texte-discret); margin-top: 8px; letter-spacing: 0.05em; }
+  .billet-note { text-align: center; color: var(--accent); font-size: 12.5px; margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -15,12 +39,70 @@
 <div class="zone-confirmation">
   <div class="icone-succes">&#9989;</div>
   <h1 style="color:var(--accent);font-family:var(--police-titre);">Paiement reussi !</h1>
-  <p style="color:var(--texte-doux);margin-top:12px;">
-    Votre paiement a bien ete confirme. Votre commande est en cours de traitement,
-    vous recevrez bientot une notification avec les details de la livraison.
+  <p id="texteMessage" style="color:var(--texte-doux);margin-top:10px;">
+    Votre paiement a bien ete confirme.
   </p>
+
+  <div id="zoneBillet"></div>
+
   <a href="index.html" class="aw-btn aw-btn-primaire" style="display:inline-block;margin-top:24px;">Retour a l'accueil</a>
 </div>
+
+<script>
+var MOIS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+function formatDateFr(dateStr) {
+  if (!dateStr) return "";
+  var parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  var jour = parseInt(parts[2], 10);
+  var mois = MOIS_FR[parseInt(parts[1], 10) - 1];
+  return jour + " " + mois + " " + parts[0];
+}
+
+var ticketBrut = localStorage.getItem("aw_dernier_ticket");
+if (ticketBrut) {
+  try {
+    var t = JSON.parse(ticketBrut);
+    if (t.type === "reservation_voiture") {
+      document.getElementById("texteMessage").textContent = "Votre reservation est confirmee. Voici votre billet :";
+
+      var texteTrajet = t.direction === "aller" ? "Dakar \u2192 Bokidiawe" : "Bokidiawe \u2192 Dakar";
+      var reference = (t.id || "").replace(/-/g, "").slice(0, 8).toUpperCase();
+      var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=" + encodeURIComponent(t.id || "");
+
+      var html = "<div class=\"billet\">" +
+        "<div class=\"billet-entete\">" +
+          "<div class=\"marque\">AW SERVICES &mdash; Billet de voyage</div>" +
+          "<div class=\"trajet\">" + texteTrajet + "</div>" +
+        "</div>" +
+        "<div class=\"billet-siege\"><div class=\"num\">Chaise " + t.siege + "</div><div class=\"txt\">Numero de place</div></div>" +
+        "<div class=\"billet-ligne\"><span class=\"label\">Passager</span><span class=\"valeur\">" + t.nom + "</span></div>" +
+        "<div class=\"billet-ligne\"><span class=\"label\">Date de depart</span><span class=\"valeur\">" + formatDateFr(t.date_voyage) + "</span></div>" +
+        "<div class=\"billet-ligne\"><span class=\"label\">Telephone</span><span class=\"valeur\">" + t.telephone + "</span></div>";
+      if (t.village) {
+        html += "<div class=\"billet-ligne\"><span class=\"label\">Village de depart</span><span class=\"valeur\">" + t.village + "</span></div>";
+      }
+      if (t.valises) {
+        html += "<div class=\"billet-ligne\"><span class=\"label\">Valises supplementaires</span><span class=\"valeur\">" + t.valises + "</span></div>";
+      }
+      html += "<div class=\"billet-ligne\"><span class=\"label\">Total paye</span><span class=\"valeur\">" + Number(t.prix_total).toLocaleString("fr-FR") + " FCFA</span></div>" +
+        "<div class=\"billet-qr\"><img src=\"" + qrUrl + "\" alt=\"QR code du billet\"></div>" +
+        "<div class=\"billet-ref\">Reference : " + reference + "</div>" +
+      "</div>" +
+      "<p class=\"billet-note\">Presentez ce billet (capture d'ecran) au chauffeur le jour du depart.</p>";
+
+      document.getElementById("zoneBillet").innerHTML = html;
+    } else {
+      document.getElementById("texteMessage").textContent = "Votre paiement a bien ete confirme. Votre commande est en cours de traitement, vous recevrez bientot une notification avec les details de la livraison.";
+    }
+    localStorage.removeItem("aw_dernier_ticket");
+  } catch (e) {
+    document.getElementById("texteMessage").textContent = "Votre paiement a bien ete confirme. Votre commande est en cours de traitement, vous recevrez bientot une notification avec les details de la livraison.";
+  }
+} else {
+  document.getElementById("texteMessage").textContent = "Votre paiement a bien ete confirme. Votre commande est en cours de traitement, vous recevrez bientot une notification avec les details de la livraison.";
+}
+</script>
 
 </body>
 </html>
