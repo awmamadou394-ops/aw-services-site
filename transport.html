@@ -202,7 +202,7 @@
         </select>
       </div>
 
-      <p class="aw-badge aw-badge-attente" style="display:block;margin-top:12px;">Place : 12 500 FCFA (23kg de bagages inclus) 鈥� +1 000 FCFA/valise au-dela</p>
+      <p class="aw-badge aw-badge-attente" style="display:block;margin-top:12px;">Place : 12 500 FCFA (23kg de bagages inclus) — +1 000 FCFA/valise au-dela</p>
 
       <div id="zoneRassemblement"></div>
 
@@ -249,14 +249,7 @@
         <label class="aw-label">Valises supplementaires (au-dela de 23kg)</label>
         <input class="aw-input" type="number" id="v_valises" min="0" value="0">
 
-        <label class="aw-label">Mode de paiement</label>
-        <select id="v_paiement" required>
-          <option value="">Choisir...</option>
-          <option value="Wave">Wave</option>
-          <option value="Orange Money">Orange Money</option>
-          <option value="Free Money">Free Money</option>
-          <option value="Especes">Especes au depart</option>
-        </select>
+        <p style="color:var(--texte-doux);font-size:13px;margin:4px 0 4px;">Paiement en ligne securise (Wave, Orange Money, carte bancaire) a l'etape suivante.</p>
 
         <button type="submit" class="aw-btn aw-btn-primaire" id="btnVoiture" style="width:100%;margin-top:18px;">Reserver ma chaise</button>
         <div id="msgVoiture"></div>
@@ -267,7 +260,7 @@
 </div>
 
 <footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
-  &copy; 2026 AW SERVICES 鈥� Tous droits reserves
+  &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
 
 <script>
@@ -748,11 +741,11 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
   var nomFamille = document.getElementById("v_nom_famille").value;
   var cni = document.getElementById("v_cni").value;
   var telephone = document.getElementById("v_telephone").value;
-  var paiement = document.getElementById("v_paiement").value;
   var valises = parseInt(document.getElementById("v_valises").value) || 0;
   var village = document.getElementById("v_village").value;
   var prixTotal = 12500 + (valises * 1000);
   var nomComplet = prenom + " " + nomFamille;
+  var idReservation = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
 
   localStorage.setItem("aw_client_nom", nomComplet);
   localStorage.setItem("aw_client_telephone", telephone);
@@ -761,6 +754,7 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
   localStorage.setItem("aw_client_cni", cni);
 
   var donneesReservation = {
+    id: idReservation,
     client_nom: nomComplet,
     prenom: prenom,
     nom_famille: nomFamille,
@@ -769,10 +763,11 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
     direction: direction,
     date_voyage: dateVoyage,
     siege: siegeSelectionne,
-    mode_paiement: paiement,
+    mode_paiement: "Paiement en ligne (PayTech)",
     valises_supplementaires: valises,
     prix_total: prixTotal,
-    statut: "confirmee"
+    statut: "confirmee",
+    statut_paiement: "non_paye"
   };
   if (direction === "retour") {
     donneesReservation.village_depart = village;
@@ -783,10 +778,9 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
   }
 
   sb.from("reservations_voiture").insert([donneesReservation]).then(function(reponse) {
-    btn.disabled = false;
-    btn.textContent = "Reserver ma chaise";
-
     if (reponse.error) {
+      btn.disabled = false;
+      btn.textContent = "Reserver ma chaise";
       if (reponse.error.code === "23505") {
         msg.innerHTML = "<div class=\"msg erreur\">Cette chaise vient d'etre prise par quelqu'un d'autre. Choisissez-en une autre.</div>";
         siegeSelectionne = null;
@@ -797,25 +791,30 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
       return;
     }
 
-    var texteDirection = direction === "aller" ? "Dakar -> Bokidiawe" : "Bokidiawe -> Dakar";
-    msg.innerHTML = "<div class=\"msg succes\">Chaise " + siegeSelectionne + " reservee pour le " + dateVoyage + " ! Total : " + prixTotal.toLocaleString("fr-FR") + " FCFA</div>";
-    var message = "Bonjour, je reserve une place :\nTrajet : " + texteDirection + "\nDate : " + dateVoyage +
-                   "\nChaise : " + siegeSelectionne + "\nNom : " + nomComplet + "\nCNI/Passeport : " + cni +
-                   "\nTelephone : " + telephone + "\nValises supplementaires : " + valises +
-                   "\nTotal : " + prixTotal.toLocaleString("fr-FR") + " FCFA" +
-                   (village ? "\nVillage de depart : " + village : "") +
-                   "\nPaiement : " + paiement;
-    window.open("https://wa.me/" + NUMERO_WHATSAPP + "?text=" + encodeURIComponent(message), "_blank");
-
-    document.getElementById("formVoiture").reset();
-    siegeSelectionne = null;
-    positionVoiture = null;
-    document.getElementById("btnPositionVoiture").textContent = "Utiliser ma position actuelle (obligatoire pour le retour)";
-    document.getElementById("msgPositionVoiture").textContent = "Necessaire pour que le chauffeur vienne vous chercher a domicile.";
-    document.getElementById("msgPositionVoiture").className = "msg-position";
-    mettreAJourPrix();
-    remplirProfilLocal();
-    chargerSieges();
+    fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table: "reservations_voiture",
+        id: idReservation,
+        item_name: "Reservation Dakar-Bokidiawe - Chaise " + siegeSelectionne,
+        item_price: prixTotal,
+        telephone: telephone,
+        nom: nomComplet
+      })
+    }).then(function(r) { return r.json(); }).then(function(resultatPaiement) {
+      if (resultatPaiement.success === 1 && resultatPaiement.redirect_url) {
+        window.location.href = resultatPaiement.redirect_url;
+      } else {
+        btn.disabled = false;
+        btn.textContent = "Reserver ma chaise";
+        msg.innerHTML = "<div class=\"msg erreur\">Erreur lors de la creation du paiement. Reessayez.</div>";
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = "Reserver ma chaise";
+      msg.innerHTML = "<div class=\"msg erreur\">Erreur de connexion au service de paiement. Reessayez.</div>";
+    });
   });
 });
 
