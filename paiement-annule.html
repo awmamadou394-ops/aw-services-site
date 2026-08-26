@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Paiement annule</title>
 <link rel="stylesheet" href="style-global.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   .zone-confirmation { max-width: 480px; margin: 60px auto; text-align: center; padding: 0 var(--espace-md); }
   .icone-annule { font-size: 64px; margin-bottom: 16px; }
@@ -15,12 +16,32 @@
 <div class="zone-confirmation">
   <div class="icone-annule">&#10060;</div>
   <h1 style="color:var(--alerte);font-family:var(--police-titre);">Paiement annule</h1>
-  <p style="color:var(--texte-doux);margin-top:12px;">
+  <p id="texteMessage" style="color:var(--texte-doux);margin-top:12px;">
     Le paiement n'a pas ete finalise. Votre commande n'a pas ete confirmee.
-    Vous pouvez reessayer depuis la boutique.
   </p>
-  <a href="catalogue.html" class="aw-btn aw-btn-primaire" style="display:inline-block;margin-top:24px;">Retour a la boutique</a>
+  <a href="catalogue.html" id="lienRetour" class="aw-btn aw-btn-primaire" style="display:inline-block;margin-top:24px;">Retour a la boutique</a>
 </div>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+var ticketBrut = localStorage.getItem("aw_dernier_ticket");
+if (ticketBrut) {
+  try {
+    var t = JSON.parse(ticketBrut);
+    if (t.type === "reservation_voiture" && t.id) {
+      document.getElementById("texteMessage").textContent = "Le paiement n'a pas ete finalise. Votre chaise a ete liberee, vous pouvez recommencer.";
+      document.getElementById("lienRetour").href = "transport.html";
+      document.getElementById("lienRetour").textContent = "Retour a la reservation";
+      sb.from("reservations_voiture").update({ statut: "annulee" }).eq("id", t.id).then(function() {});
+    }
+    localStorage.removeItem("aw_dernier_ticket");
+  } catch (e) {}
+}
+</script>
 
 </body>
 </html>
