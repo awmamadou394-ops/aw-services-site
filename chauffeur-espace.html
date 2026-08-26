@@ -83,6 +83,16 @@ var sb = supabase.createClient(
 
 var chauffeurCourant = null;
 
+var MOIS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+function formatDateFr(dateStr) {
+  if (!dateStr) return "";
+  var parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  var jour = parseInt(parts[2], 10);
+  var mois = MOIS_FR[parseInt(parts[1], 10) - 1];
+  return jour + " " + mois + " " + parts[0];
+}
+
 document.getElementById("btnDeconnexion").addEventListener("click", function() {
   sb.auth.signOut().then(function() {
     window.location.href = "chauffeur-connexion.html";
@@ -141,18 +151,16 @@ function chargerEspace() {
           "<div id=\"listeDeparts\" style=\"margin-top:12px;\"><p>Chargement...</p></div>" +
         "</div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
-          "<p class=\"aw-section-titre accordeon-titre\" id=\"titreAller\" style=\"cursor:pointer;\">Aller - Dakar &#8594; Bokidiawe <span class=\"fleche\">&#9662;</span></p>" +
+          "<p class=\"aw-section-titre\">Aller - Dakar &#8594; Bokidiawe</p>" +
           "<p>Passagers qui rejoignent le point de rassemblement.</p>" +
-          "<div id=\"listeAller\" class=\"accordeon-contenu\"><p>Chargement...</p></div>" +
+          "<div id=\"listeAller\" style=\"margin-top:10px;\"><p>Chargement...</p></div>" +
         "</div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
-          "<p class=\"aw-section-titre accordeon-titre\" id=\"titreRetour\" style=\"cursor:pointer;\">Retour - Bokidiawe &#8594; Dakar <span class=\"fleche\">&#9662;</span></p>" +
+          "<p class=\"aw-section-titre\">Retour - Bokidiawe &#8594; Dakar</p>" +
           "<p>Tournee a domicile : chaque client doit etre recupere a sa position.</p>" +
-          "<div id=\"listeRetour\" class=\"accordeon-contenu\"><p>Chargement...</p></div>" +
+          "<div id=\"listeRetour\" style=\"margin-top:10px;\"><p>Chargement...</p></div>" +
         "</div>";
 
-      document.getElementById("titreAller").addEventListener("click", function() { basculerAccordeon("titreAller", "listeAller"); });
-      document.getElementById("titreRetour").addEventListener("click", function() { basculerAccordeon("titreRetour", "listeRetour"); });
       document.getElementById("btnPositionRassemblement").addEventListener("click", capturerPositionRassemblement);
       document.getElementById("btnEnregistrerRassemblement").addEventListener("click", enregistrerRassemblement);
       document.getElementById("btnAjouterDepart").addEventListener("click", ajouterDepart);
@@ -170,6 +178,8 @@ function chargerEspace() {
       });
       chargerDeparts();
       chargerReservations();
+      setInterval(chargerDeparts, 20000);
+      setInterval(chargerReservations, 20000);
     });
   });
 }
@@ -286,7 +296,7 @@ function chargerDeparts() {
     for (var i = 0; i < data.length; i++) {
       var d = data[i];
       html += "<div class=\"reservation-carte\" style=\"cursor:default;\">" +
-                "<div style=\"font-size:14px;\">" + d.date_depart + "</div>" +
+                "<div style=\"font-size:14px;\">" + formatDateFr(d.date_depart) + "</div>" +
                 "<div style=\"font-size:12px;color:var(--texte-doux);font-weight:400;margin-top:2px;\">" + d.heure_depart + "</div>" +
                 "<button type=\"button\" class=\"btn-supprimer-depart\" data-id=\"" + d.id + "\">Supprimer</button>" +
               "</div>";
@@ -336,7 +346,7 @@ function ouvrirFenetre(id) {
   var r = reservationsIndex[id];
   if (!r) return;
   var html = "<p>Nom : " + (r.prenom || "") + " " + (r.nom_famille || r.client_nom) + "</p>" +
-             "<p>Date : " + r.date_voyage + "</p>";
+             "<p>Date : " + formatDateFr(r.date_voyage) + "</p>";
   if (r.cni_passeport) html += "<p>CNI/Passeport : " + r.cni_passeport + "</p>";
   if (r.direction === "retour" && r.village_depart) html += "<p>Village de depart : " + r.village_depart + "</p>";
   html += "<p>Telephone : " + r.client_telephone + "</p>";
@@ -368,11 +378,6 @@ function grouperParDate(liste) {
   return { groupes: groupes, dates: dates };
 }
 
-function basculerAccordeon(idTitre, idContenu) {
-  document.getElementById(idTitre).classList.toggle("ouvert");
-  document.getElementById(idContenu).classList.toggle("ouvert");
-}
-
 function afficherAller(liste) {
   var zone = document.getElementById("listeAller");
   if (liste.length === 0) {
@@ -384,8 +389,9 @@ function afficherAller(liste) {
   for (var d = 0; d < g.dates.length; d++) {
     var date = g.dates[d];
     var idGroupe = "grpAller" + d;
-    html += "<p class=\"titre-date\" data-cible=\"" + idGroupe + "\">Depart du " + date + " <span class=\"fleche-date\">&#9662;</span></p>";
-    html += "<div class=\"grille-reservations groupe-date-contenu\" id=\"" + idGroupe + "\">";
+    var ouvertClasse = d === 0 ? " ouvert" : "";
+    html += "<p class=\"titre-date" + ouvertClasse + "\" data-cible=\"" + idGroupe + "\">Depart du " + formatDateFr(date) + " <span class=\"fleche-date\">&#9662;</span></p>";
+    html += "<div class=\"grille-reservations groupe-date-contenu" + ouvertClasse + "\" id=\"" + idGroupe + "\">";
     var groupe = g.groupes[date];
     for (var i = 0; i < groupe.length; i++) {
       var r = groupe[i];
@@ -410,8 +416,9 @@ function afficherRetour(liste) {
   for (var d = 0; d < g.dates.length; d++) {
     var date = g.dates[d];
     var idGroupe = "grpRetour" + d;
-    html += "<p class=\"titre-date\" data-cible=\"" + idGroupe + "\">Depart du " + date + " <span class=\"fleche-date\">&#9662;</span></p>";
-    html += "<div class=\"grille-reservations groupe-date-contenu\" id=\"" + idGroupe + "\">";
+    var ouvertClasse = d === 0 ? " ouvert" : "";
+    html += "<p class=\"titre-date" + ouvertClasse + "\" data-cible=\"" + idGroupe + "\">Depart du " + formatDateFr(date) + " <span class=\"fleche-date\">&#9662;</span></p>";
+    html += "<div class=\"grille-reservations groupe-date-contenu" + ouvertClasse + "\" id=\"" + idGroupe + "\">";
     var groupe = g.groupes[date];
     for (var i = 0; i < groupe.length; i++) {
       var r = groupe[i];
