@@ -700,10 +700,18 @@ function chargerSieges() {
 
   grille.innerHTML = "<p style=\"color:var(--texte-doux);font-size:13px;grid-column:1/-1;\">Chargement des chaises...</p>";
 
-  sb.from("reservations_voiture").select("siege").eq("date_voyage", dateVoyage).eq("direction", direction).neq("statut", "annulee").then(function(reponse) {
-    siegesPris = (reponse.data || []).map(function(r) { return r.siege; });
-    afficherGrilleSieges();
-  });
+  var seuilExpiration = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+  sb.from("reservations_voiture").update({ statut: "annulee" })
+    .eq("statut_paiement", "non_paye")
+    .neq("statut", "annulee")
+    .lt("date_creation", seuilExpiration)
+    .then(function() {
+      sb.from("reservations_voiture").select("siege").eq("date_voyage", dateVoyage).eq("direction", direction).neq("statut", "annulee").then(function(reponse) {
+        siegesPris = (reponse.data || []).map(function(r) { return r.siege; });
+        afficherGrilleSieges();
+      });
+    });
 }
 
 function afficherGrilleSieges() {
