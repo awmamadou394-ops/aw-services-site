@@ -824,7 +824,6 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
       village: village,
       prix_total: prixTotal
     };
-    localStorage.setItem("aw_dernier_ticket", JSON.stringify(infosTicket));
 
     fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-init", {
       method: "POST",
@@ -839,6 +838,8 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
       })
     }).then(function(r) { return r.json(); }).then(function(resultatPaiement) {
       if (resultatPaiement.success === 1 && resultatPaiement.redirect_url) {
+        infosTicket.paytech_token = resultatPaiement.token || null;
+        localStorage.setItem("aw_dernier_ticket", JSON.stringify(infosTicket));
         window.location.href = resultatPaiement.redirect_url;
       } else {
         btn.disabled = false;
@@ -858,4 +859,4 @@ afficherZoneDirection();
 </script>
 
 </body>
-</html>
+  </html>
