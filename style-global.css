@@ -113,6 +113,17 @@ a { color: inherit; }
 .aw-carte-module p { color: var(--texte-doux); font-size: 12.5px; }
 .aw-carte-module .icone { font-size: 27px; margin-bottom: 8px; display: block; }
 
+.aw-carte-module-large {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 20px;
+}
+.aw-carte-module-large .icone { font-size: 34px; margin-bottom: 0; }
+.aw-carte-module-large h2 { font-size: 18px; margin-bottom: 3px; }
+
 .aw-badge-coin {
   position: absolute;
   top: -8px;
