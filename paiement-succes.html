@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AW SERVICES - Paiement reussi</title>
+<title>AW SERVICES - Paiement</title>
 <link rel="stylesheet" href="style-global.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   .zone-confirmation { max-width: 480px; margin: 40px auto; text-align: center; padding: 0 var(--espace-md); }
   .icone-succes { font-size: 56px; margin-bottom: 10px; }
@@ -32,15 +33,20 @@
   .billet-qr img { border-radius: var(--rayon-petit); background-color: #fff; padding: 8px; }
   .billet-ref { text-align: center; font-family: var(--police-chiffres); font-size: 13px; color: var(--texte-discret); margin-top: 8px; letter-spacing: 0.05em; }
   .billet-note { text-align: center; color: var(--accent); font-size: 12.5px; margin-top: 14px; }
+
+  .spinner { width: 34px; height: 34px; border: 3px solid var(--bordure); border-top-color: var(--accent); border-radius: 50%; margin: 0 auto 14px; animation: tourner 0.8s linear infinite; }
+  @keyframes tourner { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div class="zone-confirmation">
-  <div class="icone-succes">&#9989;</div>
-  <h1 style="color:var(--accent);font-family:var(--police-titre);">Paiement reussi !</h1>
+  <div id="zoneIcone" class="icone-succes">
+    <div class="spinner"></div>
+  </div>
+  <h1 id="titreMessage" style="color:var(--accent);font-family:var(--police-titre);">Verification du paiement...</h1>
   <p id="texteMessage" style="color:var(--texte-doux);margin-top:10px;">
-    Votre paiement a bien ete confirme.
+    Merci de patienter quelques secondes.
   </p>
 
   <div id="zoneBillet"></div>
@@ -49,6 +55,11 @@
 </div>
 
 <script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
 var MOIS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
 function formatDateFr(dateStr) {
   if (!dateStr) return "";
@@ -59,48 +70,81 @@ function formatDateFr(dateStr) {
   return jour + " " + mois + " " + parts[0];
 }
 
-var ticketBrut = localStorage.getItem("aw_dernier_ticket");
-if (ticketBrut) {
-  try {
-    var t = JSON.parse(ticketBrut);
-    if (t.type === "reservation_voiture") {
-      document.getElementById("texteMessage").textContent = "Votre reservation est confirmee. Voici votre billet :";
+function afficherBillet(t) {
+  var texteTrajet = t.direction === "aller" ? "Dakar \u2192 Bokidiawe" : "Bokidiawe \u2192 Dakar";
+  var reference = (t.id || "").replace(/-/g, "").slice(0, 8).toUpperCase();
+  var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=" + encodeURIComponent(t.id || "");
 
-      var texteTrajet = t.direction === "aller" ? "Dakar \u2192 Bokidiawe" : "Bokidiawe \u2192 Dakar";
-      var reference = (t.id || "").replace(/-/g, "").slice(0, 8).toUpperCase();
-      var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=" + encodeURIComponent(t.id || "");
-
-      var html = "<div class=\"billet\">" +
-        "<div class=\"billet-entete\">" +
-          "<div class=\"marque\">AW SERVICES &mdash; Billet de voyage</div>" +
-          "<div class=\"trajet\">" + texteTrajet + "</div>" +
-        "</div>" +
-        "<div class=\"billet-siege\"><div class=\"num\">Chaise " + t.siege + "</div><div class=\"txt\">Numero de place</div></div>" +
-        "<div class=\"billet-ligne\"><span class=\"label\">Passager</span><span class=\"valeur\">" + t.nom + "</span></div>" +
-        "<div class=\"billet-ligne\"><span class=\"label\">Date de depart</span><span class=\"valeur\">" + formatDateFr(t.date_voyage) + "</span></div>" +
-        "<div class=\"billet-ligne\"><span class=\"label\">Telephone</span><span class=\"valeur\">" + t.telephone + "</span></div>";
-      if (t.village) {
-        html += "<div class=\"billet-ligne\"><span class=\"label\">Village de depart</span><span class=\"valeur\">" + t.village + "</span></div>";
-      }
-      if (t.valises) {
-        html += "<div class=\"billet-ligne\"><span class=\"label\">Valises supplementaires</span><span class=\"valeur\">" + t.valises + "</span></div>";
-      }
-      html += "<div class=\"billet-ligne\"><span class=\"label\">Total paye</span><span class=\"valeur\">" + Number(t.prix_total).toLocaleString("fr-FR") + " FCFA</span></div>" +
-        "<div class=\"billet-qr\"><img src=\"" + qrUrl + "\" alt=\"QR code du billet\"></div>" +
-        "<div class=\"billet-ref\">Reference : " + reference + "</div>" +
-      "</div>" +
-      "<p class=\"billet-note\">Presentez ce billet (capture d'ecran) au chauffeur le jour du depart.</p>";
-
-      document.getElementById("zoneBillet").innerHTML = html;
-    } else {
-      document.getElementById("texteMessage").textContent = "Votre paiement a bien ete confirme. Votre commande est en cours de traitement, vous recevrez bientot une notification avec les details de la livraison.";
-    }
-    localStorage.removeItem("aw_dernier_ticket");
-  } catch (e) {
-    document.getElementById("texteMessage").textContent = "Votre paiement a bien ete confirme. Votre commande est en cours de traitement, vous recevrez bientot une notification avec les details de la livraison.";
+  var html = "<div class=\"billet\">" +
+    "<div class=\"billet-entete\">" +
+      "<div class=\"marque\">AW SERVICES &mdash; Billet de voyage</div>" +
+      "<div class=\"trajet\">" + texteTrajet + "</div>" +
+    "</div>" +
+    "<div class=\"billet-siege\"><div class=\"num\">Chaise " + t.siege + "</div><div class=\"txt\">Numero de place</div></div>" +
+    "<div class=\"billet-ligne\"><span class=\"label\">Passager</span><span class=\"valeur\">" + t.nom + "</span></div>" +
+    "<div class=\"billet-ligne\"><span class=\"label\">Date de depart</span><span class=\"valeur\">" + formatDateFr(t.date_voyage) + "</span></div>" +
+    "<div class=\"billet-ligne\"><span class=\"label\">Telephone</span><span class=\"valeur\">" + t.telephone + "</span></div>";
+  if (t.village) {
+    html += "<div class=\"billet-ligne\"><span class=\"label\">Village de depart</span><span class=\"valeur\">" + t.village + "</span></div>";
   }
+  if (t.valises) {
+    html += "<div class=\"billet-ligne\"><span class=\"label\">Valises supplementaires</span><span class=\"valeur\">" + t.valises + "</span></div>";
+  }
+  html += "<div class=\"billet-ligne\"><span class=\"label\">Total paye</span><span class=\"valeur\">" + Number(t.prix_total).toLocaleString("fr-FR") + " FCFA</span></div>" +
+    "<div class=\"billet-qr\"><img src=\"" + qrUrl + "\" alt=\"QR code du billet\"></div>" +
+    "<div class=\"billet-ref\">Reference : " + reference + "</div>" +
+  "</div>" +
+  "<p class=\"billet-note\">Presentez ce billet (capture d'ecran) au chauffeur le jour du depart.</p>";
+
+  document.getElementById("zoneBillet").innerHTML = html;
+}
+
+function etatFinal(succes, titre, message) {
+  document.getElementById("zoneIcone").innerHTML = succes ? "&#9989;" : "&#9888;&#65039;";
+  document.getElementById("titreMessage").textContent = titre;
+  document.getElementById("titreMessage").style.color = succes ? "var(--accent)" : "var(--alerte)";
+  document.getElementById("texteMessage").textContent = message;
+}
+
+var ticketBrut = localStorage.getItem("aw_dernier_ticket");
+
+if (!ticketBrut) {
+  etatFinal(true, "Paiement reussi !", "Votre paiement a bien ete confirme. Votre commande est en cours de traitement, vous recevrez bientot une notification avec les details de la livraison.");
 } else {
-  document.getElementById("texteMessage").textContent = "Votre paiement a bien ete confirme. Votre commande est en cours de traitement, vous recevrez bientot une notification avec les details de la livraison.";
+  var t;
+  try {
+    t = JSON.parse(ticketBrut);
+  } catch (e) {
+    t = null;
+  }
+
+  if (!t || t.type !== "reservation_voiture") {
+    etatFinal(true, "Paiement reussi !", "Votre paiement a bien ete confirme. Votre commande est en cours de traitement, vous recevrez bientot une notification avec les details de la livraison.");
+    localStorage.removeItem("aw_dernier_ticket");
+  } else if (!t.paytech_token) {
+    // Pas de token disponible, on affiche quand meme le billet (ancien flux)
+    etatFinal(true, "Paiement reussi !", "Votre reservation est confirmee. Voici votre billet :");
+    afficherBillet(t);
+    localStorage.removeItem("aw_dernier_ticket");
+  } else {
+    fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: t.paytech_token, table: "reservations_voiture", id: t.id })
+    }).then(function(r) { return r.json(); }).then(function(resultat) {
+      if (resultat.confirme === true) {
+        etatFinal(true, "Paiement reussi !", "Votre reservation est confirmee. Voici votre billet :");
+        afficherBillet(t);
+        localStorage.removeItem("aw_dernier_ticket");
+      } else if (resultat.state === "running") {
+        etatFinal(false, "Paiement en cours de traitement", "Votre paiement n'est pas encore confirme. Patientez une minute puis retrouvez votre billet via \"Deja reserve ? Retrouver mon billet\" sur la page Transport.");
+      } else {
+        etatFinal(false, "Paiement non confirme", "Nous n'avons pas pu confirmer ce paiement pour le moment. Si le montant a ete debite, contactez-nous sur WhatsApp avec la reference de votre reservation.");
+      }
+    }).catch(function() {
+      etatFinal(false, "Verification impossible", "Nous n'avons pas pu verifier votre paiement pour le moment. Utilisez \"Deja reserve ? Retrouver mon billet\" sur la page Transport dans quelques minutes.");
+    });
+  }
 }
 </script>
 
