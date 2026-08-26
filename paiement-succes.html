@@ -127,23 +127,37 @@ if (!ticketBrut) {
     afficherBillet(t);
     localStorage.removeItem("aw_dernier_ticket");
   } else {
-    fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-check", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: t.paytech_token, table: "reservations_voiture", id: t.id })
-    }).then(function(r) { return r.json(); }).then(function(resultat) {
-      if (resultat.confirme === true) {
-        etatFinal(true, "Paiement reussi !", "Votre reservation est confirmee. Voici votre billet :");
-        afficherBillet(t);
-        localStorage.removeItem("aw_dernier_ticket");
-      } else if (resultat.state === "running") {
-        etatFinal(false, "Paiement en cours de traitement", "Votre paiement n'est pas encore confirme. Patientez une minute puis retrouvez votre billet via \"Deja reserve ? Retrouver mon billet\" sur la page Transport.");
-      } else {
-        etatFinal(false, "Paiement non confirme", "Nous n'avons pas pu confirmer ce paiement pour le moment. Si le montant a ete debite, contactez-nous sur WhatsApp avec la reference de votre reservation.");
-      }
-    }).catch(function() {
-      etatFinal(false, "Verification impossible", "Nous n'avons pas pu verifier votre paiement pour le moment. Utilisez \"Deja reserve ? Retrouver mon billet\" sur la page Transport dans quelques minutes.");
-    });
+    var tentatives = 0;
+
+    function verifierPaiement() {
+      fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: t.paytech_token, table: "reservations_voiture", id: t.id })
+      }).then(function(r) { return r.json(); }).then(function(resultat) {
+        if (resultat.confirme === true) {
+          etatFinal(true, "Paiement reussi !", "Votre reservation est confirmee. Voici votre billet :");
+          afficherBillet(t);
+          localStorage.removeItem("aw_dernier_ticket");
+        } else if (tentatives < 4) {
+          tentatives++;
+          setTimeout(verifierPaiement, 3000);
+        } else if (resultat.state === "running") {
+          etatFinal(false, "Paiement en cours de traitement", "Votre paiement n'est pas encore confirme. Patientez une minute puis retrouvez votre billet via \"Deja reserve ? Retrouver mon billet\" sur la page Transport.");
+        } else {
+          etatFinal(false, "Paiement non confirme", "Nous n'avons pas pu confirmer ce paiement pour le moment. Si le montant a ete debite, contactez-nous sur WhatsApp avec la reference de votre reservation.");
+        }
+      }).catch(function() {
+        if (tentatives < 4) {
+          tentatives++;
+          setTimeout(verifierPaiement, 3000);
+        } else {
+          etatFinal(false, "Verification impossible", "Nous n'avons pas pu verifier votre paiement pour le moment. Utilisez \"Deja reserve ? Retrouver mon billet\" sur la page Transport dans quelques minutes.");
+        }
+      });
+    }
+
+    verifierPaiement();
   }
 }
 </script>
