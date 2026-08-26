@@ -322,7 +322,7 @@ function supprimerDepart(id) {
 
 function chargerReservations() {
   var aujourdHui = new Date().toISOString().split("T")[0];
-  sb.from("reservations_voiture").select("*").gte("date_voyage", aujourdHui).neq("statut", "annulee").order("date_voyage", { ascending: true }).then(function(reponse) {
+  sb.from("reservations_voiture").select("*").gte("date_voyage", aujourdHui).eq("statut_paiement", "paye").neq("statut", "annulee").order("date_voyage", { ascending: true }).then(function(reponse) {
     var data = reponse.data || [];
     var aller = data.filter(function(r) { return r.direction === "aller"; });
     var retour = data.filter(function(r) { return r.direction === "retour"; });
@@ -376,6 +376,11 @@ function grouperParDate(liste) {
   }
   dates.sort();
   return { groupes: groupes, dates: dates };
+}
+
+function basculerAccordeon(idTitre, idContenu) {
+  document.getElementById(idTitre).classList.toggle("ouvert");
+  document.getElementById(idContenu).classList.toggle("ouvert");
 }
 
 function afficherAller(liste) {
