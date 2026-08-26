@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Retrouver mon billet</title>
+<link rel="stylesheet" href="style-global.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { padding-bottom: 30px; }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+  .intro { color: var(--texte-doux); margin-bottom: var(--espace-lg); line-height: 1.5; font-size: 13.5px; }
+
+  .billet {
+    background-color: var(--surface);
+    border: 1px solid var(--bordure);
+    border-radius: var(--rayon);
+    padding: var(--espace-lg);
+    text-align: left;
+    margin-top: var(--espace-lg);
+    box-shadow: var(--ombre-carte);
+  }
+  .billet-entete { text-align: center; border-bottom: 1px dashed var(--bordure); padding-bottom: 12px; margin-bottom: 12px; }
+  .billet-entete .marque { color: var(--accent); font-family: var(--police-titre); font-weight: 700; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .billet-entete .trajet { font-size: 19px; font-weight: 700; margin-top: 4px; }
+  .billet-ligne { display: flex; justify-content: space-between; padding: 7px 0; font-size: 14px; border-bottom: 1px solid var(--bordure); }
+  .billet-ligne:last-of-type { border-bottom: none; }
+  .billet-ligne .label { color: var(--texte-doux); }
+  .billet-ligne .valeur { color: var(--texte); font-weight: 600; text-align: right; }
+  .billet-siege { text-align: center; margin: 14px 0; }
+  .billet-siege .num { font-family: var(--police-chiffres); font-size: 40px; font-weight: 700; color: var(--accent); }
+  .billet-siege .txt { font-size: 11px; color: var(--texte-doux); text-transform: uppercase; letter-spacing: 0.05em; }
+  .billet-qr { text-align: center; margin-top: 14px; }
+  .billet-qr img { border-radius: var(--rayon-petit); background-color: #fff; padding: 8px; }
+  .billet-ref { text-align: center; font-family: var(--police-chiffres); font-size: 13px; color: var(--texte-discret); margin-top: 8px; letter-spacing: 0.05em; }
+  .billet-statut { text-align: center; font-size: 12px; margin-top: 8px; }
+  .msg { font-size: 13px; padding: 10px; border-radius: var(--rayon-petit); margin-top: 12px; }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+</style>
+</head>
+<body>
+
+<header class="aw-header">
+  <h1>Retrouver mon billet</h1>
+  <p>Reservation Dakar &#8596; Bokidiawe</p>
+</header>
+
+<a href="transport.html" class="back">&#8592; Retour au transport</a>
+
+<div class="aw-conteneur">
+  <p class="intro">Entrez le numero de telephone utilise lors de la reservation pour retrouver vos billets.</p>
+
+  <div class="aw-carte">
+    <label class="aw-label">Numero de telephone</label>
+    <input class="aw-input" type="tel" id="champTelephone" placeholder="Ex : 77 123 45 67">
+    <button type="button" class="aw-btn aw-btn-primaire" id="btnChercher" style="width:100%;margin-top:14px;">Rechercher mes billets</button>
+    <div id="msgRecherche"></div>
+  </div>
+
+  <div id="zoneBillets"></div>
+</div>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+var MOIS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+function formatDateFr(dateStr) {
+  if (!dateStr) return "";
+  var parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  var jour = parseInt(parts[2], 10);
+  var mois = MOIS_FR[parseInt(parts[1], 10) - 1];
+  return jour + " " + mois + " " + parts[0];
+}
+
+function construireBillet(r) {
+  var texteTrajet = r.direction === "aller" ? "Dakar \u2192 Bokidiawe" : "Bokidiawe \u2192 Dakar";
+  var reference = (r.id || "").replace(/-/g, "").slice(0, 8).toUpperCase();
+  var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=" + encodeURIComponent(r.id || "");
+  var nom = (r.prenom || "") + " " + (r.nom_famille || r.client_nom || "");
+
+  var html = "<div class=\"billet\">" +
+    "<div class=\"billet-entete\">" +
+      "<div class=\"marque\">AW SERVICES &mdash; Billet de voyage</div>" +
+      "<div class=\"trajet\">" + texteTrajet + "</div>" +
+    "</div>" +
+    "<div class=\"billet-siege\"><div class=\"num\">Chaise " + r.siege + "</div><div class=\"txt\">Numero de place</div></div>" +
+    "<div class=\"billet-ligne\"><span class=\"label\">Passager</span><span class=\"valeur\">" + nom + "</span></div>" +
+    "<div class=\"billet-ligne\"><span class=\"label\">Date de depart</span><span class=\"valeur\">" + formatDateFr(r.date_voyage) + "</span></div>" +
+    "<div class=\"billet-ligne\"><span class=\"label\">Telephone</span><span class=\"valeur\">" + r.client_telephone + "</span></div>";
+  if (r.village_depart) {
+    html += "<div class=\"billet-ligne\"><span class=\"label\">Village de depart</span><span class=\"valeur\">" + r.village_depart + "</span></div>";
+  }
+  if (r.prix_total) {
+    html += "<div class=\"billet-ligne\"><span class=\"label\">Total paye</span><span class=\"valeur\">" + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</span></div>";
+  }
+  html += "<div class=\"billet-qr\"><img src=\"" + qrUrl + "\" alt=\"QR code du billet\"></div>" +
+    "<div class=\"billet-ref\">Reference : " + reference + "</div>";
+  if (r.statut_paiement !== "paye") {
+    html += "<p class=\"billet-statut\" style=\"color:var(--alerte);\">Paiement non confirme pour cette reservation.</p>";
+  }
+  html += "</div>";
+  return html;
+}
+
+document.getElementById("btnChercher").addEventListener("click", function() {
+  var btn = document.getElementById("btnChercher");
+  var msg = document.getElementById("msgRecherche");
+  var zone = document.getElementById("zoneBillets");
+  var tel = document.getElementById("champTelephone").value.trim();
+
+  msg.innerHTML = "";
+  zone.innerHTML = "";
+
+  if (!tel) {
+    msg.innerHTML = "<div class=\"msg erreur\">Entrez un numero de telephone.</div>";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Recherche en cours...";
+
+  sb.from("reservations_voiture").select("*").eq("client_telephone", tel).neq("statut", "annulee").order("date_voyage", { ascending: false }).then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Rechercher mes billets";
+
+    var data = reponse.data || [];
+    if (reponse.error || data.length === 0) {
+      msg.innerHTML = "<div class=\"msg erreur\">Aucun billet trouve pour ce numero. Verifiez le numero utilise lors de la reservation.</div>";
+      return;
+    }
+
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      html += construireBillet(data[i]);
+    }
+    zone.innerHTML = html;
+  });
+});
+</script>
+
+</body>
+</html>
