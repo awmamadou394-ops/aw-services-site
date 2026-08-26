@@ -612,6 +612,16 @@ function afficherZoneDirection() {
   }
 }
 
+var MOIS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+function formatDateFr(dateStr) {
+  if (!dateStr) return "";
+  var parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  var jour = parseInt(parts[2], 10);
+  var mois = MOIS_FR[parseInt(parts[1], 10) - 1];
+  return jour + " " + mois + " " + parts[0];
+}
+
 function chargerDepartsProgrammes(dir, idSelect) {
   var select = document.getElementById(idSelect);
   var aujourdHui = new Date().toISOString().split("T")[0];
@@ -625,7 +635,7 @@ function chargerDepartsProgrammes(dir, idSelect) {
     var html = "<option value=\"\">Choisir...</option>";
     for (var i = 0; i < data.length; i++) {
       var d = data[i];
-      html += "<option value=\"" + d.date_depart + "\">" + d.date_depart + " a " + d.heure_depart + "</option>";
+      html += "<option value=\"" + d.date_depart + "\">" + formatDateFr(d.date_depart) + " a " + d.heure_depart + "</option>";
     }
     select.innerHTML = html;
   });
@@ -791,6 +801,21 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
       return;
     }
 
+    var infosTicket = {
+      type: "reservation_voiture",
+      id: idReservation,
+      nom: nomComplet,
+      telephone: telephone,
+      cni: cni,
+      direction: direction,
+      date_voyage: dateVoyage,
+      siege: siegeSelectionne,
+      valises: valises,
+      village: village,
+      prix_total: prixTotal
+    };
+    localStorage.setItem("aw_dernier_ticket", JSON.stringify(infosTicket));
+
     fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-init", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -823,4 +848,4 @@ afficherZoneDirection();
 </script>
 
 </body>
-</html>
+  </html>
