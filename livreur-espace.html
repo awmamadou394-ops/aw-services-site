@@ -193,7 +193,7 @@ function lancerRecharge() {
       btn.disabled = false;
       btn.textContent = "Recharger via PayTech";
       msg.className = "msg-notif err";
-      msg.textContent = "Erreur : la recharge n'a pas pu etre enregistree.";
+      msg.textContent = "Erreur : " + (reponse.error.message || "la recharge n'a pas pu etre enregistree.");
       return;
     }
 
