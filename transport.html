@@ -129,9 +129,14 @@
         <input class="aw-input" type="text" id="m_repere" placeholder="Ex : devant la pharmacie">
 
         <label class="aw-label">Destination</label>
-        <input class="aw-input" type="text" id="m_arrivee" placeholder="Ecrivez l'adresse, ou choisissez sur la carte">
+        <input class="aw-input" type="text" id="m_arrivee" placeholder="Sera rempli automatiquement" readonly>
         <button type="button" class="aw-btn aw-btn-secondaire" id="btnChoisirDestination" style="width:100%;margin-top:8px;">&#128506; Choisir la destination sur la carte</button>
-        <p class="msg-position" id="msgDestinationChoisie"></p>
+        <p class="msg-position" id="msgDestinationChoisie">Obligatoire : le tarif est calcule a partir de la distance.</p>
+
+        <div class="recap-prix" id="recapPrixMoto" style="display:none;">
+          <p id="texteDistanceMoto"></p>
+          <div class="total" id="texteTotalMoto"></div>
+        </div>
 
         <label class="aw-label">Nom complet</label>
         <input class="aw-input" type="text" id="m_nom" required>
@@ -156,12 +161,14 @@
     <div class="aw-carte" id="carteSuivi" style="display:none;">
       <p class="aw-section-titre">Suivi de ma course</p>
       <p class="desc" id="texteSuiviStatut">En attente qu'un livreur accepte votre course...</p>
+      <p class="aw-badge aw-badge-attente" id="texteConvenuMoto" style="display:block;"></p>
       <div id="carteGoogleSuivi" style="width:100%;height:260px;border-radius:var(--rayon-petit);overflow:hidden;background-color:var(--fond);"></div>
       <div class="recap-prix" id="recapSuivi" style="display:none;">
         <p id="texteDistanceLivreur"></p>
         <div class="total" id="texteEtaLivreur"></div>
       </div>
-      <button type="button" class="aw-btn aw-btn-secondaire" id="btnNouvelleCourse" style="width:100%;margin-top:12px;">Demander une autre course</button>
+      <button type="button" class="aw-btn aw-btn-secondaire" id="btnAnnulerCourse" style="width:100%;margin-top:12px;border-color:var(--alerte);color:var(--alerte);">Annuler ma course</button>
+      <button type="button" class="aw-btn aw-btn-secondaire" id="btnNouvelleCourse" style="width:100%;margin-top:8px;display:none;">Demander une autre course</button>
     </div>
   </div>
 
@@ -202,7 +209,7 @@
         </select>
       </div>
 
-      <p class="aw-badge aw-badge-attente" style="display:block;margin-top:12px;">Place : 12 500 FCFA (23kg de bagages inclus) — +1 000 FCFA/valise au-dela</p>
+      <p class="aw-badge aw-badge-attente" style="display:block;margin-top:12px;">Place : 12 500 FCFA (23kg de bagages inclus) &#8212; +1 000 FCFA/valise au-dela</p>
 
       <a href="retrouver-billet.html" style="display:block;text-align:center;color:var(--accent);font-size:12.5px;font-weight:600;margin-top:10px;text-decoration:none;">&#128203; Deja reserve ? Retrouver mon billet</a>
 
@@ -272,7 +279,28 @@ var sb = supabase.createClient(
 );
 
 var NUMERO_WHATSAPP = "221777589444";
+var COMMISSION_COURSE = 100;
 var positionMoto = null;
+var idCourseActuelle = null;
+var wakeLockClient = null;
+
+function demanderWakeLockClient() {
+  if ("wakeLock" in navigator) {
+    navigator.wakeLock.request("screen").then(function(lock) {
+      wakeLockClient = lock;
+    }).catch(function() {});
+  }
+}
+function relacherWakeLockClient() {
+  if (wakeLockClient) {
+    wakeLockClient.release().then(function() { wakeLockClient = null; }).catch(function() {});
+  }
+}
+document.addEventListener("visibilitychange", function() {
+  if (idCourseActuelle && document.visibilityState === "visible") {
+    demanderWakeLockClient();
+  }
+});
 
 function remplirProfilLocal() {
   var nom = localStorage.getItem("aw_client_nom");
@@ -330,6 +358,7 @@ document.getElementById("btnChoisirDestination").addEventListener("click", funct
         carteChoix.setCenter(lieu.geometry.location);
         carteChoix.setZoom(16);
         marqueurChoix.setPosition(lieu.geometry.location);
+        document.getElementById("m_arrivee").value = lieu.formatted_address || lieu.name;
         document.getElementById("msgRechercheDestination").className = "msg-position ok";
         document.getElementById("msgRechercheDestination").textContent = "Lieu trouve : " + (lieu.formatted_address || lieu.name);
       });
@@ -344,12 +373,44 @@ document.getElementById("btnFermerCarte").addEventListener("click", function() {
   document.getElementById("fenetreCarte").classList.remove("visible");
 });
 
+function calculerPrixCourse(distanceKmVal) {
+  if (distanceKmVal <= 2) {
+    return 350;
+  }
+  return Math.round(350 + 250 * distanceKmVal);
+}
+
+function mettreAJourPrixCourseMoto() {
+  var zone = document.getElementById("recapPrixMoto");
+  if (!positionMoto || !destinationChoisie) {
+    zone.style.display = "none";
+    return;
+  }
+  var dist = distanceEntrePointsMoto(positionMoto.lat, positionMoto.lng, destinationChoisie.lat, destinationChoisie.lng);
+  var prix = calculerPrixCourse(dist);
+  document.getElementById("texteDistanceMoto").textContent = "Distance estimee : " + dist.toFixed(1) + " km";
+  document.getElementById("texteTotalMoto").textContent = "Prix : " + prix.toLocaleString("fr-FR") + " FCFA";
+  zone.style.display = "block";
+}
+
+function distanceEntrePointsMoto(lat1, lon1, lat2, lon2) {
+  var R = 6371;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLon = (lon2 - lon1) * Math.PI / 180;
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 document.getElementById("btnConfirmerDestination").addEventListener("click", function() {
   var pos = marqueurChoix.getPosition();
   destinationChoisie = { lat: pos.lat(), lng: pos.lng() };
   document.getElementById("msgDestinationChoisie").className = "msg-position ok";
   document.getElementById("msgDestinationChoisie").textContent = "Destination choisie sur la carte.";
   document.getElementById("fenetreCarte").classList.remove("visible");
+  mettreAJourPrixCourseMoto();
 });
 
 document.getElementById("btnPositionMoto").addEventListener("click", function() {
@@ -370,6 +431,7 @@ document.getElementById("btnPositionMoto").addEventListener("click", function() 
     btn.textContent = "Position enregistree";
     msg.textContent = "Votre position a ete capturee avec succes.";
     msg.className = "msg-position ok";
+    mettreAJourPrixCourseMoto();
   }, function() {
     btn.disabled = false;
     btn.textContent = "Utiliser ma position actuelle (obligatoire)";
@@ -401,9 +463,8 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
     return;
   }
 
-  var arrivee = document.getElementById("m_arrivee").value;
-  if (!arrivee && !destinationChoisie) {
-    msg.innerHTML = "<div class=\"msg erreur\">Ecrivez une destination ou choisissez-la sur la carte.</div>";
+  if (!destinationChoisie) {
+    msg.innerHTML = "<div class=\"msg erreur\">Choisissez la destination sur la carte pour calculer le tarif.</div>";
     return;
   }
 
@@ -412,11 +473,15 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
   msg.innerHTML = "";
 
   var repere = document.getElementById("m_repere").value;
+  var arrivee = document.getElementById("m_arrivee").value;
   var nom = document.getElementById("m_nom").value;
   var telephone = document.getElementById("m_telephone").value;
   var paiement = document.getElementById("m_paiement").value;
   localStorage.setItem("aw_client_nom", nom);
   localStorage.setItem("aw_client_telephone", telephone);
+
+  var distanceCalculee = distanceEntrePointsMoto(positionMoto.lat, positionMoto.lng, destinationChoisie.lat, destinationChoisie.lng);
+  var prixCalcule = calculerPrixCourse(distanceCalculee);
 
   var donneesCourse = {
     client_nom: nom,
@@ -425,13 +490,13 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
     lieu_arrivee: arrivee || "Choisie sur la carte",
     latitude: positionMoto.lat,
     longitude: positionMoto.lng,
+    destination_latitude: destinationChoisie.lat,
+    destination_longitude: destinationChoisie.lng,
+    prix_total: prixCalcule,
+    distance_km: Math.round(distanceCalculee * 10) / 10,
     mode_paiement: paiement,
     statut: "nouvelle"
   };
-  if (destinationChoisie) {
-    donneesCourse.destination_latitude = destinationChoisie.lat;
-    donneesCourse.destination_longitude = destinationChoisie.lng;
-  }
 
   var positionClientPourSuivi = { lat: positionMoto.lat, lng: positionMoto.lng };
 
@@ -445,32 +510,74 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
     }
 
     var courseCreee = reponse.data[0];
+    idCourseActuelle = courseCreee.id;
 
     var message = "Bonjour, je demande une course moto :\nDestination : " + arrivee +
                    "\nNom : " + nom + "\nTelephone : " + telephone + "\nPaiement : " + paiement +
+                   "\nPrix : " + prixCalcule.toLocaleString("fr-FR") + " FCFA" +
                    "\nPosition : https://www.google.com/maps?q=" + positionMoto.lat + "," + positionMoto.lng;
     window.open("https://wa.me/" + NUMERO_WHATSAPP + "?text=" + encodeURIComponent(message), "_blank");
 
     document.getElementById("formMoto").style.display = "none";
     document.getElementById("carteSuivi").style.display = "block";
+    document.getElementById("texteConvenuMoto").textContent = "Prix convenu : " + prixCalcule.toLocaleString("fr-FR") + " FCFA (" + donneesCourse.distance_km + " km)";
+    demanderWakeLockClient();
     demarrerSuivi(courseCreee.id, positionClientPourSuivi);
   });
 });
 
-document.getElementById("btnNouvelleCourse").addEventListener("click", function() {
+function reinitialiserFormulaireMoto() {
   clearInterval(minuteurSuivi);
+  relacherWakeLockClient();
   marqueurLivreurSuivi = null;
   marqueurClientSuivi = null;
   carteGoogleSuivi = null;
+  idCourseActuelle = null;
   document.getElementById("carteSuivi").style.display = "none";
+  document.getElementById("btnNouvelleCourse").style.display = "none";
+  document.getElementById("btnAnnulerCourse").style.display = "block";
+  document.getElementById("recapSuivi").style.display = "none";
   document.getElementById("formMoto").style.display = "block";
   document.getElementById("formMoto").reset();
+  document.getElementById("recapPrixMoto").style.display = "none";
   positionMoto = null;
   destinationChoisie = null;
   document.getElementById("btnPositionMoto").textContent = "Utiliser ma position actuelle (obligatoire)";
   document.getElementById("msgPositionMoto").textContent = "Le livreur en a besoin pour venir vous chercher.";
   document.getElementById("msgPositionMoto").className = "msg-position";
-  document.getElementById("msgDestinationChoisie").textContent = "";
+  document.getElementById("msgDestinationChoisie").className = "msg-position";
+  document.getElementById("msgDestinationChoisie").textContent = "Obligatoire : le tarif est calcule a partir de la distance.";
+}
+
+document.getElementById("btnNouvelleCourse").addEventListener("click", reinitialiserFormulaireMoto);
+
+document.getElementById("btnAnnulerCourse").addEventListener("click", function() {
+  if (!idCourseActuelle) return;
+  if (!confirm("Voulez-vous vraiment annuler cette course ?")) return;
+
+  var btnAnnuler = document.getElementById("btnAnnulerCourse");
+  btnAnnuler.disabled = true;
+  btnAnnuler.textContent = "Annulation en cours...";
+
+  sb.from("courses_moto").select("livreur_id, statut").eq("id", idCourseActuelle).single().then(function(reponse) {
+    var course = reponse.data;
+
+    sb.from("courses_moto").update({ statut: "annulee" }).eq("id", idCourseActuelle).then(function() {
+      if (course && course.livreur_id && course.statut !== "nouvelle") {
+        sb.from("livreurs").select("solde_compte").eq("id", course.livreur_id).single().then(function(r2) {
+          var soldeActuel = (r2.data && r2.data.solde_compte) || 0;
+          sb.from("livreurs").update({ solde_compte: soldeActuel + COMMISSION_COURSE }).eq("id", course.livreur_id).then(function() {});
+        });
+      }
+      btnAnnuler.disabled = false;
+      btnAnnuler.textContent = "Annuler ma course";
+      document.getElementById("texteSuiviStatut").textContent = "Course annulee.";
+      document.getElementById("btnAnnulerCourse").style.display = "none";
+      document.getElementById("btnNouvelleCourse").style.display = "block";
+      clearInterval(minuteurSuivi);
+      relacherWakeLockClient();
+    });
+  });
 });
 
 var carteGoogleSuivi = null;
@@ -505,6 +612,9 @@ function demarrerSuivi(idCourse, positionClient) {
         document.getElementById("texteSuiviStatut").textContent = "Vous etes en route vers votre destination.";
       } else if (c.statut === "terminee") {
         document.getElementById("texteSuiviStatut").textContent = "Course terminee. Merci d'avoir utilise AW SERVICES !";
+        document.getElementById("btnAnnulerCourse").style.display = "none";
+        document.getElementById("btnNouvelleCourse").style.display = "block";
+        relacherWakeLockClient();
         clearInterval(minuteurSuivi);
         return;
       }
@@ -855,4 +965,4 @@ afficherZoneDirection();
 </script>
 
 </body>
-  </html>
+</html>
