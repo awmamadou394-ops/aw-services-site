@@ -32,6 +32,8 @@
   .msg-notif { font-size: 12px; margin-top: 8px; color: var(--texte-doux); }
   .msg-notif.ok { color: var(--succes); }
   .msg-notif.err { color: var(--alerte); }
+
+  .solde-affiche { font-family: var(--police-chiffres); font-size: 30px; font-weight: 700; color: var(--accent); text-align: center; margin: 10px 0 16px; }
 </style>
 </head>
 <body>
@@ -52,6 +54,7 @@ var sb = supabase.createClient(
 );
 
 var VAPID_PUBLIC_KEY = "BJw5df2L2JS-HB2BoXP7QNx1caYe4F1PaLbXy6kY1KI7SY9Evt5GjH19HsacU1iT9547pf6sjUeVsThHd8mOkr0";
+var COMMISSION_COURSE = 100;
 var livreurCourant = null;
 var positionLivreur = null;
 
@@ -92,6 +95,15 @@ function chargerEspace() {
           "<p style=\"margin-top:10px;color:var(--texte-doux);font-size:14px;\">Telephone : " + livreur.telephone + "</p>" +
         "</div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Mon portefeuille</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13.5px;margin-bottom:10px;\">Une commission de " + COMMISSION_COURSE + " FCFA est deduite de votre solde a chaque course moto acceptee. Rechargez pour continuer a recevoir des courses.</p>" +
+          "<div class=\"solde-affiche\" id=\"soldeAffiche\">" + Number(livreur.solde_compte || 0).toLocaleString("fr-FR") + " FCFA</div>" +
+          "<label class=\"aw-label\">Montant a recharger</label>" +
+          "<input class=\"aw-input\" type=\"number\" id=\"montantRecharge\" min=\"100\" step=\"100\" placeholder=\"Ex : 1000\">" +
+          "<button class=\"aw-btn aw-btn-primaire\" id=\"btnRecharger\" style=\"width:100%;margin-top:10px;\">Recharger via PayTech</button>" +
+          "<p class=\"msg-notif\" id=\"msgRecharge\"></p>" +
+        "</div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
           "<p class=\"aw-section-titre\">Notifications</p>" +
           "<p style=\"color:var(--texte-doux);font-size:13.5px;margin-bottom:10px;\">Recevez une alerte des qu'une nouvelle commande arrive.</p>" +
           "<button class=\"aw-btn aw-btn-primaire\" id=\"btnActiverNotif\" style=\"width:100%;\">Activer les notifications</button>" +
@@ -115,6 +127,7 @@ function chargerEspace() {
           "<div id=\"listeCoursesDisponibles\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
         "</div>";
 
+      document.getElementById("btnRecharger").addEventListener("click", lancerRecharge);
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
       verifierEtatNotifications();
       localiserLivreur();
@@ -149,6 +162,74 @@ function distanceKm(lat1, lon1, lat2, lon2) {
           Math.sin(dLon / 2) * Math.sin(dLon / 2);
   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+function lancerRecharge() {
+  var btn = document.getElementById("btnRecharger");
+  var msg = document.getElementById("msgRecharge");
+  var montant = parseInt(document.getElementById("montantRecharge").value);
+
+  msg.className = "msg-notif";
+  msg.textContent = "";
+
+  if (!montant || montant < 100) {
+    msg.className = "msg-notif err";
+    msg.textContent = "Entrez un montant valide (minimum 100 FCFA).";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Preparation du paiement...";
+
+  var idRecharge = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
+
+  sb.from("recharges_livreurs").insert([{
+    id: idRecharge,
+    livreur_id: livreurCourant.id,
+    montant: montant,
+    statut_paiement: "non_paye"
+  }]).then(function(reponse) {
+    if (reponse.error) {
+      btn.disabled = false;
+      btn.textContent = "Recharger via PayTech";
+      msg.className = "msg-notif err";
+      msg.textContent = "Erreur : la recharge n'a pas pu etre enregistree.";
+      return;
+    }
+
+    fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table: "recharges_livreurs",
+        id: idRecharge,
+        item_name: "Recharge solde livreur",
+        item_price: montant,
+        telephone: livreurCourant.telephone,
+        nom: livreurCourant.nom
+      })
+    }).then(function(r) { return r.json(); }).then(function(resultatPaiement) {
+      if (resultatPaiement.success === 1 && resultatPaiement.redirect_url) {
+        localStorage.setItem("aw_dernier_ticket", JSON.stringify({
+          type: "recharge_livreur",
+          id: idRecharge,
+          montant: montant,
+          paytech_token: resultatPaiement.token || null
+        }));
+        window.location.href = resultatPaiement.redirect_url;
+      } else {
+        btn.disabled = false;
+        btn.textContent = "Recharger via PayTech";
+        msg.className = "msg-notif err";
+        msg.textContent = "Erreur lors de la creation du paiement. Reessayez.";
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = "Recharger via PayTech";
+      msg.className = "msg-notif err";
+      msg.textContent = "Erreur de connexion au service de paiement. Reessayez.";
+    });
+  });
 }
 
 function afficherNotifActives() {
@@ -434,12 +515,27 @@ function afficherCoursesDisponibles(liste) {
 }
 
 function accepterCourse(id) {
+  var soldeActuel = livreurCourant.solde_compte || 0;
+  if (soldeActuel < COMMISSION_COURSE) {
+    alert("Solde insuffisant pour accepter une course (commission de " + COMMISSION_COURSE + " FCFA requise). Rechargez votre solde dans la section \"Mon portefeuille\".");
+    return;
+  }
+
   sb.from("courses_moto").update({ livreur_id: livreurCourant.id, statut: "acceptee" }).eq("id", id).eq("statut", "nouvelle").then(function(reponse) {
     if (reponse.error) {
       alert("Erreur : cette course a peut-etre deja ete prise par un autre livreur.");
-    } else {
-      demarrerPartagePosition(id);
+      chargerCourses();
+      return;
     }
+
+    var nouveauSolde = soldeActuel - COMMISSION_COURSE;
+    sb.from("livreurs").update({ solde_compte: nouveauSolde }).eq("id", livreurCourant.id).then(function() {
+      livreurCourant.solde_compte = nouveauSolde;
+      var affichage = document.getElementById("soldeAffiche");
+      if (affichage) affichage.textContent = Number(nouveauSolde).toLocaleString("fr-FR") + " FCFA";
+    });
+
+    demarrerPartagePosition(id);
     chargerCourses();
   });
 }
