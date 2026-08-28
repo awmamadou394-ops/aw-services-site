@@ -118,7 +118,38 @@ if (!ticketBrut) {
     t = null;
   }
 
-  if (!t || t.type !== "reservation_voiture") {
+  if (t && t.type === "recharge_livreur" && t.paytech_token) {
+    var tentativesRecharge = 0;
+
+    function verifierRecharge() {
+      fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: t.paytech_token, table: "recharges_livreurs", id: t.id })
+      }).then(function(r) { return r.json(); }).then(function(resultat) {
+        if (resultat.confirme === true) {
+          etatFinal(true, "Recharge reussie !", "Votre solde a ete credite de " + Number(t.montant).toLocaleString("fr-FR") + " FCFA. Vous pouvez retourner dans votre espace livreur pour accepter des courses.");
+          localStorage.removeItem("aw_dernier_ticket");
+        } else if (tentativesRecharge < 4) {
+          tentativesRecharge++;
+          setTimeout(verifierRecharge, 3000);
+        } else if (resultat.state === "running") {
+          etatFinal(false, "Paiement en cours de traitement", "Votre recharge n'est pas encore confirmee. Patientez une minute puis retournez dans votre espace livreur pour verifier votre solde.");
+        } else {
+          etatFinal(false, "Paiement non confirme", "Nous n'avons pas pu confirmer cette recharge pour le moment. Si le montant a ete debite, contactez-nous sur WhatsApp.");
+        }
+      }).catch(function() {
+        if (tentativesRecharge < 4) {
+          tentativesRecharge++;
+          setTimeout(verifierRecharge, 3000);
+        } else {
+          etatFinal(false, "Verification impossible", "Nous n'avons pas pu verifier votre recharge pour le moment. Retournez dans votre espace livreur dans quelques minutes pour verifier votre solde.");
+        }
+      });
+    }
+
+    verifierRecharge();
+  } else if (!t || t.type !== "reservation_voiture") {
     etatFinal(true, "Paiement reussi !", "Votre paiement a bien ete confirme. Votre commande est en cours de traitement, vous recevrez bientot une notification avec les details de la livraison.");
     localStorage.removeItem("aw_dernier_ticket");
   } else if (!t.paytech_token) {
