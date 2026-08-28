@@ -409,10 +409,15 @@ var LIBELLES_COURSE = {
 };
 
 function chargerCourses() {
-  sb.from("courses_moto").select("*").neq("statut", "terminee").then(function(reponse) {
+  sb.from("courses_moto").select("*").not("statut", "in", "(terminee,annulee)").then(function(reponse) {
     var data = reponse.data || [];
     var mesCourses = data.filter(function(c) { return c.livreur_id === livreurCourant.id; });
     var disponibles = data.filter(function(c) { return c.livreur_id === null && c.statut === "nouvelle"; });
+
+    if (idCourseSuivie && !mesCourses.some(function(c) { return c.id === idCourseSuivie; })) {
+      arreterPartagePosition();
+      alert("Le client a annule la course en cours. Votre commission a ete remboursee.");
+    }
 
     if (positionLivreur) {
       disponibles.sort(function(a, b) {
@@ -443,7 +448,8 @@ function afficherMesCourses(liste) {
               "<p>Telephone : " + c.client_telephone + "</p>" +
               "<p>Destination : " + c.lieu_arrivee + "</p>" +
               (c.lieu_depart ? "<p>Repere : " + c.lieu_depart + "</p>" : "") +
-              "<p>Paiement : " + c.mode_paiement + "</p>" +
+              "<p>Paiement : " + c.mode_paiement + (c.prix_total ? " - " + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA" : "") + "</p>" +
+              (c.distance_km ? "<p>Distance : " + c.distance_km + " km</p>" : "") +
               "<div class=\"badges\"><span class=\"badge-statut badge-en_preparation\">" + (LIBELLES_COURSE[c.statut] || c.statut) + "</span></div>";
 
     if (c.statut === "en_cours") {
@@ -497,7 +503,7 @@ function afficherCoursesDisponibles(liste) {
               "<p>Telephone : " + c.client_telephone + "</p>" +
               "<p>Destination : " + c.lieu_arrivee + "</p>" +
               (c.lieu_depart ? "<p>Repere : " + c.lieu_depart + "</p>" : "") +
-              "<p>Paiement : " + c.mode_paiement + "</p>";
+              "<p>Paiement : " + c.mode_paiement + (c.prix_total ? " - " + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA" : "") + "</p>";
     if (c.latitude && c.longitude) {
       html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + c.latitude + "," + c.longitude + "\" target=\"_blank\">Itineraire vers le client</a>";
     }
@@ -554,11 +560,31 @@ function majCourse(id, nouveauStatut) {
 
 var minuteurPartagePosition = null;
 var idCourseSuivie = null;
+var wakeLockLivreur = null;
+
+function demanderWakeLockLivreur() {
+  if ("wakeLock" in navigator) {
+    navigator.wakeLock.request("screen").then(function(lock) {
+      wakeLockLivreur = lock;
+    }).catch(function() {});
+  }
+}
+function relacherWakeLockLivreur() {
+  if (wakeLockLivreur) {
+    wakeLockLivreur.release().then(function() { wakeLockLivreur = null; }).catch(function() {});
+  }
+}
+document.addEventListener("visibilitychange", function() {
+  if (idCourseSuivie && document.visibilityState === "visible") {
+    demanderWakeLockLivreur();
+  }
+});
 
 function demarrerPartagePosition(idCourse) {
   if (!navigator.geolocation) return;
   arreterPartagePosition();
   idCourseSuivie = idCourse;
+  demanderWakeLockLivreur();
 
   function envoyerPosition() {
     navigator.geolocation.getCurrentPosition(function(position) {
@@ -580,6 +606,7 @@ function arreterPartagePosition() {
     minuteurPartagePosition = null;
   }
   idCourseSuivie = null;
+  relacherWakeLockLivreur();
 }
 
 function reprendrePartageSiCourseActive() {
