@@ -460,6 +460,13 @@ function envoyerCommande(event) {
       })
     }).then(function(r) { return r.json(); }).then(function(resultatPaiement) {
       if (resultatPaiement.success === 1 && resultatPaiement.redirect_url) {
+        localStorage.setItem("aw_dernier_ticket", JSON.stringify({
+          type: "commande",
+          id: idCommande,
+          produit: resumeArticles.join(", "),
+          total: total,
+          paytech_token: resultatPaiement.token || null
+        }));
         panier = [];
         mettreAJourAffichagePanier();
         window.location.href = resultatPaiement.redirect_url;
