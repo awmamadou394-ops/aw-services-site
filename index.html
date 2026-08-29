@@ -11,6 +11,7 @@
   .aw-btn { width: 100%; }
   .modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--espace-md); }
   footer { text-align: center; padding: var(--espace-lg); color: var(--texte-discret); font-size: 12px; }
+  .badge-panier-nav { position: absolute; top: -6px; right: -10px; background-color: var(--alerte); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 999px; align-items: center; justify-content: center; font-family: var(--police-chiffres); padding: 0 3px; }
 </style>
 </head>
 <body class="aw-avec-nav-bas">
@@ -101,6 +102,13 @@
   <a href="index.html" class="aw-nav-item actif"><span class="icone">&#127968;</span>Accueil</a>
   <a href="catalogue.html" class="aw-nav-item"><span class="icone">&#128717;&#65039;</span>Boutique</a>
   <a href="transport.html" class="aw-nav-item"><span class="icone">&#128664;</span>Transport</a>
+  <a href="catalogue.html#zonePanier" class="aw-nav-item">
+    <span class="icone" style="position:relative;display:inline-block;">
+      &#128722;
+      <span class="badge-panier-nav" id="badgePanierNav" style="display:none;"></span>
+    </span>
+    Panier
+  </a>
   <a href="https://wa.me/221777589444" target="_blank" class="aw-nav-item"><span class="icone">&#128172;</span>Contact</a>
 </nav>
 
@@ -126,6 +134,26 @@ document.getElementById("champRechercheAccueil").addEventListener("keydown", fun
     }
   }
 });
+
+function majBadgePanierNav() {
+  var badge = document.getElementById("badgePanierNav");
+  if (!badge) return;
+  var panierSauvegarde = localStorage.getItem("aw_panier_boutique");
+  var total = 0;
+  if (panierSauvegarde) {
+    try {
+      var panierLu = JSON.parse(panierSauvegarde) || [];
+      for (var i = 0; i < panierLu.length; i++) total += panierLu[i].quantite;
+    } catch (e) {}
+  }
+  if (total > 0) {
+    badge.textContent = total;
+    badge.style.display = "flex";
+  } else {
+    badge.style.display = "none";
+  }
+}
+majBadgePanierNav();
 </script>
 
 </body>
