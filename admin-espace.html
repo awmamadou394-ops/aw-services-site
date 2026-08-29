@@ -14,8 +14,21 @@
   .refus { text-align: center; padding: 40px; color: var(--alerte); }
 
   .section { margin-bottom: var(--espace-xl); }
-  .lien-gestion { display: block; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 15px; margin-bottom: 10px; color: var(--texte); text-decoration: none; font-weight: 700; font-family: var(--police-titre); transition: border-color 0.15s ease; }
-  .lien-gestion:active { border-color: var(--accent); }
+
+  .grille-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: var(--espace-lg); }
+  .kpi { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 14px; }
+  .kpi .valeur { font-family: var(--police-chiffres); font-size: 26px; font-weight: 700; color: var(--accent); }
+  .kpi .label { font-size: 11.5px; color: var(--texte-doux); margin-top: 2px; }
+
+  .bloc-validation { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); overflow: hidden; margin-bottom: 10px; }
+  .entete-validation { display: flex; justify-content: space-between; align-items: center; padding: 14px 15px; cursor: pointer; }
+  .entete-validation h3 { font-size: 14.5px; font-family: var(--police-titre); }
+  .badge-compte { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 7px; border-radius: 999px; font-size: 12px; font-weight: 700; font-family: var(--police-chiffres); background-color: rgba(242,169,59,0.15); color: var(--accent); }
+  .badge-compte.zero { background-color: var(--fond); color: var(--texte-discret); }
+  .fleche-validation { color: var(--texte-doux); transition: transform 0.15s ease; font-size: 12px; }
+  .entete-validation.ouvert .fleche-validation { transform: rotate(180deg); }
+  .contenu-validation { display: none; padding: 0 15px 15px; }
+  .contenu-validation.ouvert { display: block; }
 
   .carte-attente { background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 14px; margin-bottom: 10px; }
   .carte-attente h3 { font-size: 15px; font-family: var(--police-titre); margin-bottom: 4px; }
@@ -25,6 +38,20 @@
   .btn-refuser { flex: 1; background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 10px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; font-family: var(--police-texte); }
   .vide { color: var(--texte-doux); font-size: 14px; padding: 15px; text-align: center; }
   .date-commande { font-size: 11px; color: var(--texte-discret); margin-bottom: 4px; }
+
+  .grille-modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .module-tuile { display: block; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 16px 14px; text-decoration: none; position: relative; }
+  .module-tuile .icone { font-size: 24px; margin-bottom: 8px; display: block; }
+  .module-tuile h3 { color: var(--texte); font-size: 14px; font-family: var(--police-titre); }
+  .module-tuile p { color: var(--texte-doux); font-size: 11.5px; margin-top: 3px; }
+  .module-tuile.actif:active { border-color: var(--accent); }
+  .module-tuile.inactif { opacity: 0.55; }
+  .badge-bientot { position: absolute; top: 10px; right: 10px; background-color: var(--fond); color: var(--texte-discret); font-size: 9.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .badge-module { position: absolute; top: 10px; right: 10px; background-color: rgba(242,169,59,0.15); color: var(--accent); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; font-family: var(--police-chiffres); }
+
+  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 4px; }
+  .badge-paye { background-color: rgba(63,163,77,0.15); color: var(--succes); }
+  .badge-nonpaye { background-color: rgba(232,72,58,0.15); color: var(--alerte); }
 </style>
 </head>
 <body>
@@ -66,37 +93,129 @@ function verifierEtCharger() {
       }
       zone.innerHTML =
         "<div class=\"section\">" +
-          "<p class=\"aw-section-titre\">Gestion des catalogues</p>" +
-          "<a href=\"admin-immobilier.html\" class=\"lien-gestion\">Gerer l'Immobilier</a>" +
-          "<a href=\"admin-boutique.html\" class=\"lien-gestion\">Gerer la Boutique</a>" +
+          "<p class=\"aw-section-titre\">Vue d'ensemble</p>" +
+          "<div class=\"grille-kpi\" id=\"grilleKpi\">" +
+            "<div class=\"kpi\"><div class=\"valeur\" id=\"kpiCommandesJour\">-</div><div class=\"label\">Commandes aujourd'hui</div></div>" +
+            "<div class=\"kpi\"><div class=\"valeur\" id=\"kpiAttente\">-</div><div class=\"label\">En attente d'approbation</div></div>" +
+            "<div class=\"kpi\"><div class=\"valeur\" id=\"kpiReservations\">-</div><div class=\"label\">Reservations Transport a venir</div></div>" +
+            "<div class=\"kpi\"><div class=\"valeur\" id=\"kpiLivreursActifs\">-</div><div class=\"label\">Livreurs actifs</div></div>" +
+          "</div>" +
         "</div>" +
+
         "<div class=\"section\">" +
-          "<p class=\"aw-section-titre\">Vendeurs en attente</p>" +
-          "<div id=\"listeVendeurs\"><p class=\"vide\">Chargement...</p></div>" +
+          "<p class=\"aw-section-titre\">Validations en attente</p>" +
+          "<div class=\"bloc-validation\">" +
+            "<div class=\"entete-validation\" data-cible=\"blocVendeurs\"><h3>Vendeurs</h3><div style=\"display:flex;align-items:center;gap:8px;\"><span class=\"badge-compte zero\" id=\"compteVendeurs\">0</span><span class=\"fleche-validation\">&#9662;</span></div></div>" +
+            "<div class=\"contenu-validation\" id=\"blocVendeurs\"><div id=\"listeVendeurs\"><p class=\"vide\">Chargement...</p></div></div>" +
+          "</div>" +
+          "<div class=\"bloc-validation\">" +
+            "<div class=\"entete-validation\" data-cible=\"blocChauffeurs\"><h3>Chauffeurs (Dakar-Bokidiawe)</h3><div style=\"display:flex;align-items:center;gap:8px;\"><span class=\"badge-compte zero\" id=\"compteChauffeurs\">0</span><span class=\"fleche-validation\">&#9662;</span></div></div>" +
+            "<div class=\"contenu-validation\" id=\"blocChauffeurs\"><div id=\"listeChauffeurs\"><p class=\"vide\">Chargement...</p></div></div>" +
+          "</div>" +
+          "<div class=\"bloc-validation\">" +
+            "<div class=\"entete-validation\" data-cible=\"blocProduits\"><h3>Produits (Boutique)</h3><div style=\"display:flex;align-items:center;gap:8px;\"><span class=\"badge-compte zero\" id=\"compteProduits\">0</span><span class=\"fleche-validation\">&#9662;</span></div></div>" +
+            "<div class=\"contenu-validation\" id=\"blocProduits\"><div id=\"listeProduits\"><p class=\"vide\">Chargement...</p></div></div>" +
+          "</div>" +
+          "<div class=\"bloc-validation\">" +
+            "<div class=\"entete-validation\" data-cible=\"blocLivreurs\"><h3>Livreurs</h3><div style=\"display:flex;align-items:center;gap:8px;\"><span class=\"badge-compte zero\" id=\"compteLivreurs\">0</span><span class=\"fleche-validation\">&#9662;</span></div></div>" +
+            "<div class=\"contenu-validation\" id=\"blocLivreurs\"><div id=\"listeLivreurs\"><p class=\"vide\">Chargement...</p></div></div>" +
+          "</div>" +
         "</div>" +
+
         "<div class=\"section\">" +
-          "<p class=\"aw-section-titre\">Chauffeurs en attente (Dakar-Bokidiawe)</p>" +
-          "<div id=\"listeChauffeurs\"><p class=\"vide\">Chargement...</p></div>" +
+          "<p class=\"aw-section-titre\">Modules</p>" +
+          "<div class=\"grille-modules\">" +
+            "<a href=\"admin-boutique.html\" class=\"module-tuile actif\">" +
+              "<span class=\"icone\">&#128717;</span>" +
+              "<h3>Boutique</h3>" +
+              "<p>Produits et commandes</p>" +
+              "<span class=\"badge-module\" id=\"badgeBoutique\" style=\"display:none;\"></span>" +
+            "</a>" +
+            "<a href=\"admin-immobilier.html\" class=\"module-tuile actif\">" +
+              "<span class=\"icone\">&#127968;</span>" +
+              "<h3>Immobilier</h3>" +
+              "<p>Annonces</p>" +
+            "</a>" +
+            "<div class=\"module-tuile inactif\">" +
+              "<span class=\"icone\">&#128663;</span>" +
+              "<h3>Transport</h3>" +
+              "<p>Reservations &amp; courses moto</p>" +
+              "<span class=\"badge-bientot\">Bientot</span>" +
+            "</div>" +
+            "<div class=\"module-tuile inactif\">" +
+              "<span class=\"icone\">&#9992;&#65039;</span>" +
+              "<h3>Voyage</h3>" +
+              "<p>Pre-inscriptions</p>" +
+              "<span class=\"badge-bientot\">Bientot</span>" +
+            "</div>" +
+            "<div class=\"module-tuile inactif\">" +
+              "<span class=\"icone\">&#128181;</span>" +
+              "<h3>Livreurs</h3>" +
+              "<p>Soldes &amp; recharges</p>" +
+              "<span class=\"badge-bientot\">Bientot</span>" +
+            "</div>" +
+          "</div>" +
         "</div>" +
-        "<div class=\"section\">" +
-          "<p class=\"aw-section-titre\">Produits en attente (Boutique)</p>" +
-          "<div id=\"listeProduits\"><p class=\"vide\">Chargement...</p></div>" +
-        "</div>" +
-        "<div class=\"section\">" +
-          "<p class=\"aw-section-titre\">Livreurs en attente</p>" +
-          "<div id=\"listeLivreurs\"><p class=\"vide\">Chargement...</p></div>" +
-        "</div>" +
+
         "<div class=\"section\">" +
           "<p class=\"aw-section-titre\">Commandes recentes</p>" +
           "<div id=\"listeCommandes\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>";
 
+      attacherTogglesValidation();
       chargerVendeurs();
       chargerChauffeurs();
       chargerProduits();
       chargerLivreurs();
       chargerCommandes();
+      chargerKpiCommandesJour();
+      chargerKpiReservations();
+      chargerKpiLivreursActifs();
     });
+  });
+}
+
+function attacherTogglesValidation() {
+  var entetes = document.getElementsByClassName("entete-validation");
+  for (var i = 0; i < entetes.length; i++) {
+    entetes[i].addEventListener("click", function() {
+      this.classList.toggle("ouvert");
+      document.getElementById(this.getAttribute("data-cible")).classList.toggle("ouvert");
+    });
+  }
+}
+
+function majBadgeCompte(idBadge, total) {
+  var badge = document.getElementById(idBadge);
+  badge.textContent = total;
+  badge.className = total > 0 ? "badge-compte" : "badge-compte zero";
+}
+
+function majKpiAttenteGlobal() {
+  var total = parseInt(document.getElementById("compteVendeurs").textContent || "0") +
+              parseInt(document.getElementById("compteChauffeurs").textContent || "0") +
+              parseInt(document.getElementById("compteProduits").textContent || "0") +
+              parseInt(document.getElementById("compteLivreurs").textContent || "0");
+  document.getElementById("kpiAttente").textContent = total;
+}
+
+function chargerKpiCommandesJour() {
+  var aujourdHui = new Date().toISOString().split("T")[0];
+  sb.from("commandes").select("id", { count: "exact", head: true }).gte("date_commande", aujourdHui + "T00:00:00").then(function(reponse) {
+    document.getElementById("kpiCommandesJour").textContent = reponse.count || 0;
+  });
+}
+
+function chargerKpiReservations() {
+  var aujourdHui = new Date().toISOString().split("T")[0];
+  sb.from("reservations_voiture").select("id", { count: "exact", head: true }).gte("date_voyage", aujourdHui).eq("statut_paiement", "paye").neq("statut", "annulee").then(function(reponse) {
+    document.getElementById("kpiReservations").textContent = reponse.count || 0;
+  });
+}
+
+function chargerKpiLivreursActifs() {
+  sb.from("livreurs").select("id", { count: "exact", head: true }).eq("statut", "approuve").then(function(reponse) {
+    document.getElementById("kpiLivreursActifs").textContent = reponse.count || 0;
   });
 }
 
@@ -104,6 +223,8 @@ function chargerVendeurs() {
   sb.from("vendeurs").select("*").eq("statut", "en_attente").then(function(reponse) {
     var data = reponse.data;
     var zone = document.getElementById("listeVendeurs");
+    majBadgeCompte("compteVendeurs", data ? data.length : 0);
+    majKpiAttenteGlobal();
     if (!data || data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucun vendeur en attente.</p>"; return; }
     var html = "";
     for (var i = 0; i < data.length; i++) {
@@ -128,6 +249,8 @@ function chargerChauffeurs() {
   sb.from("chauffeurs").select("*").eq("statut", "en_attente").then(function(reponse) {
     var data = reponse.data;
     var zone = document.getElementById("listeChauffeurs");
+    majBadgeCompte("compteChauffeurs", data ? data.length : 0);
+    majKpiAttenteGlobal();
     if (!data || data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucun chauffeur en attente.</p>"; return; }
     var html = "";
     for (var i = 0; i < data.length; i++) {
@@ -152,6 +275,15 @@ function chargerProduits() {
   sb.from("produits").select("*").eq("statut", "en_attente").then(function(reponse) {
     var data = reponse.data;
     var zone = document.getElementById("listeProduits");
+    majBadgeCompte("compteProduits", data ? data.length : 0);
+    majKpiAttenteGlobal();
+    var badgeBoutique = document.getElementById("badgeBoutique");
+    if (data && data.length > 0) {
+      badgeBoutique.textContent = data.length;
+      badgeBoutique.style.display = "inline-block";
+    } else {
+      badgeBoutique.style.display = "none";
+    }
     if (!data || data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucun produit en attente.</p>"; return; }
     var html = "";
     for (var i = 0; i < data.length; i++) {
@@ -176,6 +308,8 @@ function chargerLivreurs() {
   sb.from("livreurs").select("*").eq("statut", "en_attente").then(function(reponse) {
     var data = reponse.data;
     var zone = document.getElementById("listeLivreurs");
+    majBadgeCompte("compteLivreurs", data ? data.length : 0);
+    majKpiAttenteGlobal();
     if (!data || data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucun livreur en attente.</p>"; return; }
     var html = "";
     for (var i = 0; i < data.length; i++) {
@@ -205,14 +339,16 @@ function chargerCommandes() {
     for (var i = 0; i < data.length; i++) {
       var c = data[i];
       var dateAffichee = c.date_commande ? new Date(c.date_commande).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Date inconnue";
+      var classeBadge = c.statut_paiement === "paye" ? "badge-paye" : "badge-nonpaye";
+      var texteBadge = c.statut_paiement === "paye" ? "Paye" : "Non paye";
       html += "<div class=\"carte-attente\">" +
                 "<p class=\"date-commande\">" + dateAffichee + "</p>" +
                 "<h3>" + c.client_nom + "</h3>" +
                 "<p>Telephone : " + c.client_telephone + "</p>" +
                 "<p>Produit : " + c.produit + "</p>" +
-                "<p>Paiement : " + c.mode_paiement + "</p>" +
                 "<p>Adresse : " + c.adresse_livraison + "</p>" +
-                "<p>Statut : " + c.statut + "</p>" +
+                "<p>Statut preparation : " + c.statut + "</p>" +
+                "<span class=\"badge-statut " + classeBadge + "\">" + texteBadge + "</span>" +
               "</div>";
     }
     zone.innerHTML = html;
