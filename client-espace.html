@@ -4,49 +4,57 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Mes Commandes</title>
+<link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; background-color: #0a0e17; color: #ffffff; }
-  header { background-color: #0d1220; padding: 20px; border-bottom: 2px solid #d62828; display: flex; justify-content: space-between; align-items: center; }
-  header h1 { color: #1e6fd9; font-size: 18px; }
-  .deconnexion { background-color: transparent; border: 1px solid #d62828; color: #d62828; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
-  .content { padding: 20px 15px; max-width: 550px; margin: 0 auto; }
-  .carte { background-color: #121826; border: 1px solid #1e6fd9; border-radius: 10px; padding: 20px; margin-bottom: 15px; }
-  .carte h2 { font-size: 16px; margin-bottom: 10px; }
-  .info { color: #b0b8c5; font-size: 14px; margin-top: 6px; }
-  .chargement { text-align: center; padding: 40px; color: #b0b8c5; }
-  .lien-boutique { display: block; text-align: center; background-color: #1e6fd9; color: #ffffff; text-decoration: none; padding: 13px; border-radius: 8px; font-weight: bold; font-size: 14px; margin-bottom: 15px; }
+  .aw-header { display: flex; justify-content: space-between; align-items: center; text-align: left; }
+  .aw-header h1 { font-size: 17px; }
+  .deconnexion { background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 8px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 600; font-family: var(--police-texte); }
+  .chargement { text-align: center; padding: 40px; color: var(--texte-doux); }
+  .vide { color: var(--texte-doux); font-size: 14px; padding: 15px; text-align: center; }
 
-  .btn-notif { background-color: #1e6fd9; color: #ffffff; border: none; padding: 12px; border-radius: 6px; font-size: 14px; font-weight: bold; width: 100%; margin-top: 8px; }
-  .btn-notif:disabled { opacity: 0.6; }
-  .msg-notif { font-size: 12px; margin-top: 8px; color: #b0b8c5; }
-  .msg-notif.ok { color: #80ff9e; }
-  .msg-notif.err { color: #ff8080; }
+  .lien-boutique { display: block; text-align: center; background-color: var(--accent); color: #1C1200; text-decoration: none; padding: 13px; border-radius: var(--rayon-petit); font-weight: 700; font-size: 14px; margin-bottom: var(--espace-md); }
 
-  .commande-carte { background-color: #0a0e17; border: 1px solid #2a3040; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
-  .commande-carte h3 { font-size: 14px; margin-bottom: 4px; }
-  .commande-carte .date { font-size: 11px; color: #b0b8c5; margin-bottom: 10px; }
-  .commande-carte .articles { font-size: 13px; color: #b0b8c5; margin-bottom: 4px; }
-  .commande-carte .total { font-size: 14px; color: #d62828; font-weight: bold; margin-bottom: 12px; }
+  .btn-notif { width: 100%; margin-top: 8px; }
+  .msg-notif { font-size: 12px; margin-top: 8px; color: var(--texte-doux); }
+  .msg-notif.ok { color: var(--succes); }
+  .msg-notif.err { color: var(--alerte); }
+
+  .onglets { display: flex; gap: 8px; margin-bottom: var(--espace-lg); }
+  .onglet { flex: 1; background-color: var(--surface); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 12px 6px; border-radius: var(--rayon-petit); font-size: 12.5px; font-weight: 600; text-align: center; font-family: var(--police-titre); }
+  .onglet.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
+  .panneau { display: none; }
+  .panneau.visible { display: block; }
+
+  .commande-carte { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 14px; margin-bottom: 12px; }
+  .commande-carte h3 { font-size: 15px; font-family: var(--police-titre); margin-bottom: 4px; }
+  .commande-carte .date { font-size: 11px; color: var(--texte-discret); margin-bottom: 8px; }
+  .commande-carte p { font-size: 13px; color: var(--texte-doux); margin-top: 3px; }
+  .commande-carte .total { font-size: 15px; color: var(--accent); font-weight: 700; margin: 8px 0; font-family: var(--police-chiffres); }
+
+  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 6px; }
+  .badge-paye { background-color: rgba(63,163,77,0.15); color: var(--succes); }
+  .badge-nonpaye { background-color: rgba(232,72,58,0.15); color: var(--alerte); }
+  .badge-annulee { background-color: var(--fond); color: var(--texte-discret); }
+  .badge-neutre { background-color: rgba(107,169,255,0.15); color: #6aa9ff; }
 
   .etapes { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-  .etape { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #6a7383; }
-  .etape.faite { color: #80ff9e; }
-  .etape.active { color: #ffffff; font-weight: bold; }
-  .pastille { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #2a3040; flex-shrink: 0; }
-  .etape.faite .pastille { background-color: #80ff9e; border-color: #80ff9e; }
-  .etape.active .pastille { background-color: #1e6fd9; border-color: #1e6fd9; }
+  .etape { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--texte-discret); }
+  .etape.faite { color: var(--succes); }
+  .etape.active { color: var(--texte); font-weight: 700; }
+  .pastille-etape { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--bordure); flex-shrink: 0; }
+  .etape.faite .pastille-etape { background-color: var(--succes); border-color: var(--succes); }
+  .etape.active .pastille-etape { background-color: var(--accent); border-color: var(--accent); }
 </style>
 </head>
 <body>
 
-<header>
+<header class="aw-header">
   <h1>Mes Commandes</h1>
   <button class="deconnexion" id="btnDeconnexion">Deconnexion</button>
 </header>
 
-<div class="content">
+<div class="aw-conteneur">
   <div id="zoneContenu" class="chargement">Chargement...</div>
 </div>
 
@@ -58,6 +66,16 @@ var sb = supabase.createClient(
 
 var VAPID_PUBLIC_KEY = "BJw5df2L2JS-HB2BoXP7QNx1caYe4F1PaLbXy6kY1KI7SY9Evt5GjH19HsacU1iT9547pf6sjUeVsThHd8mOkr0";
 var clientCourant = null;
+
+var MOIS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+function formatDateFr(dateStr) {
+  if (!dateStr) return "";
+  var parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  var jour = parseInt(parts[2], 10);
+  var mois = MOIS_FR[parseInt(parts[1], 10) - 1];
+  return jour + " " + mois + " " + parts[0];
+}
 
 var ETAPES = [
   "Commande recue",
@@ -85,34 +103,63 @@ function chargerEspace() {
       var client = reponse.data;
       var zone = document.getElementById("zoneContenu");
       if (reponse.error || !client) {
-        zone.innerHTML = "<div class=\"carte\"><p class=\"info\">Profil introuvable. Contactez AW SERVICES.</p></div>";
+        zone.innerHTML = "<div class=\"aw-carte\"><p>Profil introuvable. Contactez AW SERVICES.</p></div>";
         return;
       }
       clientCourant = client;
 
       zone.innerHTML =
-        "<div class=\"carte\">" +
-          "<h2>Bonjour, " + client.nom + "</h2>" +
-          "<p class=\"info\">Telephone : " + (client.telephone || "-") + "</p>" +
+        "<div class=\"aw-carte\">" +
+          "<p class=\"aw-section-titre\">Bonjour, " + client.nom + "</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13px;\">Telephone : " + (client.telephone || "-") + "</p>" +
         "</div>" +
-        "<div class=\"carte\">" +
-          "<h2>Notifications</h2>" +
-          "<p class=\"info\">Soyez alerte a chaque etape de votre commande.</p>" +
-          "<button class=\"btn-notif\" id=\"btnActiverNotif\">Activer les notifications</button>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Notifications</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13px;\">Soyez alerte a chaque etape de votre commande.</p>" +
+          "<button class=\"aw-btn aw-btn-primaire btn-notif\" id=\"btnActiverNotif\">Activer les notifications</button>" +
           "<p class=\"msg-notif\" id=\"msgNotif\"></p>" +
         "</div>" +
-        "<a href=\"catalogue.html\" class=\"lien-boutique\">Parcourir la boutique</a>" +
-        "<div class=\"carte\">" +
-          "<h2>Suivi de mes commandes</h2>" +
-          "<div id=\"listeCommandes\"><p class=\"info\">Chargement...</p></div>" +
+        "<a href=\"catalogue.html\" class=\"lien-boutique\" style=\"margin-top:15px;\">Parcourir la boutique</a>" +
+
+        "<div class=\"onglets\">" +
+          "<div class=\"onglet actif\" id=\"ongletAchats\">Achats</div>" +
+          "<div class=\"onglet\" id=\"ongletTransport\">Reservations</div>" +
+          "<div class=\"onglet\" id=\"ongletCourses\">Courses moto</div>" +
+        "</div>" +
+
+        "<div class=\"panneau visible\" id=\"panneauAchats\">" +
+          "<div id=\"listeCommandes\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"panneau\" id=\"panneauTransport\">" +
+          "<div id=\"listeReservations\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"panneau\" id=\"panneauCourses\">" +
+          "<div id=\"listeCoursesClient\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>";
+
+      document.getElementById("ongletAchats").addEventListener("click", function() { basculerOnglet("Achats"); });
+      document.getElementById("ongletTransport").addEventListener("click", function() { basculerOnglet("Transport"); });
+      document.getElementById("ongletCourses").addEventListener("click", function() { basculerOnglet("Courses"); });
 
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
       verifierEtatNotifications();
       chargerCommandes();
+      chargerReservationsClient();
+      chargerCoursesClient();
       setInterval(chargerCommandes, 20000);
+      setInterval(chargerReservationsClient, 20000);
+      setInterval(chargerCoursesClient, 20000);
     });
   });
+}
+
+function basculerOnglet(nom) {
+  var onglets = { Achats: "ongletAchats", Transport: "ongletTransport", Courses: "ongletCourses" };
+  var panneaux = { Achats: "panneauAchats", Transport: "panneauTransport", Courses: "panneauCourses" };
+  for (var cle in onglets) {
+    document.getElementById(onglets[cle]).classList.toggle("actif", cle === nom);
+    document.getElementById(panneaux[cle]).classList.toggle("visible", cle === nom);
+  }
 }
 
 function afficherNotifActives() {
@@ -221,7 +268,7 @@ function chargerCommandes() {
     var data = reponse.data;
     var zone = document.getElementById("listeCommandes");
     if (!data || data.length === 0) {
-      zone.innerHTML = "<p class=\"info\">Vous n'avez pas encore passe de commande.</p>";
+      zone.innerHTML = "<p class=\"vide\">Vous n'avez pas encore passe de commande.</p>";
       return;
     }
 
@@ -229,24 +276,94 @@ function chargerCommandes() {
     for (var i = 0; i < data.length; i++) {
       var c = data[i];
       var etat = calculerEtapes(c.statut || "nouvelle", c.statut_livraison || "en_attente_livreur");
-
       var dateAffichee = new Date(c.date_commande).toLocaleDateString("fr-FR") + " a " + new Date(c.date_commande).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      var classeBadge = c.statut_paiement === "paye" ? "badge-paye" : "badge-nonpaye";
+      var texteBadge = c.statut_paiement === "paye" ? "Paye" : "Non paye";
 
       html += "<div class=\"commande-carte\">" +
-                "<h3>Commande</h3>" +
                 "<div class=\"date\">" + dateAffichee + "</div>" +
-                "<div class=\"articles\">" + c.produit + "</div>";
+                "<h3>" + c.produit + "</h3>";
       if (c.total) {
         html += "<div class=\"total\">Total : " + Number(c.total).toLocaleString("fr-FR") + " FCFA</div>";
       }
+      html += "<span class=\"badge-statut " + classeBadge + "\">" + texteBadge + "</span>";
       html += "<div class=\"etapes\">";
       for (var j = 0; j < ETAPES.length; j++) {
         var classe = "etape";
         if (etat.faites[j] && j !== etat.active) classe += " faite";
         if (j === etat.active) classe += " active";
-        html += "<div class=\"" + classe + "\"><span class=\"pastille\"></span>" + ETAPES[j] + "</div>";
+        html += "<div class=\"" + classe + "\"><span class=\"pastille-etape\"></span>" + ETAPES[j] + "</div>";
       }
       html += "</div></div>";
+    }
+    zone.innerHTML = html;
+  });
+}
+
+function chargerReservationsClient() {
+  sb.from("reservations_voiture").select("*").eq("client_id", clientCourant.id).order("date_voyage", { ascending: false }).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeReservations");
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p class=\"vide\">Vous n'avez pas encore reserve de trajet Dakar-Bokidiawe.</p>";
+      return;
+    }
+
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var r = data[i];
+      var texteTrajet = r.direction === "aller" ? "Dakar &#8594; Bokidiawe" : "Bokidiawe &#8594; Dakar";
+      var classeBadge = r.statut_paiement === "paye" ? "badge-paye" : "badge-nonpaye";
+      var texteBadge = r.statut_paiement === "paye" ? "Paye" : "Non paye";
+
+      html += "<div class=\"commande-carte\">" +
+                "<div class=\"date\">" + formatDateFr(r.date_voyage) + "</div>" +
+                "<h3>" + texteTrajet + " &mdash; Chaise " + r.siege + "</h3>" +
+                (r.prix_total ? "<div class=\"total\">" + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</div>" : "") +
+                "<span class=\"badge-statut " + classeBadge + "\">" + texteBadge + "</span>" +
+                (r.statut === "annulee" ? " <span class=\"badge-statut badge-annulee\">Annulee</span>" : "") +
+              "</div>";
+    }
+    zone.innerHTML = html;
+  });
+}
+
+var LIBELLES_COURSE_CLIENT = {
+  nouvelle: "En attente d'un livreur",
+  acceptee: "Livreur en route",
+  en_cours: "En route vers la destination",
+  terminee: "Terminee",
+  annulee: "Annulee"
+};
+var CLASSES_COURSE_CLIENT = {
+  nouvelle: "badge-nonpaye",
+  acceptee: "badge-neutre",
+  en_cours: "badge-neutre",
+  terminee: "badge-paye",
+  annulee: "badge-annulee"
+};
+
+function chargerCoursesClient() {
+  sb.from("courses_moto").select("*").eq("client_id", clientCourant.id).limit(20).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeCoursesClient");
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p class=\"vide\">Vous n'avez pas encore demande de course moto.</p>";
+      return;
+    }
+
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var c = data[i];
+      var classeBadge = CLASSES_COURSE_CLIENT[c.statut] || "badge-neutre";
+      var texteBadge = LIBELLES_COURSE_CLIENT[c.statut] || c.statut;
+
+      html += "<div class=\"commande-carte\">" +
+                "<h3>Vers " + c.lieu_arrivee + "</h3>" +
+                (c.distance_km ? "<p>Distance : " + c.distance_km + " km</p>" : "") +
+                (c.prix_total ? "<div class=\"total\">" + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA (" + c.mode_paiement + ")</div>" : "") +
+                "<span class=\"badge-statut " + classeBadge + "\">" + texteBadge + "</span>" +
+              "</div>";
     }
     zone.innerHTML = html;
   });
