@@ -601,7 +601,6 @@ function envoyerPreinscription(event) {
             montant: montant,
             paytech_token: resultatPaiement.token || null
           }));
-          window.open("https://wa.me/221777589444?text=" + encodeURIComponent("Bonjour, je viens de deposer une pre-inscription pour " + pays + ". Nom : " + nom + ", Telephone : " + tel), "_blank");
           window.location.href = resultatPaiement.redirect_url;
         } else {
           btn.disabled = false;
@@ -638,4 +637,4 @@ function envoyerPreinscription(event) {
 </script>
 
 </body>
-      </html>
+  </html>
