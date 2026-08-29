@@ -140,6 +140,14 @@ var sb = supabase.createClient(
 );
 
 var panier = [];
+var panierSauvegarde = localStorage.getItem("aw_panier_boutique");
+if (panierSauvegarde) {
+  try {
+    panier = JSON.parse(panierSauvegarde) || [];
+  } catch (e) {
+    panier = [];
+  }
+}
 var positionClient = null;
 var clientConnecte = null;
 var tousLesProduits = [];
@@ -302,6 +310,8 @@ function calculerTotal() {
 }
 
 function mettreAJourAffichagePanier() {
+  localStorage.setItem("aw_panier_boutique", JSON.stringify(panier));
+
   var zonePanier = document.getElementById("zonePanier");
   var panierFlottant = document.getElementById("panierFlottant");
   var listeArticles = document.getElementById("listeArticlesPanier");
@@ -493,6 +503,7 @@ if (termeInitial) {
 }
 
 chargerProduits();
+mettreAJourAffichagePanier();
 </script>
 
 </body>
