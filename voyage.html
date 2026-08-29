@@ -126,7 +126,7 @@
     </ul>
     <div class="prix-box">
       <strong>Frais dossier :</strong> 75 000 FCFA (public) / 100 000 FCFA (prive)<br>
-      <strong>Frais Campus France :</strong> 85 000 FCFA (a payer a la banque BICIS)
+      <strong>Frais Campus France :</strong> 85 000 FCFA (a payer a SUNU Bank Senegal, ex-BICIS)
     </div>
     <p style="margin-top:10px;"><strong>Documents a fournir :</strong></p>
     <ul>
@@ -154,10 +154,17 @@
         <option value="Master 1">Master 1</option>
         <option value="Doctorat">Doctorat</option>
       </select>
+      <label class="aw-label">Etablissement vise</label>
+      <select class="p_type_etablissement" required>
+        <option value="">Choisir...</option>
+        <option value="Public">Public (75 000 FCFA)</option>
+        <option value="Prive">Prive (100 000 FCFA)</option>
+      </select>
       <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
+      <div class="recap-prix-frais" style="display:none;color:var(--accent);font-weight:700;font-family:var(--police-chiffres);margin-top:6px;"></div>
       <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour la France</button>
-      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+      <p class="note-paiement">Paiement du dossier en ligne securise (Wave, Orange Money, carte) a l'etape suivante. Les frais Campus France (85 000 FCFA) restent a payer separement a SUNU Bank Senegal.</p>
     </form>
   </div>
 </div>
@@ -166,22 +173,34 @@
   <a href="#" class="retour-pays btn-retour">&#8592; Retour aux pays</a>
   <div class="aw-carte detail-pays">
     <h3>&#127464;&#127462; Canada</h3>
+    <p>Tout savoir sur la procedure pour etudier au Canada avec AW SERVICES.</p>
     <p><strong>Les etapes :</strong></p>
     <ul>
-      <li>Etape 1 : Ecole de formation professionnelle</li>
-      <li>Etape 2 : Choix d'une formation adequate a votre projet</li>
-      <li>Etape 3 : Demande d'admission</li>
+      <li>Etape 1 : Choisir une filiere dans une de nos ecoles partenaires de formation professionnelle (villes : Montreal, Laval et Vancouver)</li>
+      <li>Etape 2 : Selection d'une formation adequate a votre projet d'etudes et professionnel</li>
+      <li>Etape 3 : Depot de la demande d'admission</li>
       <li>Etape 4 : Paiement des frais d'admission</li>
-      <li>Etape 5 : Reponse de l'etablissement</li>
-      <li>Etape 6 : Demande d'acceptation du Quebec (CAQ) ou Lettre d'Attestation Provinciale</li>
-      <li>Etape 7 : Procedure consulaire (Visa)</li>
+      <li>Etape 5 : Reception de la reponse de l'etablissement</li>
+      <li>Etape 6 : En cas d'admission, depot d'une demande d'acceptation du Quebec (CAQ) ou de la Lettre d'Attestation Provinciale</li>
+      <li>Etape 7 : Procedure consulaire pour l'obtention du visa d'etudes</li>
+    </ul>
+    <p style="margin-top:10px;"><strong>Niveau collegial disponible :</strong> BTS, Licence, Master</p>
+    <p style="margin-top:10px;"><strong>Documents a fournir selon le niveau :</strong></p>
+    <ul>
+      <li>Bulletins lycee (seconde, premiere, terminale)</li>
+      <li>Diplome du Bac et releve de notes</li>
+      <li>Passeport valide</li>
+      <li>Curriculum Vitae (CV)</li>
+      <li>Extrait de naissance</li>
+      <li>Dernier diplome obtenu</li>
     </ul>
     <div class="prix-box">
-      <strong>Frais d'admission et de dossier :</strong> 175 000 FCFA<br>
-      <strong>CAQ :</strong> 85 000 FCFA<br>
-      <strong>Demande de permis d'etudes :</strong> 130 000 FCFA<br>
-      <strong>Garant financier (si besoin) :</strong> 300 000 FCFA
+      <strong>Frais d'admission et de dossier :</strong> 150 000 FCFA<br>
+      <strong>Frais d'inscription (acompte) :</strong> 2 650 000 FCFA (obligatoire pour recevoir l'attestation de pre-inscription)<br>
+      <strong>Apres admission — CAQ ou Lettre Provinciale :</strong> 85 000 FCFA<br>
+      <strong>Apres CAQ — Demande de permis d'etudes :</strong> 130 000 FCFA
     </div>
+    <p style="margin-top:10px;color:var(--accent);font-weight:600;">L'acceptation est garantie a 100%.</p>
 
     <form class="form-preinscription" data-pays="Canada">
       <h4>Postuler pour le Canada</h4>
@@ -195,6 +214,7 @@
         <option value="">Choisir...</option>
         <option value="Terminale">Terminale</option>
         <option value="Bachelier">Bachelier</option>
+        <option value="BTS">BTS</option>
         <option value="Licence">Licence</option>
         <option value="Master 1">Master 1</option>
         <option value="Doctorat">Doctorat</option>
@@ -202,7 +222,7 @@
       <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
       <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour le Canada</button>
-      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+      <p class="note-paiement">Paiement du dossier en ligne securise (Wave, Orange Money, carte) a l'etape suivante. Les frais suivants (inscription, CAQ, permis) restent a payer separement, selon l'avancement du dossier.</p>
     </form>
   </div>
 </div>
@@ -243,7 +263,7 @@
       <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
       <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour les USA</button>
-      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+      <p class="note-paiement">Paiement du dossier en ligne securise (Wave, Orange Money, carte) a l'etape suivante.</p>
     </form>
   </div>
 </div>
@@ -279,7 +299,7 @@
       <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
       <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour le Maroc</button>
-      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+      <p class="note-paiement">Paiement du dossier en ligne securise (Wave, Orange Money, carte) a l'etape suivante.</p>
     </form>
   </div>
 </div>
@@ -319,7 +339,7 @@
       <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
       <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour la Russie</button>
-      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+      <p class="note-paiement">Tarif etabli selon votre profil : nous vous contactons apres etude de votre dossier.</p>
     </form>
   </div>
 </div>
@@ -391,7 +411,7 @@
       <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
       <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
       <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour la Belgique</button>
-      <p class="note-paiement">Paiement des frais en ligne (Wave, Orange Money, carte) bientot disponible ici.</p>
+      <p class="note-paiement">Paiement du dossier en ligne securise (Wave, Orange Money, carte) a l'etape suivante. Les frais d'admission (150 000 FCFA) restent a payer separement.</p>
     </form>
   </div>
 </div>
@@ -465,6 +485,40 @@ for (var f = 0; f < formulaires.length; f++) {
   formulaires[f].addEventListener("submit", envoyerPreinscription);
 }
 
+var FRAIS_DOSSIER = {
+  "Canada": 150000,
+  "USA": 400000,
+  "Maroc": 50000,
+  "Belgique": 200000
+};
+
+var selectTypeEtablissement = document.querySelector(".p_type_etablissement");
+if (selectTypeEtablissement) {
+  selectTypeEtablissement.addEventListener("change", function() {
+    var form = this.closest("form");
+    var recap = form.querySelector(".recap-prix-frais");
+    if (this.value === "Public") {
+      recap.textContent = "Frais de dossier a payer en ligne : 75 000 FCFA";
+      recap.style.display = "block";
+    } else if (this.value === "Prive") {
+      recap.textContent = "Frais de dossier a payer en ligne : 100 000 FCFA";
+      recap.style.display = "block";
+    } else {
+      recap.style.display = "none";
+    }
+  });
+}
+
+function calculerFraisDossier(pays, form) {
+  if (pays === "France") {
+    var type = form.querySelector(".p_type_etablissement").value;
+    if (type === "Public") return 75000;
+    if (type === "Prive") return 100000;
+    return null;
+  }
+  return FRAIS_DOSSIER[pays] || null;
+}
+
 function envoyerPreinscription(event) {
   event.preventDefault();
   var form = event.target;
@@ -480,28 +534,85 @@ function envoyerPreinscription(event) {
   var niveau = form.querySelector(".p_niveau").value;
   var fichiers = form.querySelector(".p_documents").files;
 
+  var montant = calculerFraisDossier(pays, form);
+  if (pays !== "Russie" && !montant) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Merci de choisir le type d'etablissement.</div>";
+    btn.disabled = false;
+    btn.textContent = "Postuler pour " + pays;
+    return;
+  }
+
   var urls = [];
   var total = fichiers.length;
   var compteur = 0;
 
   function finaliser() {
-    sb.from("preinscriptions_voyage").insert([{
+    var idPreinscription = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
+
+    var donnees = {
+      id: idPreinscription,
       nom: nom,
       telephone: tel,
       pays: pays,
       niveau: niveau,
       documents: urls
-    }]).then(function(reponse) {
-      btn.disabled = false;
-      btn.textContent = "Postuler pour " + pays;
+    };
+
+    if (pays !== "Russie") {
+      donnees.montant_frais = montant;
+      donnees.statut_paiement = "non_paye";
+    }
+
+    sb.from("preinscriptions_voyage").insert([donnees]).then(function(reponse) {
       if (reponse.error) {
+        btn.disabled = false;
+        btn.textContent = "Postuler pour " + pays;
         zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
         return;
       }
-      var message = "Bonjour, je souhaite une pre-inscription.\nPays : " + pays + "\nNom : " + nom + "\nTelephone : " + tel + "\nNiveau : " + niveau + "\nDocuments envoyes : " + total;
-      window.open("https://wa.me/221777589444?text=" + encodeURIComponent(message), "_blank");
-      zoneMsg.innerHTML = "<div class=\"msg succes\">Pre-inscription envoyee avec succes !</div>";
-      form.reset();
+
+      if (pays === "Russie") {
+        btn.disabled = false;
+        btn.textContent = "Postuler pour " + pays;
+        var message = "Bonjour, je souhaite une pre-inscription.\nPays : " + pays + "\nNom : " + nom + "\nTelephone : " + tel + "\nNiveau : " + niveau + "\nDocuments envoyes : " + total;
+        window.open("https://wa.me/221777589444?text=" + encodeURIComponent(message), "_blank");
+        zoneMsg.innerHTML = "<div class=\"msg succes\">Pre-inscription envoyee avec succes ! Nous vous contactons pour le tarif.</div>";
+        form.reset();
+        return;
+      }
+
+      fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table: "preinscriptions_voyage",
+          id: idPreinscription,
+          item_name: "Frais de dossier - " + pays,
+          item_price: montant,
+          telephone: tel,
+          nom: nom
+        })
+      }).then(function(r) { return r.json(); }).then(function(resultatPaiement) {
+        if (resultatPaiement.success === 1 && resultatPaiement.redirect_url) {
+          localStorage.setItem("aw_dernier_ticket", JSON.stringify({
+            type: "preinscription_voyage",
+            id: idPreinscription,
+            pays: pays,
+            montant: montant,
+            paytech_token: resultatPaiement.token || null
+          }));
+          window.open("https://wa.me/221777589444?text=" + encodeURIComponent("Bonjour, je viens de deposer une pre-inscription pour " + pays + ". Nom : " + nom + ", Telephone : " + tel), "_blank");
+          window.location.href = resultatPaiement.redirect_url;
+        } else {
+          btn.disabled = false;
+          btn.textContent = "Postuler pour " + pays;
+          zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur lors de la creation du paiement. Reessayez.</div>";
+        }
+      }).catch(function() {
+        btn.disabled = false;
+        btn.textContent = "Postuler pour " + pays;
+        zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur de connexion au service de paiement. Reessayez.</div>";
+      });
     });
   }
 
@@ -527,4 +638,4 @@ function envoyerPreinscription(event) {
 </script>
 
 </body>
-</html>
+      </html>
