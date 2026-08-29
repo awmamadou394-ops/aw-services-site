@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Admin Livreurs</title>
+<link rel="stylesheet" href="style-global.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .aw-header { display: flex; justify-content: space-between; align-items: center; text-align: left; }
+  .aw-header h1 { font-size: 17px; }
+  .deconnexion { background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 8px 14px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 600; font-family: var(--police-texte); }
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+  .chargement { text-align: center; padding: 40px; color: var(--texte-doux); }
+  .refus { text-align: center; padding: 40px; color: var(--alerte); }
+  .vide { color: var(--texte-doux); font-size: 14px; padding: 15px; text-align: center; }
+
+  .onglets { display: flex; gap: 8px; margin-bottom: var(--espace-lg); }
+  .onglet { flex: 1; background-color: var(--surface); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 12px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 600; text-align: center; font-family: var(--police-titre); }
+  .onglet.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
+  .panneau { display: none; }
+  .panneau.visible { display: block; }
+
+  .grille-kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: var(--espace-lg); }
+  .kpi { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: 14px; }
+  .kpi .valeur { font-family: var(--police-chiffres); font-size: 24px; font-weight: 700; color: var(--accent); }
+  .kpi .label { font-size: 11.5px; color: var(--texte-doux); margin-top: 2px; }
+
+  .carte-item { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 14px; margin-bottom: 10px; }
+  .carte-item h3 { font-size: 15px; font-family: var(--police-titre); margin-bottom: 4px; }
+  .carte-item p { font-size: 13px; color: var(--texte-doux); margin-top: 3px; }
+  .solde-item { font-family: var(--police-chiffres); font-size: 19px; font-weight: 700; color: var(--accent); margin-top: 6px; }
+  .ligne-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .badge-statut { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .badge-paye { background-color: rgba(63,163,77,0.15); color: var(--succes); }
+  .badge-nonpaye { background-color: rgba(232,72,58,0.15); color: var(--alerte); }
+  .badge-approuve { background-color: rgba(63,163,77,0.15); color: var(--succes); }
+  .badge-attente { background-color: rgba(242,169,59,0.15); color: var(--accent); }
+
+  .filtre-sous-onglets { display: flex; gap: 8px; margin-bottom: var(--espace-md); }
+  .sous-onglet { flex: 1; background-color: var(--fond); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 9px; border-radius: var(--rayon-petit); font-size: 12px; font-weight: 600; text-align: center; font-family: var(--police-texte); }
+  .sous-onglet.actif { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="aw-header">
+  <h1>Admin — Livreurs</h1>
+  <button class="deconnexion" id="btnDeconnexion">Deconnexion</button>
+</header>
+
+<a href="admin-espace.html" class="back">&#8592; Retour au tableau de bord</a>
+
+<div class="aw-conteneur">
+  <div id="zoneContenu" class="chargement">Verification des droits...</div>
+</div>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+var filtreLivreurs = "approuve";
+
+document.getElementById("btnDeconnexion").addEventListener("click", function() {
+  sb.auth.signOut().then(function() {
+    window.location.href = "admin-connexion.html";
+  });
+});
+
+function verifierEtCharger() {
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) {
+      window.location.href = "admin-connexion.html";
+      return;
+    }
+    sb.from("admins").select("*").eq("user_id", user.id).single().then(function(reponseAdmin) {
+      var admin = reponseAdmin.data;
+      var zone = document.getElementById("zoneContenu");
+      if (!admin) {
+        zone.innerHTML = "<div class=\"refus\">Acces refuse. Ce compte n a pas les droits administrateur.</div>";
+        return;
+      }
+
+      zone.innerHTML =
+        "<div class=\"grille-kpi\">" +
+          "<div class=\"kpi\"><div class=\"valeur\" id=\"kpiSoldeTotal\">-</div><div class=\"label\">Solde total livreurs (FCFA)</div></div>" +
+          "<div class=\"kpi\"><div class=\"valeur\" id=\"kpiLivreursApprouves\">-</div><div class=\"label\">Livreurs approuves</div></div>" +
+        "</div>" +
+
+        "<div class=\"onglets\">" +
+          "<div class=\"onglet actif\" id=\"ongletLivreurs\">Livreurs</div>" +
+          "<div class=\"onglet\" id=\"ongletRecharges\">Recharges</div>" +
+        "</div>" +
+
+        "<div class=\"panneau visible\" id=\"panneauLivreurs\">" +
+          "<div class=\"filtre-sous-onglets\">" +
+            "<div class=\"sous-onglet actif\" id=\"filtreApprouve\">Approuves</div>" +
+            "<div class=\"sous-onglet\" id=\"filtreTousLivreurs\">Tous</div>" +
+          "</div>" +
+          "<div id=\"listeLivreurs\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>" +
+
+        "<div class=\"panneau\" id=\"panneauRecharges\">" +
+          "<div id=\"listeRecharges\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>";
+
+      document.getElementById("ongletLivreurs").addEventListener("click", function() {
+        this.classList.add("actif");
+        document.getElementById("ongletRecharges").classList.remove("actif");
+        document.getElementById("panneauLivreurs").classList.add("visible");
+        document.getElementById("panneauRecharges").classList.remove("visible");
+      });
+      document.getElementById("ongletRecharges").addEventListener("click", function() {
+        this.classList.add("actif");
+        document.getElementById("ongletLivreurs").classList.remove("actif");
+        document.getElementById("panneauRecharges").classList.add("visible");
+        document.getElementById("panneauLivreurs").classList.remove("visible");
+      });
+      document.getElementById("filtreApprouve").addEventListener("click", function() {
+        filtreLivreurs = "approuve";
+        this.classList.add("actif");
+        document.getElementById("filtreTousLivreurs").classList.remove("actif");
+        chargerLivreurs();
+      });
+      document.getElementById("filtreTousLivreurs").addEventListener("click", function() {
+        filtreLivreurs = "tous";
+        this.classList.add("actif");
+        document.getElementById("filtreApprouve").classList.remove("actif");
+        chargerLivreurs();
+      });
+
+      chargerLivreurs();
+      chargerRecharges();
+    });
+  });
+}
+
+function chargerLivreurs() {
+  var zone = document.getElementById("listeLivreurs");
+  zone.innerHTML = "<p class=\"vide\">Chargement...</p>";
+
+  var requete = sb.from("livreurs").select("*");
+  if (filtreLivreurs === "approuve") {
+    requete = requete.eq("statut", "approuve");
+  }
+
+  requete.then(function(reponse) {
+    var data = reponse.data || [];
+
+    var totalSolde = 0;
+    var totalApprouves = 0;
+    for (var k = 0; k < data.length; k++) {
+      totalSolde += (data[k].solde_compte || 0);
+      if (data[k].statut === "approuve") totalApprouves++;
+    }
+    document.getElementById("kpiSoldeTotal").textContent = totalSolde.toLocaleString("fr-FR");
+    document.getElementById("kpiLivreursApprouves").textContent = totalApprouves;
+
+    if (data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucun livreur.</p>"; return; }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var l = data[i];
+      var badgeStatut = l.statut === "approuve" ? "<span class=\"badge-statut badge-approuve\">Approuve</span>" : "<span class=\"badge-statut badge-attente\">En attente</span>";
+      html += "<div class=\"carte-item\">" +
+                "<h3>" + l.nom + "</h3>" +
+                "<p>Telephone : " + l.telephone + "</p>" +
+                (l.zone ? "<p>Zone : " + l.zone + "</p>" : "") +
+                (l.vehicule ? "<p>Vehicule : " + l.vehicule + "</p>" : "") +
+                "<div class=\"solde-item\">" + Number(l.solde_compte || 0).toLocaleString("fr-FR") + " FCFA</div>" +
+                "<div class=\"ligne-badges\">" + badgeStatut + "</div>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+  });
+}
+
+function chargerRecharges() {
+  var zone = document.getElementById("listeRecharges");
+  zone.innerHTML = "<p class=\"vide\">Chargement...</p>";
+
+  sb.from("recharges_livreurs").select("*").order("date_creation", { ascending: false }).limit(50).then(function(reponse) {
+    var data = reponse.data || [];
+    if (data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucune recharge.</p>"; return; }
+
+    var idsLivreurs = [];
+    for (var i = 0; i < data.length; i++) {
+      if (data[i].livreur_id && idsLivreurs.indexOf(data[i].livreur_id) === -1) {
+        idsLivreurs.push(data[i].livreur_id);
+      }
+    }
+
+    sb.from("livreurs").select("id, nom").in("id", idsLivreurs).then(function(reponseLivreurs) {
+      var noms = {};
+      var livreursData = reponseLivreurs.data || [];
+      for (var n = 0; n < livreursData.length; n++) {
+        noms[livreursData[n].id] = livreursData[n].nom;
+      }
+
+      var html = "";
+      for (var i = 0; i < data.length; i++) {
+        var r = data[i];
+        var nomLivreur = noms[r.livreur_id] || "Livreur inconnu";
+        var dateAffichee = r.date_creation ? new Date(r.date_creation).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+        var badge = r.statut_paiement === "paye" ? "<span class=\"badge-statut badge-paye\">Payee</span>" : "<span class=\"badge-statut badge-nonpaye\">Non payee</span>";
+        html += "<div class=\"carte-item\">" +
+                  "<h3>" + nomLivreur + "</h3>" +
+                  "<p>" + dateAffichee + "</p>" +
+                  "<div class=\"solde-item\">" + Number(r.montant).toLocaleString("fr-FR") + " FCFA</div>" +
+                  "<div class=\"ligne-badges\">" + badge + "</div>" +
+                "</div>";
+      }
+      zone.innerHTML = html;
+    });
+  });
+}
+
+verifierEtCharger();
+</script>
+
+</body>
+</html>
