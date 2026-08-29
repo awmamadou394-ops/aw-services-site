@@ -72,9 +72,27 @@
   .nom-boutique { font-size: 10.5px; color: var(--texte); font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .info-boutique-active { display: none; background-color: var(--surface); border: 1px solid var(--accent); border-radius: var(--rayon-petit); padding: 12px; margin-bottom: var(--espace-md); }
   .info-boutique-active.visible { display: block; }
+
+  .fenetre-fond { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(10,10,25,0.85); align-items: center; justify-content: center; padding: 20px; }
+  .fenetre-fond.visible { display: flex; }
+  .fenetre-contenu { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: var(--espace-lg); width: 100%; box-shadow: var(--ombre-carte); }
+  .pastille-zone-actuelle { display: inline-flex; align-items: center; gap: 6px; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: 999px; padding: 7px 14px; font-size: 12.5px; color: var(--texte-doux); margin-bottom: var(--espace-md); }
+  .pastille-zone-actuelle button { background-color: transparent; border: none; color: var(--accent); font-weight: 700; font-size: 12.5px; font-family: var(--police-texte); }
 </style>
 </head>
 <body class="aw-avec-nav-bas">
+
+<div class="fenetre-fond visible" id="fenetreZone" style="z-index:50;">
+  <div class="fenetre-contenu" style="max-width:480px;">
+    <p class="aw-section-titre">Ou etes-vous ?</p>
+    <p class="desc" style="margin-bottom:12px;">Choisissez votre village pour voir les boutiques disponibles pres de chez vous.</p>
+    <select id="selectZoneClient" style="margin-bottom:10px;">
+      <option value="">Chargement...</option>
+    </select>
+    <p class="msg-position err" id="msgZoneClient" style="display:none;"></p>
+    <button type="button" class="aw-btn aw-btn-primaire" id="btnConfirmerZoneClient" style="width:100%;">Continuer</button>
+  </div>
+</div>
 
 <header class="aw-header">
   <h1>Catalogue</h1>
@@ -84,6 +102,11 @@
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
 <div class="aw-conteneur">
+  <div class="pastille-zone-actuelle" id="pastilleZone" style="display:none;">
+    &#128205; <span id="texteZoneActuelle"></span>
+    <button type="button" id="btnChangerZone">Changer</button>
+  </div>
+
   <div class="aw-recherche">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     <input type="text" id="champRecherche" placeholder="Rechercher un produit...">
@@ -124,13 +147,10 @@
       <p style="color:var(--texte-doux);font-size:13px;margin:4px 0 14px;">Paiement en ligne securise (Wave, Orange Money, carte bancaire) a l'etape suivante.</p>
 
       <label class="aw-label">Votre village / zone</label>
-      <select id="cmd_village" required>
-        <option value="">Choisir...</option>
-        <option value="Doumga Ouro Alpha">Doumga Ouro Alpha</option>
-        <option value="Ourossogui">Ourossogui</option>
-        <option value="Matam ville">Matam ville</option>
+      <select id="cmd_village" required disabled>
+        <option value="">Choisissez d'abord votre zone en haut de page</option>
       </select>
-      <p class="msg-position" style="margin-top:4px;">Livraison disponible uniquement dans ces zones pour le moment.</p>
+      <p class="msg-position" style="margin-top:4px;">Livraison uniquement dans votre zone selectionnee.</p>
 
       <label class="aw-label">Adresse precise (quartier, repere...)</label>
       <input class="aw-input" type="text" id="cmd_adresse" required>
@@ -185,9 +205,11 @@ var positionClient = null;
 var clientConnecte = null;
 var tousLesProduits = [];
 var tousLesVendeurs = [];
+var idsVendeursVisibles = [];
 var categorieActive = "Tous";
 var boutiqueActive = null;
 var termeRecherche = "";
+var zoneClient = localStorage.getItem("aw_zone_client") || null;
 
 function remplirProfilLocal() {
   var nom = localStorage.getItem("aw_client_nom");
@@ -219,8 +241,13 @@ function verifierConnexion() {
 
 function chargerBoutiques() {
   sb.from("vendeurs").select("*").eq("statut", "approuve").then(function(reponse) {
-    tousLesVendeurs = reponse.data || [];
+    var tous = reponse.data || [];
+    tousLesVendeurs = tous.filter(function(v) {
+      return !v.zone || v.zone === zoneClient;
+    });
+    idsVendeursVisibles = tousLesVendeurs.map(function(v) { return v.id; });
     afficherBoutiques();
+    afficherProduitsFiltres();
   });
 }
 
@@ -321,7 +348,8 @@ function afficherProduitsFiltres() {
     var matchCategorie = categorieActive === "Tous" || p.categorie === categorieActive;
     var matchRecherche = !termeRecherche || (p.nom && p.nom.toLowerCase().indexOf(termeRecherche) !== -1) || (p.description && p.description.toLowerCase().indexOf(termeRecherche) !== -1);
     var matchBoutique = !boutiqueActive || p.vendeur_id === boutiqueActive;
-    return matchCategorie && matchRecherche && matchBoutique;
+    var matchZone = idsVendeursVisibles.indexOf(p.vendeur_id) !== -1;
+    return matchCategorie && matchRecherche && matchBoutique && matchZone;
   });
   afficherProduits(filtres);
 }
@@ -613,6 +641,63 @@ if (termeInitial) {
   document.getElementById("champRecherche").value = termeInitial;
   termeRecherche = termeInitial.trim().toLowerCase();
 }
+
+function chargerZonesDisponibles(callback) {
+  sb.from("zones_actives").select("*").eq("actif", true).order("nom", { ascending: true }).then(function(reponse) {
+    var data = reponse.data || [];
+    var select = document.getElementById("selectZoneClient");
+    if (data.length === 0) {
+      select.innerHTML = "<option value=\"\">Aucune zone disponible pour le moment</option>";
+    } else {
+      var html = "<option value=\"\">Choisir...</option>";
+      for (var i = 0; i < data.length; i++) {
+        html += "<option value=\"" + data[i].nom + "\">" + data[i].nom + "</option>";
+      }
+      select.innerHTML = html;
+    }
+    if (callback) callback();
+  });
+}
+
+function afficherPastilleZone() {
+  var pastille = document.getElementById("pastilleZone");
+  if (zoneClient) {
+    document.getElementById("texteZoneActuelle").textContent = zoneClient;
+    pastille.style.display = "inline-flex";
+    var selectVillage = document.getElementById("cmd_village");
+    selectVillage.innerHTML = "<option value=\"" + zoneClient + "\">" + zoneClient + "</option>";
+    selectVillage.disabled = true;
+  } else {
+    pastille.style.display = "none";
+  }
+}
+
+document.getElementById("btnConfirmerZoneClient").addEventListener("click", function() {
+  var valeur = document.getElementById("selectZoneClient").value;
+  var msg = document.getElementById("msgZoneClient");
+  if (!valeur) {
+    msg.style.display = "block";
+    msg.textContent = "Choisissez votre village pour continuer.";
+    return;
+  }
+  zoneClient = valeur;
+  localStorage.setItem("aw_zone_client", zoneClient);
+  document.getElementById("fenetreZone").classList.remove("visible");
+  afficherPastilleZone();
+  chargerBoutiques();
+});
+
+document.getElementById("btnChangerZone").addEventListener("click", function() {
+  document.getElementById("fenetreZone").classList.add("visible");
+  document.getElementById("msgZoneClient").style.display = "none";
+});
+
+chargerZonesDisponibles(function() {
+  if (zoneClient) {
+    document.getElementById("fenetreZone").classList.remove("visible");
+    afficherPastilleZone();
+  }
+});
 
 chargerProduits();
 chargerBoutiques();
