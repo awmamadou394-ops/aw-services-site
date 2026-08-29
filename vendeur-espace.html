@@ -102,6 +102,18 @@ function chargerEspace() {
         "</div>" +
 
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Ma boutique publique</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13.5px;margin-bottom:10px;\">Ces informations sont visibles par les clients sur la page Boutique.</p>" +
+          (vendeur.logo_url ? "<img src=\"" + vendeur.logo_url + "\" style=\"width:70px;height:70px;border-radius:12px;object-fit:cover;margin-bottom:10px;display:block;\">" : "") +
+          "<label class=\"aw-label\">Logo de la boutique</label>" +
+          "<input type=\"file\" id=\"v_logo\" accept=\"image/*\" style=\"background-color:var(--fond);border:1px solid var(--bordure);border-radius:var(--rayon-petit);padding:10px;color:var(--texte-doux);font-size:12px;width:100%;\">" +
+          "<label class=\"aw-label\" style=\"margin-top:10px;\">Description courte</label>" +
+          "<textarea class=\"aw-textarea\" id=\"v_description\" rows=\"2\" placeholder=\"Ex : Produits bio et naturels\">" + (vendeur.description || "") + "</textarea>" +
+          "<button type=\"button\" class=\"aw-btn aw-btn-primaire\" id=\"btnMajBoutique\" style=\"width:100%;margin-top:10px;\">Enregistrer</button>" +
+          "<p class=\"msg-notif\" id=\"msgBoutique\"></p>" +
+        "</div>" +
+
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
           "<p class=\"aw-section-titre\">Notifications</p>" +
           "<p style=\"color:var(--texte-doux);font-size:13.5px;margin-bottom:10px;\">Soyez alerte des nouvelles commandes et de leur suivi.</p>" +
           "<button class=\"aw-btn aw-btn-primaire\" id=\"btnActiverNotif\" style=\"width:100%;\">Activer les notifications</button>" +
@@ -147,6 +159,7 @@ function chargerEspace() {
 
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
       document.getElementById("btnPosition").addEventListener("click", enregistrerPosition);
+      document.getElementById("btnMajBoutique").addEventListener("click", majBoutique);
       document.getElementById("formProduit").addEventListener("submit", ajouterProduit);
       verifierEtatNotifications();
       chargerCommandes();
@@ -321,6 +334,54 @@ function enregistrerPosition() {
     btn.textContent = "Enregistrer ma position actuelle";
     zoneMsg.innerHTML = "<div class=\"msg erreur\">Impossible d'obtenir votre position. Verifiez que la localisation est activee.</div>";
   });
+}
+
+function majBoutique() {
+  var btn = document.getElementById("btnMajBoutique");
+  var msg = document.getElementById("msgBoutique");
+  var description = document.getElementById("v_description").value;
+  var fichierLogo = document.getElementById("v_logo").files[0];
+
+  btn.disabled = true;
+  btn.textContent = "Enregistrement...";
+  msg.className = "msg-notif";
+  msg.textContent = "";
+
+  function finaliser(logoUrl) {
+    var maj = { description: description };
+    if (logoUrl) maj.logo_url = logoUrl;
+
+    sb.from("vendeurs").update(maj).eq("id", vendeurCourant.id).then(function(reponse) {
+      btn.disabled = false;
+      btn.textContent = "Enregistrer";
+      if (reponse.error) {
+        msg.className = "msg-notif err";
+        msg.textContent = "Erreur : " + reponse.error.message;
+        return;
+      }
+      msg.className = "msg-notif ok";
+      msg.textContent = "Boutique mise a jour !";
+      vendeurCourant.description = description;
+      if (logoUrl) vendeurCourant.logo_url = logoUrl;
+    });
+  }
+
+  if (fichierLogo) {
+    var nomFichier = "logo_" + vendeurCourant.id + "_" + Date.now() + "_" + fichierLogo.name;
+    sb.storage.from("produits").upload(nomFichier, fichierLogo).then(function(reponseUpload) {
+      if (reponseUpload.error) {
+        btn.disabled = false;
+        btn.textContent = "Enregistrer";
+        msg.className = "msg-notif err";
+        msg.textContent = "Erreur lors de l'envoi du logo.";
+        return;
+      }
+      var urlData = sb.storage.from("produits").getPublicUrl(nomFichier);
+      finaliser(urlData.data.publicUrl);
+    });
+  } else {
+    finaliser(null);
+  }
 }
 
 function chargerProduits() {
