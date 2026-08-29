@@ -38,6 +38,9 @@
   .badge-annulee { background-color: var(--fond); color: var(--texte-discret); }
 
   .btn-annuler { background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 8px 12px; border-radius: var(--rayon-petit); font-size: 12px; font-weight: 700; font-family: var(--police-texte); margin-top: 10px; }
+
+  .entete-groupe { color: var(--accent); font-family: var(--police-titre); font-size: 14px; font-weight: 700; margin: 18px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--bordure); }
+  .entete-groupe:first-child { margin-top: 0; }
 </style>
 </head>
 <body>
@@ -147,23 +150,28 @@ function chargerReservations() {
   var requete = sb.from("reservations_voiture").select("*");
   if (filtreReservations === "avenir") {
     var aujourdHui = new Date().toISOString().split("T")[0];
-    requete = requete.gte("date_voyage", aujourdHui).order("date_voyage", { ascending: true }).limit(100);
+    requete = requete.gte("date_voyage", aujourdHui).order("date_voyage", { ascending: true }).order("direction", { ascending: true }).limit(100);
   } else {
-    requete = requete.order("date_voyage", { ascending: false }).limit(50);
+    requete = requete.order("date_voyage", { ascending: false }).order("direction", { ascending: true }).limit(50);
   }
 
   requete.then(function(reponse) {
     var data = reponse.data || [];
     if (data.length === 0) { zone.innerHTML = "<p class=\"vide\">Aucune reservation.</p>"; return; }
     var html = "";
+    var groupeActuel = null;
     for (var i = 0; i < data.length; i++) {
       var r = data[i];
       var texteTrajet = r.direction === "aller" ? "Dakar &#8594; Bokidiawe" : "Bokidiawe &#8594; Dakar";
+      var cleGroupe = r.date_voyage + "|" + r.direction;
+      if (cleGroupe !== groupeActuel) {
+        groupeActuel = cleGroupe;
+        html += "<p class=\"entete-groupe\">" + formatDateFr(r.date_voyage) + " &mdash; " + texteTrajet + "</p>";
+      }
       var badgePaiement = r.statut_paiement === "paye" ? "<span class=\"badge-statut badge-paye\">Paye</span>" : "<span class=\"badge-statut badge-nonpaye\">Non paye</span>";
       var badgeAnnulee = r.statut === "annulee" ? "<span class=\"badge-statut badge-annulee\">Annulee</span>" : "";
       html += "<div class=\"carte-item\">" +
                 "<h3>" + (r.prenom || "") + " " + (r.nom_famille || r.client_nom || "") + " &mdash; Chaise " + r.siege + "</h3>" +
-                "<p>" + texteTrajet + " &mdash; " + formatDateFr(r.date_voyage) + "</p>" +
                 "<p>Telephone : " + r.client_telephone + "</p>" +
                 (r.village_depart ? "<p>Village de depart : " + r.village_depart + "</p>" : "") +
                 (r.prix_total ? "<p>Prix : " + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</p>" : "") +
