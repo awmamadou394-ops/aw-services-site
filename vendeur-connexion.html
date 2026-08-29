@@ -50,6 +50,11 @@
       <input class="aw-input" type="tel" id="i_telephone" required>
       <label class="aw-label">Categorie de produits</label>
       <input class="aw-input" type="text" id="i_categorie" placeholder="Ex : Parfums, Electronique..." required>
+      <label class="aw-label">Zone de la boutique</label>
+      <select id="i_zone_vendeur" required>
+        <option value="">Chargement...</option>
+      </select>
+      <p style="color:var(--texte-doux);font-size:12px;margin-top:4px;">Seuls les clients de cette zone verront votre boutique.</p>
       <label class="aw-label">Email</label>
       <input class="aw-input" type="email" id="i_email" required>
       <label class="aw-label">Mot de passe</label>
@@ -93,6 +98,23 @@ document.getElementById("ongletInscription").addEventListener("click", function(
   document.getElementById("carteConnexion").classList.remove("visible");
 });
 
+function chargerZonesVendeur() {
+  var select = document.getElementById("i_zone_vendeur");
+  sb.from("zones_actives").select("*").eq("actif", true).order("nom", { ascending: true }).then(function(reponse) {
+    var data = reponse.data || [];
+    if (data.length === 0) {
+      select.innerHTML = "<option value=\"\">Aucune zone disponible, contactez-nous</option>";
+      return;
+    }
+    var html = "<option value=\"\">Choisir...</option>";
+    for (var i = 0; i < data.length; i++) {
+      html += "<option value=\"" + data[i].nom + "\">" + data[i].nom + "</option>";
+    }
+    select.innerHTML = html;
+  });
+}
+chargerZonesVendeur();
+
 document.getElementById("ongletConnexion").addEventListener("click", function() {
   document.getElementById("ongletConnexion").classList.add("actif");
   document.getElementById("ongletInscription").classList.remove("actif");
@@ -107,6 +129,7 @@ document.getElementById("formInscription").addEventListener("submit", function(e
   var nom = document.getElementById("i_nom").value;
   var telephone = document.getElementById("i_telephone").value;
   var categorie = document.getElementById("i_categorie").value;
+  var zoneVendeur = document.getElementById("i_zone_vendeur").value;
   var email = document.getElementById("i_email").value;
   var password = document.getElementById("i_password").value;
   var password2 = document.getElementById("i_password2").value;
@@ -131,6 +154,7 @@ document.getElementById("formInscription").addEventListener("submit", function(e
       nom: nom,
       telephone: telephone,
       produits_categorie: categorie,
+      zone: zoneVendeur,
       user_id: userId
     }]).then(function(reponse2) {
       btn.disabled = false;
