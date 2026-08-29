@@ -118,7 +118,38 @@ if (!ticketBrut) {
     t = null;
   }
 
-  if (t && t.type === "commande" && t.paytech_token) {
+  if (t && t.type === "preinscription_voyage" && t.paytech_token) {
+    var tentativesVoyage = 0;
+
+    function verifierVoyage() {
+      fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: t.paytech_token, table: "preinscriptions_voyage", id: t.id })
+      }).then(function(r) { return r.json(); }).then(function(resultat) {
+        if (resultat.confirme === true) {
+          etatFinal(true, "Paiement reussi !", "Votre dossier de pre-inscription pour " + t.pays + " est confirme (" + Number(t.montant).toLocaleString("fr-FR") + " FCFA payes). Notre equipe vous contacte sous peu pour la suite de la procedure.");
+          localStorage.removeItem("aw_dernier_ticket");
+        } else if (tentativesVoyage < 4) {
+          tentativesVoyage++;
+          setTimeout(verifierVoyage, 3000);
+        } else if (resultat.state === "running") {
+          etatFinal(false, "Paiement en cours de traitement", "Votre paiement n'est pas encore confirme. Patientez une minute, votre dossier sera automatiquement mis a jour des confirmation.");
+        } else {
+          etatFinal(false, "Paiement non confirme", "Nous n'avons pas pu confirmer ce paiement pour le moment. Si le montant a ete debite, contactez-nous sur WhatsApp.");
+        }
+      }).catch(function() {
+        if (tentativesVoyage < 4) {
+          tentativesVoyage++;
+          setTimeout(verifierVoyage, 3000);
+        } else {
+          etatFinal(false, "Verification impossible", "Nous n'avons pas pu verifier votre paiement pour le moment. Contactez-nous sur WhatsApp si le montant a ete debite.");
+        }
+      });
+    }
+
+    verifierVoyage();
+  } else if (t && t.type === "commande" && t.paytech_token) {
     var tentativesCommande = 0;
 
     function verifierCommande() {
