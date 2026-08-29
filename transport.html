@@ -269,7 +269,7 @@
 </div>
 
 <footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
-  &copy; 2026 AW SERVICES — Tous droits reserves
+  &copy; 2026 AW SERVICES &mdash; Tous droits reserves
 </footer>
 
 <script>
@@ -325,6 +325,23 @@ var destinationChoisie = null;
 var carteChoix = null;
 var marqueurChoix = null;
 var autocompleteDestination = null;
+var clientConnecte = null;
+
+function verifierConnexionClient() {
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) return;
+    sb.from("clients").select("*").eq("user_id", user.id).single().then(function(reponse) {
+      if (reponse.data) {
+        clientConnecte = reponse.data;
+        document.getElementById("m_nom").value = clientConnecte.nom;
+        document.getElementById("m_telephone").value = clientConnecte.telephone;
+        document.getElementById("v_telephone").value = clientConnecte.telephone;
+      }
+    });
+  });
+}
+verifierConnexionClient();
 
 document.getElementById("btnChoisirDestination").addEventListener("click", function() {
   document.getElementById("fenetreCarte").classList.add("visible");
@@ -497,6 +514,9 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
     mode_paiement: paiement,
     statut: "nouvelle"
   };
+  if (clientConnecte) {
+    donneesCourse.client_id = clientConnecte.id;
+  }
 
   var positionClientPourSuivi = { lat: positionMoto.lat, lng: positionMoto.lng };
 
@@ -895,6 +915,9 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
     statut: "confirmee",
     statut_paiement: "non_paye"
   };
+  if (clientConnecte) {
+    donneesReservation.client_id = clientConnecte.id;
+  }
   if (direction === "retour") {
     donneesReservation.village_depart = village;
     if (positionVoiture) {
