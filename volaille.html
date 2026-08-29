@@ -32,9 +32,10 @@
   select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
   .msg-position { font-size: 12px; color: var(--texte-doux); margin-top: 6px; }
   .msg-position.ok { color: var(--succes); }
+  .badge-panier-nav { position: absolute; top: -6px; right: -10px; background-color: var(--alerte); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 999px; align-items: center; justify-content: center; font-family: var(--police-chiffres); padding: 0 3px; }
 </style>
 </head>
-<body>
+<body class="aw-avec-nav-bas">
 
 <header class="aw-header">
   <h1>Foyre Bamtaare</h1>
@@ -128,8 +129,8 @@
       <label class="aw-label">Adresse precise (quartier, repere...)</label>
       <input class="aw-input" type="text" id="cmd_adresse" required>
 
-      <button type="button" class="aw-btn aw-btn-secondaire" id="btnPositionCmd" style="width:100%;margin-top:10px;">&#128205; Utiliser ma position actuelle (pour le livreur)</button>
-      <p class="msg-position" id="msgPositionCmd">Optionnel, mais aide le livreur a vous trouver facilement.</p>
+      <button type="button" class="aw-btn aw-btn-secondaire" id="btnPositionCmd" style="width:100%;margin-top:10px;">&#128205; Utiliser ma position actuelle (obligatoire)</button>
+      <p class="msg-position" id="msgPositionCmd">Obligatoire pour que le livreur puisse vous trouver.</p>
 
       <button type="submit" class="aw-btn aw-btn-primaire" id="btn_commande" style="width:100%;margin-top:14px;">Confirmer la commande</button>
     </form>
@@ -137,8 +138,22 @@
 </div>
 
 <footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
-  &copy; 2026 AW SERVICES — Tous droits reserves
+  &copy; 2026 AW SERVICES &mdash; Tous droits reserves
 </footer>
+
+<nav class="aw-bottom-nav">
+  <a href="index.html" class="aw-nav-item"><span class="icone">&#127968;</span>Accueil</a>
+  <a href="catalogue.html" class="aw-nav-item"><span class="icone">&#128717;&#65039;</span>Boutique</a>
+  <a href="transport.html" class="aw-nav-item"><span class="icone">&#128664;</span>Transport</a>
+  <a href="catalogue.html#zonePanier" class="aw-nav-item">
+    <span class="icone" style="position:relative;display:inline-block;">
+      &#128722;
+      <span class="badge-panier-nav" id="badgePanierNav" style="display:none;"></span>
+    </span>
+    Panier
+  </a>
+  <a href="https://wa.me/221777589444" target="_blank" class="aw-nav-item"><span class="icone">&#128172;</span>Contact</a>
+</nav>
 
 <script>
 var sb = supabase.createClient(
@@ -232,6 +247,15 @@ document.getElementById("formCommande").addEventListener("submit", envoyerComman
 function envoyerCommande(event) {
   event.preventDefault();
   var btn = document.getElementById("btn_commande");
+
+  if (!positionClient) {
+    var msgPos = document.getElementById("msgPositionCmd");
+    msgPos.textContent = "Merci d'utiliser le bouton de position avant d'envoyer (obligatoire).";
+    msgPos.className = "msg-position";
+    document.getElementById("btnPositionCmd").scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = "Envoi en cours...";
 
@@ -313,6 +337,26 @@ function envoyerCommande(event) {
 verifierConnexion();
 remplirProfilLocal();
 mettreAJourRecap();
+
+function majBadgePanierNav() {
+  var badge = document.getElementById("badgePanierNav");
+  if (!badge) return;
+  var panierSauvegarde = localStorage.getItem("aw_panier_boutique");
+  var total = 0;
+  if (panierSauvegarde) {
+    try {
+      var panierLu = JSON.parse(panierSauvegarde) || [];
+      for (var i = 0; i < panierLu.length; i++) total += panierLu[i].quantite;
+    } catch (e) {}
+  }
+  if (total > 0) {
+    badge.textContent = total;
+    badge.style.display = "flex";
+  } else {
+    badge.style.display = "none";
+  }
+}
+majBadgePanierNav();
 </script>
 
 </body>
