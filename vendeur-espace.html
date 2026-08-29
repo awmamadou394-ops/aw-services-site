@@ -109,6 +109,9 @@ function chargerEspace() {
           "<input type=\"file\" id=\"v_logo\" accept=\"image/*\" style=\"background-color:var(--fond);border:1px solid var(--bordure);border-radius:var(--rayon-petit);padding:10px;color:var(--texte-doux);font-size:12px;width:100%;\">" +
           "<label class=\"aw-label\" style=\"margin-top:10px;\">Description courte</label>" +
           "<textarea class=\"aw-textarea\" id=\"v_description\" rows=\"2\" placeholder=\"Ex : Produits bio et naturels\">" + (vendeur.description || "") + "</textarea>" +
+          "<label class=\"aw-label\" style=\"margin-top:10px;\">Zone de la boutique</label>" +
+          "<select id=\"v_zone\"><option value=\"\">Chargement...</option></select>" +
+          "<p style=\"color:var(--texte-doux);font-size:12px;margin-top:4px;\">Seuls les clients de cette zone verront votre boutique.</p>" +
           "<button type=\"button\" class=\"aw-btn aw-btn-primaire\" id=\"btnMajBoutique\" style=\"width:100%;margin-top:10px;\">Enregistrer</button>" +
           "<p class=\"msg-notif\" id=\"msgBoutique\"></p>" +
         "</div>" +
@@ -161,6 +164,7 @@ function chargerEspace() {
       document.getElementById("btnPosition").addEventListener("click", enregistrerPosition);
       document.getElementById("btnMajBoutique").addEventListener("click", majBoutique);
       document.getElementById("formProduit").addEventListener("submit", ajouterProduit);
+      chargerZonesVendeurEspace(vendeur.zone);
       verifierEtatNotifications();
       chargerCommandes();
       chargerProduits();
@@ -336,10 +340,24 @@ function enregistrerPosition() {
   });
 }
 
+function chargerZonesVendeurEspace(zoneActuelle) {
+  var select = document.getElementById("v_zone");
+  sb.from("zones_actives").select("*").eq("actif", true).order("nom", { ascending: true }).then(function(reponse) {
+    var data = reponse.data || [];
+    var html = "<option value=\"\">Choisir...</option>";
+    for (var i = 0; i < data.length; i++) {
+      var selectionne = data[i].nom === zoneActuelle ? " selected" : "";
+      html += "<option value=\"" + data[i].nom + "\"" + selectionne + ">" + data[i].nom + "</option>";
+    }
+    select.innerHTML = html;
+  });
+}
+
 function majBoutique() {
   var btn = document.getElementById("btnMajBoutique");
   var msg = document.getElementById("msgBoutique");
   var description = document.getElementById("v_description").value;
+  var zoneChoisie = document.getElementById("v_zone").value;
   var fichierLogo = document.getElementById("v_logo").files[0];
 
   btn.disabled = true;
@@ -348,7 +366,7 @@ function majBoutique() {
   msg.textContent = "";
 
   function finaliser(logoUrl) {
-    var maj = { description: description };
+    var maj = { description: description, zone: zoneChoisie };
     if (logoUrl) maj.logo_url = logoUrl;
 
     sb.from("vendeurs").update(maj).eq("id", vendeurCourant.id).then(function(reponse) {
@@ -362,6 +380,7 @@ function majBoutique() {
       msg.className = "msg-notif ok";
       msg.textContent = "Boutique mise a jour !";
       vendeurCourant.description = description;
+      vendeurCourant.zone = zoneChoisie;
       if (logoUrl) vendeurCourant.logo_url = logoUrl;
     });
   }
