@@ -62,6 +62,16 @@
   .panier-flottant button { background-color: #1C1200; color: var(--accent); border: none; padding: 10px 16px; border-radius: var(--rayon-petit); font-weight: 700; font-size: 13px; font-family: var(--police-texte); }
 
   .badge-panier-nav { position: absolute; top: -6px; right: -10px; background-color: var(--alerte); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 999px; align-items: center; justify-content: center; font-family: var(--police-chiffres); padding: 0 3px; }
+
+  .boutiques-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: var(--espace-lg); scrollbar-width: none; }
+  .boutiques-scroll::-webkit-scrollbar { display: none; }
+  .carte-boutique { flex: 0 0 auto; width: 88px; text-align: center; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px 6px; }
+  .carte-boutique.actif { border-color: var(--accent); border-width: 2px; }
+  .logo-boutique { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; margin: 0 auto 6px; display: block; background-color: var(--fond); }
+  .initiale-boutique { width: 44px; height: 44px; border-radius: 50%; background-color: var(--fond); color: var(--accent); font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-family: var(--police-titre); }
+  .nom-boutique { font-size: 10.5px; color: var(--texte); font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .info-boutique-active { display: none; background-color: var(--surface); border: 1px solid var(--accent); border-radius: var(--rayon-petit); padding: 12px; margin-bottom: var(--espace-md); }
+  .info-boutique-active.visible { display: block; }
 </style>
 </head>
 <body class="aw-avec-nav-bas">
@@ -77,6 +87,13 @@
   <div class="aw-recherche">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     <input type="text" id="champRecherche" placeholder="Rechercher un produit...">
+  </div>
+
+  <div class="boutiques-scroll" id="zoneBoutiques"></div>
+
+  <div class="info-boutique-active" id="infoBoutiqueActive">
+    <p style="font-weight:700;font-family:var(--police-titre);" id="nomBoutiqueActive"></p>
+    <p style="color:var(--texte-doux);font-size:13px;margin-top:4px;" id="descBoutiqueActive"></p>
   </div>
 
   <div class="categories" id="zoneCategories"></div>
@@ -167,7 +184,9 @@ if (panierSauvegarde) {
 var positionClient = null;
 var clientConnecte = null;
 var tousLesProduits = [];
+var tousLesVendeurs = [];
 var categorieActive = "Tous";
+var boutiqueActive = null;
 var termeRecherche = "";
 
 function remplirProfilLocal() {
@@ -196,6 +215,66 @@ function verifierConnexion() {
       }
     });
   });
+}
+
+function chargerBoutiques() {
+  sb.from("vendeurs").select("*").eq("statut", "approuve").then(function(reponse) {
+    tousLesVendeurs = reponse.data || [];
+    afficherBoutiques();
+  });
+}
+
+function afficherBoutiques() {
+  var zone = document.getElementById("zoneBoutiques");
+  if (tousLesVendeurs.length === 0) {
+    zone.style.display = "none";
+    return;
+  }
+
+  var html = "<div class=\"carte-boutique" + (!boutiqueActive ? " actif" : "") + "\" data-vendeur=\"\">" +
+                "<div class=\"initiale-boutique\">Tous</div>" +
+                "<div class=\"nom-boutique\">Toutes</div>" +
+              "</div>";
+
+  for (var i = 0; i < tousLesVendeurs.length; i++) {
+    var v = tousLesVendeurs[i];
+    var actif = boutiqueActive === v.id ? " actif" : "";
+    var initiale = v.nom ? v.nom.charAt(0).toUpperCase() : "?";
+    html += "<div class=\"carte-boutique" + actif + "\" data-vendeur=\"" + v.id + "\">" +
+              (v.logo_url ? "<img class=\"logo-boutique\" src=\"" + v.logo_url + "\">" : "<div class=\"initiale-boutique\">" + initiale + "</div>") +
+              "<div class=\"nom-boutique\">" + v.nom + "</div>" +
+            "</div>";
+  }
+  zone.innerHTML = html;
+
+  var cartes = zone.getElementsByClassName("carte-boutique");
+  for (var c = 0; c < cartes.length; c++) {
+    cartes[c].addEventListener("click", function() {
+      var idVendeur = this.getAttribute("data-vendeur");
+      boutiqueActive = idVendeur || null;
+
+      var tousBoutons = zone.getElementsByClassName("carte-boutique");
+      for (var t = 0; t < tousBoutons.length; t++) tousBoutons[t].classList.remove("actif");
+      this.classList.add("actif");
+
+      var zoneInfo = document.getElementById("infoBoutiqueActive");
+      if (boutiqueActive) {
+        var vendeurChoisi = null;
+        for (var k = 0; k < tousLesVendeurs.length; k++) {
+          if (tousLesVendeurs[k].id === boutiqueActive) { vendeurChoisi = tousLesVendeurs[k]; break; }
+        }
+        if (vendeurChoisi) {
+          document.getElementById("nomBoutiqueActive").textContent = vendeurChoisi.nom;
+          document.getElementById("descBoutiqueActive").textContent = vendeurChoisi.description || "";
+          zoneInfo.classList.add("visible");
+        }
+      } else {
+        zoneInfo.classList.remove("visible");
+      }
+
+      afficherProduitsFiltres();
+    });
+  }
 }
 
 function chargerProduits() {
@@ -241,7 +320,8 @@ function afficherProduitsFiltres() {
   var filtres = tousLesProduits.filter(function(p) {
     var matchCategorie = categorieActive === "Tous" || p.categorie === categorieActive;
     var matchRecherche = !termeRecherche || (p.nom && p.nom.toLowerCase().indexOf(termeRecherche) !== -1) || (p.description && p.description.toLowerCase().indexOf(termeRecherche) !== -1);
-    return matchCategorie && matchRecherche;
+    var matchBoutique = !boutiqueActive || p.vendeur_id === boutiqueActive;
+    return matchCategorie && matchRecherche && matchBoutique;
   });
   afficherProduits(filtres);
 }
@@ -535,6 +615,7 @@ if (termeInitial) {
 }
 
 chargerProduits();
+chargerBoutiques();
 mettreAJourAffichagePanier();
 </script>
 
