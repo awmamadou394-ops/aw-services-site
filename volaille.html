@@ -119,10 +119,7 @@
 
       <label class="aw-label">Votre village / zone</label>
       <select id="cmd_village" required>
-        <option value="">Choisir...</option>
-        <option value="Doumga Ouro Alpha">Doumga Ouro Alpha</option>
-        <option value="Ourossogui">Ourossogui</option>
-        <option value="Matam ville">Matam ville</option>
+        <option value="">Chargement...</option>
       </select>
       <p class="msg-position" style="margin-top:4px;">Livraison disponible uniquement dans ces zones pour le moment.</p>
 
@@ -337,6 +334,23 @@ function envoyerCommande(event) {
 verifierConnexion();
 remplirProfilLocal();
 mettreAJourRecap();
+
+function chargerZonesVolaille() {
+  var select = document.getElementById("cmd_village");
+  sb.from("zones_actives").select("*").eq("actif", true).order("nom", { ascending: true }).then(function(reponse) {
+    var data = reponse.data || [];
+    if (data.length === 0) {
+      select.innerHTML = "<option value=\"\">Aucune zone disponible, contactez-nous</option>";
+      return;
+    }
+    var html = "<option value=\"\">Choisir...</option>";
+    for (var i = 0; i < data.length; i++) {
+      html += "<option value=\"" + data[i].nom + "\">" + data[i].nom + "</option>";
+    }
+    select.innerHTML = html;
+  });
+}
+chargerZonesVolaille();
 
 function majBadgePanierNav() {
   var badge = document.getElementById("badgePanierNav");
