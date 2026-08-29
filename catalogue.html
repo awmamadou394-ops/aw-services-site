@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  body { padding-bottom: 90px; }
+  body { padding-bottom: 30px; }
   .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
 
   .aw-recherche { max-width: 100%; margin: 0 0 var(--espace-md); }
@@ -60,9 +60,11 @@
   .panier-flottant.visible { display: flex; }
   .panier-flottant span { color: #1C1200; font-weight: 700; font-size: 14px; font-family: var(--police-chiffres); }
   .panier-flottant button { background-color: #1C1200; color: var(--accent); border: none; padding: 10px 16px; border-radius: var(--rayon-petit); font-weight: 700; font-size: 13px; font-family: var(--police-texte); }
+
+  .badge-panier-nav { position: absolute; top: -6px; right: -10px; background-color: var(--alerte); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 999px; align-items: center; justify-content: center; font-family: var(--police-chiffres); padding: 0 3px; }
 </style>
 </head>
-<body>
+<body class="aw-avec-nav-bas">
 
 <header class="aw-header">
   <h1>Catalogue</h1>
@@ -132,6 +134,20 @@
 <footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
   &copy; 2026 AW SERVICES — Tous droits reserves
 </footer>
+
+<nav class="aw-bottom-nav">
+  <a href="index.html" class="aw-nav-item"><span class="icone">&#127968;</span>Accueil</a>
+  <a href="catalogue.html" class="aw-nav-item actif"><span class="icone">&#128717;&#65039;</span>Boutique</a>
+  <a href="transport.html" class="aw-nav-item"><span class="icone">&#128664;</span>Transport</a>
+  <a href="#zonePanier" class="aw-nav-item" id="navPanierCatalogue">
+    <span class="icone" style="position:relative;display:inline-block;">
+      &#128722;
+      <span class="badge-panier-nav" id="badgePanierNavCatalogue" style="display:none;"></span>
+    </span>
+    Panier
+  </a>
+  <a href="https://wa.me/221777589444" target="_blank" class="aw-nav-item"><span class="icone">&#128172;</span>Contact</a>
+</nav>
 
 <script>
 var sb = supabase.createClient(
@@ -317,9 +333,19 @@ function mettreAJourAffichagePanier() {
   var listeArticles = document.getElementById("listeArticlesPanier");
   var totalPanierEl = document.getElementById("totalPanier");
   var texteFlottant = document.getElementById("texteFlottant");
+  var badgeNav = document.getElementById("badgePanierNavCatalogue");
 
   var nombreArticles = 0;
   for (var i = 0; i < panier.length; i++) { nombreArticles += panier[i].quantite; }
+
+  if (badgeNav) {
+    if (nombreArticles > 0) {
+      badgeNav.textContent = nombreArticles;
+      badgeNav.style.display = "flex";
+    } else {
+      badgeNav.style.display = "none";
+    }
+  }
 
   if (panier.length === 0) {
     zonePanier.classList.remove("visible");
@@ -365,6 +391,12 @@ function mettreAJourAffichagePanier() {
 }
 
 document.getElementById("btnVoirPanier").addEventListener("click", function() {
+  document.getElementById("zonePanier").classList.add("visible");
+  document.getElementById("zonePanier").scrollIntoView({ behavior: "smooth" });
+});
+
+document.getElementById("navPanierCatalogue").addEventListener("click", function(e) {
+  e.preventDefault();
   document.getElementById("zonePanier").classList.add("visible");
   document.getElementById("zonePanier").scrollIntoView({ behavior: "smooth" });
 });
