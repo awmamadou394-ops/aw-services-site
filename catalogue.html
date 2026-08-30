@@ -84,13 +84,28 @@
 
 <div class="fenetre-fond visible" id="fenetreZone" style="z-index:50;">
   <div class="fenetre-contenu" style="max-width:480px;">
-    <p class="aw-section-titre">Ou etes-vous ?</p>
-    <p class="desc" style="margin-bottom:12px;">Choisissez votre village pour voir les boutiques disponibles pres de chez vous.</p>
-    <select id="selectZoneClient" style="margin-bottom:10px;">
-      <option value="">Chargement...</option>
-    </select>
-    <p class="msg-position err" id="msgZoneClient" style="display:none;"></p>
-    <button type="button" class="aw-btn aw-btn-primaire" id="btnConfirmerZoneClient" style="width:100%;">Continuer</button>
+    <div id="etapeLocalisation">
+      <p class="aw-section-titre">Ou etes-vous ?</p>
+      <p class="desc" style="margin-bottom:12px;">Nous devons verifier votre position pour vous montrer les boutiques disponibles pres de chez vous.</p>
+      <button type="button" class="aw-btn aw-btn-primaire" id="btnLocaliserClient" style="width:100%;">&#128205; Verifier ma position</button>
+      <p class="msg-position" id="msgLocalisationClient"></p>
+    </div>
+
+    <div id="etapeChoixManuel" style="display:none;">
+      <p class="aw-section-titre">Confirmez votre village</p>
+      <p class="desc" style="margin-bottom:12px;" id="texteChoixManuel"></p>
+      <select id="selectZoneClient" style="margin-bottom:10px;">
+        <option value="">Choisir...</option>
+      </select>
+      <p class="msg-position err" id="msgZoneClient" style="display:none;"></p>
+      <button type="button" class="aw-btn aw-btn-primaire" id="btnConfirmerZoneClient" style="width:100%;">Continuer</button>
+    </div>
+
+    <div id="etapeHorsZone" style="display:none;">
+      <p class="aw-section-titre" style="color:var(--alerte);">Service non disponible ici</p>
+      <p class="desc" style="margin-bottom:12px;" id="texteHorsZone"></p>
+      <a href="https://wa.me/221777589444" target="_blank" class="aw-btn aw-btn-secondaire" style="width:100%;display:block;text-align:center;text-decoration:none;">Nous contacter sur WhatsApp</a>
+    </div>
   </div>
 </div>
 
@@ -642,19 +657,32 @@ if (termeInitial) {
   termeRecherche = termeInitial.trim().toLowerCase();
 }
 
+var RAYON_ZONE_KM = 5;
+var zonesAvecCoordonnees = [];
+var zonesSansCoordonnees = [];
+
+function distanceKmZone(lat1, lon1, lat2, lon2) {
+  var R = 6371;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLon = (lon2 - lon1) * Math.PI / 180;
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function afficherEtape(nom) {
+  document.getElementById("etapeLocalisation").style.display = nom === "localisation" ? "block" : "none";
+  document.getElementById("etapeChoixManuel").style.display = nom === "manuel" ? "block" : "none";
+  document.getElementById("etapeHorsZone").style.display = nom === "horszone" ? "block" : "none";
+}
+
 function chargerZonesDisponibles(callback) {
   sb.from("zones_actives").select("*").eq("actif", true).order("nom", { ascending: true }).then(function(reponse) {
     var data = reponse.data || [];
-    var select = document.getElementById("selectZoneClient");
-    if (data.length === 0) {
-      select.innerHTML = "<option value=\"\">Aucune zone disponible pour le moment</option>";
-    } else {
-      var html = "<option value=\"\">Choisir...</option>";
-      for (var i = 0; i < data.length; i++) {
-        html += "<option value=\"" + data[i].nom + "\">" + data[i].nom + "</option>";
-      }
-      select.innerHTML = html;
-    }
+    zonesAvecCoordonnees = data.filter(function(z) { return z.latitude && z.longitude; });
+    zonesSansCoordonnees = data.filter(function(z) { return !z.latitude || !z.longitude; });
     if (callback) callback();
   });
 }
@@ -672,6 +700,75 @@ function afficherPastilleZone() {
   }
 }
 
+function validerZoneClient(nomZone) {
+  zoneClient = nomZone;
+  localStorage.setItem("aw_zone_client", zoneClient);
+  document.getElementById("fenetreZone").classList.remove("visible");
+  afficherPastilleZone();
+  chargerBoutiques();
+}
+
+function proposerChoixManuel() {
+  if (zonesSansCoordonnees.length === 0) {
+    document.getElementById("texteHorsZone").textContent = "Vous semblez situe en dehors de nos zones de livraison actuelles (rayon de " + RAYON_ZONE_KM + " km autour de nos villages couverts).";
+    afficherEtape("horszone");
+    return;
+  }
+  document.getElementById("texteChoixManuel").textContent = "Nous n'avons pas pu vous situer automatiquement. Choisissez votre village :";
+  var select = document.getElementById("selectZoneClient");
+  var html = "<option value=\"\">Choisir...</option>";
+  for (var i = 0; i < zonesSansCoordonnees.length; i++) {
+    html += "<option value=\"" + zonesSansCoordonnees[i].nom + "\">" + zonesSansCoordonnees[i].nom + "</option>";
+  }
+  select.innerHTML = html;
+  afficherEtape("manuel");
+}
+
+document.getElementById("btnLocaliserClient").addEventListener("click", function() {
+  var btn = document.getElementById("btnLocaliserClient");
+  var msg = document.getElementById("msgLocalisationClient");
+
+  if (!navigator.geolocation) {
+    msg.textContent = "La localisation n'est pas disponible sur cet appareil.";
+    proposerChoixManuel();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Localisation en cours...";
+  msg.textContent = "";
+
+  navigator.geolocation.getCurrentPosition(function(position) {
+    btn.disabled = false;
+    btn.textContent = "Verifier ma position";
+
+    var lat = position.coords.latitude;
+    var lng = position.coords.longitude;
+    var zoneTrouvee = null;
+    var distanceMin = Infinity;
+
+    for (var i = 0; i < zonesAvecCoordonnees.length; i++) {
+      var z = zonesAvecCoordonnees[i];
+      var d = distanceKmZone(lat, lng, z.latitude, z.longitude);
+      if (d <= RAYON_ZONE_KM && d < distanceMin) {
+        distanceMin = d;
+        zoneTrouvee = z;
+      }
+    }
+
+    if (zoneTrouvee) {
+      validerZoneClient(zoneTrouvee.nom);
+    } else {
+      proposerChoixManuel();
+    }
+  }, function() {
+    btn.disabled = false;
+    btn.textContent = "Verifier ma position";
+    msg.textContent = "Impossible d'obtenir votre position. Activez la localisation et reessayez, ou choisissez manuellement ci-dessous.";
+    proposerChoixManuel();
+  });
+});
+
 document.getElementById("btnConfirmerZoneClient").addEventListener("click", function() {
   var valeur = document.getElementById("selectZoneClient").value;
   var msg = document.getElementById("msgZoneClient");
@@ -680,16 +777,13 @@ document.getElementById("btnConfirmerZoneClient").addEventListener("click", func
     msg.textContent = "Choisissez votre village pour continuer.";
     return;
   }
-  zoneClient = valeur;
-  localStorage.setItem("aw_zone_client", zoneClient);
-  document.getElementById("fenetreZone").classList.remove("visible");
-  afficherPastilleZone();
-  chargerBoutiques();
+  validerZoneClient(valeur);
 });
 
 document.getElementById("btnChangerZone").addEventListener("click", function() {
   document.getElementById("fenetreZone").classList.add("visible");
   document.getElementById("msgZoneClient").style.display = "none";
+  afficherEtape("localisation");
 });
 
 chargerZonesDisponibles(function() {
