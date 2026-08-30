@@ -51,7 +51,7 @@
 
   <div id="zoneBillet"></div>
 
-  <a href="index.html" class="aw-btn aw-btn-primaire" style="display:inline-block;margin-top:24px;">Retour a l'accueil</a>
+  <a href="index.html" id="btnRetour" class="aw-btn aw-btn-primaire" style="display:inline-block;margin-top:24px;">Retour a l'accueil</a>
 </div>
 
 <script>
@@ -106,6 +106,22 @@ function etatFinal(succes, titre, message) {
   document.getElementById("texteMessage").textContent = message;
 }
 
+function adapterBoutonRetour(type) {
+  var btn = document.getElementById("btnRetour");
+  if (!btn) return;
+  var DESTINATIONS = {
+    recharge_livreur: { href: "livreur-espace.html", texte: "Retour a mon espace livreur" },
+    commande: { href: "client-espace.html", texte: "Voir mes commandes" },
+    preinscription_voyage: { href: "voyage.html", texte: "Retour a la page Voyage" },
+    reservation_voiture: { href: "transport.html", texte: "Retour a Transport" }
+  };
+  var cible = DESTINATIONS[type];
+  if (cible) {
+    btn.href = cible.href;
+    btn.textContent = cible.texte;
+  }
+}
+
 var ticketBrut = localStorage.getItem("aw_dernier_ticket");
 
 if (!ticketBrut) {
@@ -119,6 +135,7 @@ if (!ticketBrut) {
   }
 
   if (t && t.type === "preinscription_voyage" && t.paytech_token) {
+    adapterBoutonRetour(t.type);
     var tentativesVoyage = 0;
 
     function verifierVoyage() {
@@ -150,6 +167,7 @@ if (!ticketBrut) {
 
     verifierVoyage();
   } else if (t && t.type === "commande" && t.paytech_token) {
+    adapterBoutonRetour(t.type);
     var tentativesCommande = 0;
 
     function verifierCommande() {
@@ -181,6 +199,7 @@ if (!ticketBrut) {
 
     verifierCommande();
   } else if (t && t.type === "recharge_livreur" && t.paytech_token) {
+    adapterBoutonRetour(t.type);
     var tentativesRecharge = 0;
 
     function verifierRecharge() {
@@ -216,10 +235,12 @@ if (!ticketBrut) {
     localStorage.removeItem("aw_dernier_ticket");
   } else if (!t.paytech_token) {
     // Pas de token disponible, on affiche quand meme le billet (ancien flux)
+    adapterBoutonRetour("reservation_voiture");
     etatFinal(true, "Paiement reussi !", "Votre reservation est confirmee. Voici votre billet :");
     afficherBillet(t);
     localStorage.removeItem("aw_dernier_ticket");
   } else {
+    adapterBoutonRetour("reservation_voiture");
     var tentatives = 0;
 
     function verifierPaiement() {
