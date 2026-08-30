@@ -24,6 +24,11 @@
   .ligne-zone .nom-zone { font-size: 14.5px; font-weight: 600; color: var(--texte); }
   .ligne-zone .nom-zone.inactif { color: var(--texte-discret); }
 
+  .carte-zone { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 13px 14px; margin-bottom: 8px; }
+  .statut-coords { font-size: 11.5px; color: var(--alerte); margin-top: 8px; }
+  .statut-coords.ok { color: var(--succes); }
+  .btn-capturer { width: 100%; margin-top: 8px; background-color: var(--fond); border: 1px solid var(--accent); color: var(--accent); padding: 9px; border-radius: var(--rayon-petit); font-size: 12.5px; font-weight: 700; font-family: var(--police-texte); }
+
   .interrupteur { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
   .interrupteur input { opacity: 0; width: 0; height: 0; }
   .glissiere { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: 999px; transition: 0.15s; }
@@ -137,12 +142,17 @@ function afficherZones() {
   var html = "";
   for (var i = 0; i < filtrees.length; i++) {
     var z = filtrees[i];
-    html += "<div class=\"ligne-zone\">" +
-              "<span class=\"nom-zone" + (z.actif ? "" : " inactif") + "\">" + z.nom + "</span>" +
-              "<label class=\"interrupteur\">" +
-                "<input type=\"checkbox\" class=\"toggle-zone\" data-id=\"" + z.id + "\"" + (z.actif ? " checked" : "") + ">" +
-                "<span class=\"glissiere\"></span>" +
-              "</label>" +
+    var aCoords = z.latitude && z.longitude;
+    html += "<div class=\"carte-zone\">" +
+              "<div class=\"ligne-zone\" style=\"margin-bottom:0;\">" +
+                "<span class=\"nom-zone" + (z.actif ? "" : " inactif") + "\">" + z.nom + "</span>" +
+                "<label class=\"interrupteur\">" +
+                  "<input type=\"checkbox\" class=\"toggle-zone\" data-id=\"" + z.id + "\"" + (z.actif ? " checked" : "") + ">" +
+                  "<span class=\"glissiere\"></span>" +
+                "</label>" +
+              "</div>" +
+              "<p class=\"statut-coords" + (aCoords ? " ok" : "") + "\">" + (aCoords ? "Position GPS definie" : "Position GPS non definie (verification client desactivee pour ce village)") + "</p>" +
+              "<button type=\"button\" class=\"btn-capturer\" data-id=\"" + z.id + "\">&#128205; " + (aCoords ? "Redefinir ma position ici" : "Je suis ici : capturer la position") + "</button>" +
             "</div>";
   }
   zone.innerHTML = html;
@@ -159,6 +169,38 @@ function afficherZones() {
           return;
         }
         chargerZones();
+      });
+    });
+  }
+
+  var boutonsCapturer = document.getElementsByClassName("btn-capturer");
+  for (var c = 0; c < boutonsCapturer.length; c++) {
+    boutonsCapturer[c].addEventListener("click", function(e) {
+      var btn = e.target;
+      var id = btn.getAttribute("data-id");
+
+      if (!navigator.geolocation) {
+        alert("La localisation n'est pas disponible sur cet appareil.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Localisation en cours...";
+
+      navigator.geolocation.getCurrentPosition(function(position) {
+        sb.from("zones_actives").update({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        }).eq("id", id).then(function(reponse) {
+          if (reponse.error) {
+            alert("Erreur : " + reponse.error.message);
+          }
+          chargerZones();
+        });
+      }, function() {
+        btn.disabled = false;
+        btn.textContent = "Je suis ici : capturer la position";
+        alert("Impossible d'obtenir votre position. Verifiez que la localisation est activee.");
       });
     });
   }
