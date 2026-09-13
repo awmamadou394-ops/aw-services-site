@@ -13,6 +13,13 @@
   footer { text-align: center; padding: var(--espace-lg); color: var(--texte-discret); font-size: 12px; }
   .badge-panier-nav { position: absolute; top: -6px; right: -10px; background-color: var(--alerte); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 999px; align-items: center; justify-content: center; font-family: var(--police-chiffres); padding: 0 3px; }
 </style>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#12142B">
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
 </head>
 <body class="aw-avec-nav-bas">
 
