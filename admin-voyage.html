@@ -131,7 +131,7 @@ function chargerPreinscriptions() {
       if (p.documents && p.documents.length > 0) {
         htmlDocuments = "<div class=\"liste-documents\">";
         for (var d = 0; d < p.documents.length; d++) {
-          htmlDocuments += "<a class=\"lien-document\" href=\"" + p.documents[d] + "\" target=\"_blank\">Document " + (d + 1) + "</a>";
+          htmlDocuments += "<button type=\"button\" class=\"lien-document btn-doc-voyage\" data-chemin=\"" + p.documents[d] + "\">Document " + (d + 1) + "</button>";
         }
         htmlDocuments += "</div>";
       }
@@ -148,7 +148,30 @@ function chargerPreinscriptions() {
               "</div>";
     }
     zone.innerHTML = html;
+    attacherBoutonsDocVoyage();
   });
+}
+
+function attacherBoutonsDocVoyage() {
+  var boutons = document.getElementsByClassName("btn-doc-voyage");
+  for (var i = 0; i < boutons.length; i++) {
+    boutons[i].addEventListener("click", function(e) {
+      var btn = e.target;
+      var chemin = btn.getAttribute("data-chemin");
+      var texteOriginal = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Ouverture...";
+      sb.storage.from("documents-voyage").createSignedUrl(chemin, 300).then(function(reponse) {
+        btn.disabled = false;
+        btn.textContent = texteOriginal;
+        if (reponse.error || !reponse.data) {
+          alert("Impossible d'ouvrir le document.");
+          return;
+        }
+        window.open(reponse.data.signedUrl, "_blank");
+      });
+    });
+  }
 }
 
 verifierEtCharger();
