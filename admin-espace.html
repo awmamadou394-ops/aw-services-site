@@ -101,6 +101,7 @@ function verifierEtCharger() {
             "<div class=\"kpi\"><div class=\"valeur\" id=\"kpiAttente\">-</div><div class=\"label\">En attente d'approbation</div></div>" +
             "<div class=\"kpi\"><div class=\"valeur\" id=\"kpiReservations\">-</div><div class=\"label\">Reservations Transport a venir</div></div>" +
             "<div class=\"kpi\"><div class=\"valeur\" id=\"kpiLivreursActifs\">-</div><div class=\"label\">Livreurs actifs</div></div>" +
+            "<div class=\"kpi\"><div class=\"valeur\" id=\"kpiChauffeursActifs\">-</div><div class=\"label\">Chauffeurs actifs</div></div>" +
           "</div>" +
         "</div>" +
 
@@ -175,6 +176,7 @@ function verifierEtCharger() {
       chargerKpiCommandesJour();
       chargerKpiReservations();
       chargerKpiLivreursActifs();
+      chargerKpiChauffeursActifs();
     });
   });
 }
@@ -220,6 +222,12 @@ function chargerKpiReservations() {
 function chargerKpiLivreursActifs() {
   sb.from("livreurs").select("id", { count: "exact", head: true }).eq("statut", "approuve").then(function(reponse) {
     document.getElementById("kpiLivreursActifs").textContent = reponse.count || 0;
+  });
+}
+
+function chargerKpiChauffeursActifs() {
+  sb.from("chauffeurs").select("id", { count: "exact", head: true }).eq("statut", "approuve").then(function(reponse) {
+    document.getElementById("kpiChauffeursActifs").textContent = reponse.count || 0;
   });
 }
 
