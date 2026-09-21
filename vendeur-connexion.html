@@ -25,6 +25,8 @@
   .lien-oublie a { color: var(--accent); font-size: 13px; text-decoration: none; font-weight: 600; }
   #zoneOublie { display: none; margin-top: var(--espace-md); padding-top: var(--espace-md); border-top: 1px solid var(--bordure); }
   #zoneOublie.visible { display: block; }
+
+  .aide-champ { color: var(--texte-doux); font-size: 12px; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -54,7 +56,10 @@
       <select id="i_zone_vendeur" required>
         <option value="">Chargement...</option>
       </select>
-      <p style="color:var(--texte-doux);font-size:12px;margin-top:4px;">Seuls les clients de cette zone verront votre boutique.</p>
+      <p class="aide-champ">Seuls les clients de cette zone verront votre boutique.</p>
+      <label class="aw-label">Carte d'identite nationale (CNI)</label>
+      <input class="aw-input" type="file" id="i_cni" accept="image/*,application/pdf" required>
+      <p class="aide-champ">Photo nette ou PDF, 5 Mo maximum. Visible uniquement par l'equipe AW SERVICES, pour verifier votre identite.</p>
       <label class="aw-label">Email</label>
       <input class="aw-input" type="email" id="i_email" required>
       <label class="aw-label">Mot de passe</label>
@@ -90,6 +95,9 @@ var sb = supabase.createClient(
   "https://vnceunqygoiwglnwpgcr.supabase.co",
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
+
+var TYPES_CNI = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf" };
+var TAILLE_MAX_CNI = 5 * 1024 * 1024;
 
 document.getElementById("ongletInscription").addEventListener("click", function() {
   document.getElementById("ongletInscription").classList.add("actif");
@@ -133,38 +141,70 @@ document.getElementById("formInscription").addEventListener("submit", function(e
   var email = document.getElementById("i_email").value;
   var password = document.getElementById("i_password").value;
   var password2 = document.getElementById("i_password2").value;
+  var fichier = document.getElementById("i_cni").files[0];
 
   if (password !== password2) {
     msg.innerHTML = "<div class=\"msg erreur\">Les mots de passe ne correspondent pas.</div>";
     return;
   }
+  if (!fichier) {
+    msg.innerHTML = "<div class=\"msg erreur\">Ajoutez la photo de votre CNI.</div>";
+    return;
+  }
+  var ext = TYPES_CNI[fichier.type];
+  if (!ext) {
+    msg.innerHTML = "<div class=\"msg erreur\">Format non accepte. Utilisez une photo (JPG, PNG, WEBP) ou un PDF.</div>";
+    return;
+  }
+  if (fichier.size > TAILLE_MAX_CNI) {
+    msg.innerHTML = "<div class=\"msg erreur\">Fichier trop lourd (5 Mo maximum).</div>";
+    return;
+  }
+
+  function reactiver() {
+    btn.disabled = false;
+    btn.textContent = "Creer mon compte vendeur";
+  }
 
   btn.disabled = true;
-  btn.textContent = "Creation en cours...";
+  btn.textContent = "Envoi de la CNI...";
+  msg.innerHTML = "";
 
-  sb.auth.signUp({ email: email, password: password }).then(function(reponse) {
-    if (reponse.error) {
-      btn.disabled = false;
-      btn.textContent = "Creer mon compte vendeur";
-      msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
+  var chemin = "vendeurs/" + Date.now() + "-" + Math.random().toString(36).slice(2, 10) + "." + ext;
+
+  sb.storage.from("documents-identite").upload(chemin, fichier, { contentType: fichier.type, upsert: false }).then(function(up) {
+    if (up.error) {
+      reactiver();
+      msg.innerHTML = "<div class=\"msg erreur\">Erreur d'envoi de la CNI : " + up.error.message + "</div>";
       return;
     }
-    var userId = reponse.data.user.id;
-    sb.from("vendeurs").insert([{
-      nom: nom,
-      telephone: telephone,
-      produits_categorie: categorie,
-      zone: zoneVendeur,
-      user_id: userId
-    }]).then(function(reponse2) {
-      btn.disabled = false;
-      btn.textContent = "Creer mon compte vendeur";
-      if (reponse2.error) {
-        msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse2.error.message + "</div>";
+
+    btn.textContent = "Creation en cours...";
+
+    sb.auth.signUp({ email: email, password: password }).then(function(reponse) {
+      if (reponse.error) {
+        reactiver();
+        msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
         return;
       }
-      msg.innerHTML = "<div class=\"msg succes\">Compte cree ! Verifiez votre email pour confirmer, puis connectez-vous.</div>";
-      document.getElementById("formInscription").reset();
+      var userId = reponse.data.user.id;
+      sb.from("vendeurs").insert([{
+        nom: nom,
+        telephone: telephone,
+        produits_categorie: categorie,
+        zone: zoneVendeur,
+        user_id: userId,
+        cni_url: chemin,
+        statut: "en_attente"
+      }]).then(function(reponse2) {
+        reactiver();
+        if (reponse2.error) {
+          msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse2.error.message + "</div>";
+          return;
+        }
+        msg.innerHTML = "<div class=\"msg succes\">Compte cree ! Verifiez votre email pour confirmer. Votre CNI sera verifiee par notre equipe avant l'activation de votre boutique.</div>";
+        document.getElementById("formInscription").reset();
+      });
     });
   });
 });
@@ -180,13 +220,32 @@ document.getElementById("formConnexion").addEventListener("submit", function(eve
   btn.textContent = "Connexion en cours...";
 
   sb.auth.signInWithPassword({ email: email, password: password }).then(function(reponse) {
-    btn.disabled = false;
-    btn.textContent = "Se connecter";
     if (reponse.error) {
+      btn.disabled = false;
+      btn.textContent = "Se connecter";
       msg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
       return;
     }
-    window.location.href = "vendeur-espace.html";
+
+    sb.from("vendeurs").select("statut").eq("user_id", reponse.data.user.id).maybeSingle().then(function(r) {
+      btn.disabled = false;
+      btn.textContent = "Se connecter";
+      var statut = r.data ? r.data.statut : null;
+
+      if (statut === "en_attente") {
+        sb.auth.signOut().then(function() {
+          msg.innerHTML = "<div class=\"msg erreur\">Votre compte est en attente de verification de votre CNI. Nous vous contacterons des que c'est valide.</div>";
+        });
+        return;
+      }
+      if (statut === "refuse") {
+        sb.auth.signOut().then(function() {
+          msg.innerHTML = "<div class=\"msg erreur\">Votre compte n'a pas ete valide. Contactez AW SERVICES.</div>";
+        });
+        return;
+      }
+      window.location.href = "vendeur-espace.html";
+    });
   });
 });
 
