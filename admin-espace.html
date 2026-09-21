@@ -36,6 +36,8 @@
   .boutons { display: flex; gap: 8px; margin-top: 12px; }
   .btn-approuver { flex: 1; background-color: var(--accent); color: #1C1200; border: none; padding: 10px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; font-family: var(--police-texte); }
   .btn-refuser { flex: 1; background-color: transparent; border: 1px solid var(--alerte); color: var(--alerte); padding: 10px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; font-family: var(--police-texte); }
+  .btn-doc { width: 100%; background-color: transparent; border: 1px solid var(--bordure); color: var(--texte); padding: 9px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 600; font-family: var(--police-texte); margin-top: 8px; }
+  .doc-absent { font-size: 12px; color: var(--texte-discret); margin-top: 8px; }
   .vide { color: var(--texte-doux); font-size: 14px; padding: 15px; text-align: center; }
   .date-commande { font-size: 11px; color: var(--texte-discret); margin-bottom: 4px; }
 
@@ -235,6 +237,9 @@ function chargerVendeurs() {
                 "<h3>" + v.nom + "</h3>" +
                 "<p>Telephone : " + v.telephone + "</p>" +
                 "<p>Produits : " + v.produits_categorie + "</p>" +
+                (v.cni_url ?
+                  "<button class=\"btn-doc btn-v-doc\" data-chemin=\"" + v.cni_url + "\">Voir la CNI</button>"
+                  : "<p class=\"doc-absent\">Aucune CNI enregistree</p>") +
                 "<div class=\"boutons\">" +
                   "<button class=\"btn-approuver btn-v-approuver\" data-id=\"" + v.id + "\">Approuver</button>" +
                   "<button class=\"btn-refuser btn-v-refuser\" data-id=\"" + v.id + "\">Refuser</button>" +
@@ -242,6 +247,7 @@ function chargerVendeurs() {
               "</div>";
     }
     zone.innerHTML = html;
+    attacherBoutonsDoc("btn-v-doc");
     attacherBoutons("btn-v-approuver", "vendeurs", "approuve", chargerVendeurs);
     attacherBoutons("btn-v-refuser", "vendeurs", "refuse", chargerVendeurs);
   });
@@ -261,6 +267,9 @@ function chargerChauffeurs() {
                 "<h3>" + c.nom + "</h3>" +
                 "<p>Telephone : " + c.telephone + "</p>" +
                 "<p>" + c.vehicule + "</p>" +
+                (c.permis_url ?
+                  "<button class=\"btn-doc btn-c-doc\" data-chemin=\"" + c.permis_url + "\">Voir le permis</button>"
+                  : "<p class=\"doc-absent\">Aucun permis enregistre</p>") +
                 "<div class=\"boutons\">" +
                   "<button class=\"btn-approuver btn-c-approuver\" data-id=\"" + c.id + "\">Approuver</button>" +
                   "<button class=\"btn-refuser btn-c-refuser\" data-id=\"" + c.id + "\">Refuser</button>" +
@@ -268,6 +277,7 @@ function chargerChauffeurs() {
               "</div>";
     }
     zone.innerHTML = html;
+    attacherBoutonsDoc("btn-c-doc");
     attacherBoutons("btn-c-approuver", "chauffeurs", "approuve", chargerChauffeurs);
     attacherBoutons("btn-c-refuser", "chauffeurs", "refuse", chargerChauffeurs);
   });
@@ -320,6 +330,9 @@ function chargerLivreurs() {
                 "<h3>" + l.nom + "</h3>" +
                 "<p>Telephone : " + l.telephone + "</p>" +
                 "<p>" + l.vehicule + " - " + l.zone + "</p>" +
+                (l.permis_url ?
+                  "<button class=\"btn-doc btn-l-doc\" data-chemin=\"" + l.permis_url + "\">Voir le permis</button>"
+                  : "<p class=\"doc-absent\">Aucun permis enregistre</p>") +
                 "<div class=\"boutons\">" +
                   "<button class=\"btn-approuver btn-l-approuver\" data-id=\"" + l.id + "\">Approuver</button>" +
                   "<button class=\"btn-refuser btn-l-refuser\" data-id=\"" + l.id + "\">Refuser</button>" +
@@ -327,6 +340,7 @@ function chargerLivreurs() {
               "</div>";
     }
     zone.innerHTML = html;
+    attacherBoutonsDoc("btn-l-doc");
     attacherBoutons("btn-l-approuver", "livreurs", "approuve", chargerLivreurs);
     attacherBoutons("btn-l-refuser", "livreurs", "refuse", chargerLivreurs);
   });
@@ -355,6 +369,28 @@ function chargerCommandes() {
     }
     zone.innerHTML = html;
   });
+}
+
+function attacherBoutonsDoc(classeBouton) {
+  var boutons = document.getElementsByClassName(classeBouton);
+  for (var i = 0; i < boutons.length; i++) {
+    boutons[i].addEventListener("click", function(e) {
+      var btn = e.target;
+      var chemin = btn.getAttribute("data-chemin");
+      var texteOriginal = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Ouverture...";
+      sb.storage.from("documents-identite").createSignedUrl(chemin, 300).then(function(reponse) {
+        btn.disabled = false;
+        btn.textContent = texteOriginal;
+        if (reponse.error || !reponse.data) {
+          alert("Impossible d'ouvrir le document.");
+          return;
+        }
+        window.open(reponse.data.signedUrl, "_blank");
+      });
+    });
+  }
 }
 
 function attacherBoutons(classeBouton, table, nouveauStatut, callbackRecharger) {
