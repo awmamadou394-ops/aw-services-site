@@ -8,7 +8,7 @@ const SUPABASE_URL = "https://vnceunqygoiwglnwpgcr.supabase.co";
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
-const SITE_URL = "https://awmamadou394-ops.github.io/aw-services-site";
+const SITE_URL = "https://awservices.sn";
 
 const NB_PRODUITS_BOUTIQUE = 4;
 const NB_BIENS_IMMOBILIER = 2;
