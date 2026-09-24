@@ -73,6 +73,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 document.getElementById("btnDeconnexion").addEventListener("click", function() {
   sb.auth.signOut().then(function() {
     window.location.href = "admin-connexion.html";
@@ -242,11 +252,11 @@ function chargerVendeurs() {
     for (var i = 0; i < data.length; i++) {
       var v = data[i];
       html += "<div class=\"carte-attente\">" +
-                "<h3>" + v.nom + "</h3>" +
-                "<p>Telephone : " + v.telephone + "</p>" +
-                "<p>Produits : " + v.produits_categorie + "</p>" +
+                "<h3>" + escapeHtml(v.nom) + "</h3>" +
+                "<p>Telephone : " + escapeHtml(v.telephone) + "</p>" +
+                "<p>Produits : " + escapeHtml(v.produits_categorie) + "</p>" +
                 (v.cni_url ?
-                  "<button class=\"btn-doc btn-v-doc\" data-chemin=\"" + v.cni_url + "\">Voir la CNI</button>"
+                  "<button class=\"btn-doc btn-v-doc\" data-chemin=\"" + escapeHtml(v.cni_url) + "\">Voir la CNI</button>"
                   : "<p class=\"doc-absent\">Aucune CNI enregistree</p>") +
                 "<div class=\"boutons\">" +
                   "<button class=\"btn-approuver btn-v-approuver\" data-id=\"" + v.id + "\">Approuver</button>" +
@@ -272,10 +282,10 @@ function chargerChauffeurs() {
     for (var i = 0; i < data.length; i++) {
       var c = data[i];
       html += "<div class=\"carte-attente\">" +
-                "<h3>" + c.nom + "</h3>" +
-                "<p>Telephone : " + c.telephone + "</p>" +
+                "<h3>" + escapeHtml(c.nom) + "</h3>" +
+                "<p>Telephone : " + escapeHtml(c.telephone) + "</p>" +
                 (c.permis_url ?
-                  "<button class=\"btn-doc btn-c-doc\" data-chemin=\"" + c.permis_url + "\">Voir le permis</button>"
+                  "<button class=\"btn-doc btn-c-doc\" data-chemin=\"" + escapeHtml(c.permis_url) + "\">Voir le permis</button>"
                   : "<p class=\"doc-absent\">Aucun permis enregistre</p>") +
                 "<div class=\"boutons\">" +
                   "<button class=\"btn-approuver btn-c-approuver\" data-id=\"" + c.id + "\">Approuver</button>" +
@@ -308,9 +318,9 @@ function chargerProduits() {
     for (var i = 0; i < data.length; i++) {
       var p = data[i];
       html += "<div class=\"carte-attente\">" +
-                "<h3>" + p.nom + "</h3>" +
-                "<p>" + p.prix + " FCFA - Stock : " + p.stock + "</p>" +
-                "<p>" + (p.description || "") + "</p>" +
+                "<h3>" + escapeHtml(p.nom) + "</h3>" +
+                "<p>" + escapeHtml(p.prix) + " FCFA - Stock : " + escapeHtml(p.stock) + "</p>" +
+                "<p>" + escapeHtml(p.description || "") + "</p>" +
                 "<div class=\"boutons\">" +
                   "<button class=\"btn-approuver btn-p-approuver\" data-id=\"" + p.id + "\">Approuver</button>" +
                   "<button class=\"btn-refuser btn-p-refuser\" data-id=\"" + p.id + "\">Refuser</button>" +
@@ -334,11 +344,11 @@ function chargerLivreurs() {
     for (var i = 0; i < data.length; i++) {
       var l = data[i];
       html += "<div class=\"carte-attente\">" +
-                "<h3>" + l.nom + "</h3>" +
-                "<p>Telephone : " + l.telephone + "</p>" +
-                "<p>" + l.vehicule + " - " + l.zone + "</p>" +
+                "<h3>" + escapeHtml(l.nom) + "</h3>" +
+                "<p>Telephone : " + escapeHtml(l.telephone) + "</p>" +
+                "<p>" + escapeHtml(l.vehicule) + " - " + escapeHtml(l.zone) + "</p>" +
                 (l.permis_url ?
-                  "<button class=\"btn-doc btn-l-doc\" data-chemin=\"" + l.permis_url + "\">Voir le permis</button>"
+                  "<button class=\"btn-doc btn-l-doc\" data-chemin=\"" + escapeHtml(l.permis_url) + "\">Voir le permis</button>"
                   : "<p class=\"doc-absent\">Aucun permis enregistre</p>") +
                 "<div class=\"boutons\">" +
                   "<button class=\"btn-approuver btn-l-approuver\" data-id=\"" + l.id + "\">Approuver</button>" +
@@ -365,12 +375,12 @@ function chargerCommandes() {
       var classeBadge = c.statut_paiement === "paye" ? "badge-paye" : "badge-nonpaye";
       var texteBadge = c.statut_paiement === "paye" ? "Paye" : "Non paye";
       html += "<div class=\"carte-attente\">" +
-                "<p class=\"date-commande\">" + dateAffichee + "</p>" +
-                "<h3>" + c.client_nom + "</h3>" +
-                "<p>Telephone : " + c.client_telephone + "</p>" +
-                "<p>Produit : " + c.produit + "</p>" +
-                "<p>Adresse : " + c.adresse_livraison + "</p>" +
-                "<p>Statut preparation : " + c.statut + "</p>" +
+                "<p class=\"date-commande\">" + escapeHtml(dateAffichee) + "</p>" +
+                "<h3>" + escapeHtml(c.client_nom) + "</h3>" +
+                "<p>Telephone : " + escapeHtml(c.client_telephone) + "</p>" +
+                "<p>Produit : " + escapeHtml(c.produit) + "</p>" +
+                "<p>Adresse : " + escapeHtml(c.adresse_livraison) + "</p>" +
+                "<p>Statut preparation : " + escapeHtml(c.statut) + "</p>" +
                 "<span class=\"badge-statut " + classeBadge + "\">" + texteBadge + "</span>" +
               "</div>";
     }
