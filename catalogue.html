@@ -207,6 +207,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var panier = [];
 var panierSauvegarde = localStorage.getItem("aw_panier_boutique");
 if (panierSauvegarde) {
@@ -244,7 +254,7 @@ function verifierConnexion() {
     sb.from("clients").select("*").eq("user_id", user.id).single().then(function(reponse) {
       if (reponse.data) {
         clientConnecte = reponse.data;
-        bandeau.innerHTML = "Connecte : " + clientConnecte.nom + " - <a href=\"client-espace.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">Mes commandes</a>";
+        bandeau.innerHTML = "Connecte : " + escapeHtml(clientConnecte.nom) + " - <a href=\"client-espace.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">Mes commandes</a>";
         document.getElementById("cmd_nom").value = clientConnecte.nom;
         document.getElementById("cmd_tel").value = clientConnecte.telephone;
       } else {
@@ -283,8 +293,8 @@ function afficherBoutiques() {
     var actif = boutiqueActive === v.id ? " actif" : "";
     var initiale = v.nom ? v.nom.charAt(0).toUpperCase() : "?";
     html += "<div class=\"carte-boutique" + actif + "\" data-vendeur=\"" + v.id + "\">" +
-              (v.logo_url ? "<img class=\"logo-boutique\" src=\"" + v.logo_url + "\">" : "<div class=\"initiale-boutique\">" + initiale + "</div>") +
-              "<div class=\"nom-boutique\">" + v.nom + "</div>" +
+              (v.logo_url ? "<img class=\"logo-boutique\" src=\"" + escapeHtml(v.logo_url) + "\">" : "<div class=\"initiale-boutique\">" + escapeHtml(initiale) + "</div>") +
+              "<div class=\"nom-boutique\">" + escapeHtml(v.nom) + "</div>" +
             "</div>";
   }
   zone.innerHTML = html;
@@ -337,7 +347,7 @@ function construireCategories() {
   var html = "";
   for (var c = 0; c < categories.length; c++) {
     var actif = categories[c] === categorieActive ? " actif" : "";
-    html += "<button type=\"button\" class=\"puce-categorie" + actif + "\" data-cat=\"" + categories[c] + "\">" + categories[c] + "</button>";
+    html += "<button type=\"button\" class=\"puce-categorie" + actif + "\" data-cat=\"" + escapeHtml(categories[c]) + "\">" + escapeHtml(categories[c]) + "</button>";
   }
   zone.innerHTML = html;
 
@@ -381,13 +391,13 @@ function afficherProduits(data) {
   for (var i = 0; i < data.length; i++) {
     var p = data[i];
     html += "<div class=\"produit-carte\">" +
-              "<img src=\"" + (p.image_url || "") + "\" alt=\"\">" +
+              "<img src=\"" + escapeHtml(p.image_url || "") + "\" alt=\"\">" +
               "<div class=\"infos\">" +
-                (p.categorie ? "<div class=\"categorie-tag\">" + p.categorie + "</div>" : "") +
-                "<h3>" + p.nom + "</h3>" +
-                "<div class=\"prix\">" + p.prix + " FCFA</div>" +
-                "<div class=\"stock\">" + p.stock + " en stock</div>" +
-                "<button class=\"btn-ajouter\" data-id=\"" + p.id + "\" data-nom=\"" + p.nom + "\" data-prix=\"" + p.prix + "\" data-stock=\"" + p.stock + "\">Ajouter au panier</button>" +
+                (p.categorie ? "<div class=\"categorie-tag\">" + escapeHtml(p.categorie) + "</div>" : "") +
+                "<h3>" + escapeHtml(p.nom) + "</h3>" +
+                "<div class=\"prix\">" + escapeHtml(p.prix) + " FCFA</div>" +
+                "<div class=\"stock\">" + escapeHtml(p.stock) + " en stock</div>" +
+                "<button class=\"btn-ajouter\" data-id=\"" + p.id + "\" data-nom=\"" + escapeHtml(p.nom) + "\" data-prix=\"" + p.prix + "\" data-stock=\"" + p.stock + "\">Ajouter au panier</button>" +
               "</div>" +
             "</div>";
   }
@@ -485,8 +495,8 @@ function mettreAJourAffichagePanier() {
     var a = panier[j];
     html += "<div class=\"article-panier\">" +
               "<div>" +
-                "<div class=\"nom\">" + a.nom + "</div>" +
-                "<div class=\"prix-unitaire\">" + a.prix + " FCFA / unite</div>" +
+                "<div class=\"nom\">" + escapeHtml(a.nom) + "</div>" +
+                "<div class=\"prix-unitaire\">" + escapeHtml(a.prix) + " FCFA / unite</div>" +
               "</div>" +
               "<div class=\"controles\">" +
                 "<button type=\"button\" class=\"btn-qte btn-moins\" data-id=\"" + a.id + "\">-</button>" +
@@ -693,7 +703,7 @@ function afficherPastilleZone() {
     document.getElementById("texteZoneActuelle").textContent = zoneClient;
     pastille.style.display = "inline-flex";
     var selectVillage = document.getElementById("cmd_village");
-    selectVillage.innerHTML = "<option value=\"" + zoneClient + "\">" + zoneClient + "</option>";
+    selectVillage.innerHTML = "<option value=\"" + escapeHtml(zoneClient) + "\">" + escapeHtml(zoneClient) + "</option>";
     selectVillage.disabled = true;
   } else {
     pastille.style.display = "none";
@@ -718,7 +728,7 @@ function proposerChoixManuel() {
   var select = document.getElementById("selectZoneClient");
   var html = "<option value=\"\">Choisir...</option>";
   for (var i = 0; i < zonesSansCoordonnees.length; i++) {
-    html += "<option value=\"" + zonesSansCoordonnees[i].nom + "\">" + zonesSansCoordonnees[i].nom + "</option>";
+    html += "<option value=\"" + escapeHtml(zonesSansCoordonnees[i].nom) + "\">" + escapeHtml(zonesSansCoordonnees[i].nom) + "</option>";
   }
   select.innerHTML = html;
   afficherEtape("manuel");
