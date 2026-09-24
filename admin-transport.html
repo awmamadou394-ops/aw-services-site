@@ -62,6 +62,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var MOIS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
 function formatDateFr(dateStr) {
   if (!dateStr) return "";
@@ -171,9 +181,9 @@ function chargerReservations() {
       var badgePaiement = r.statut_paiement === "paye" ? "<span class=\"badge-statut badge-paye\">Paye</span>" : "<span class=\"badge-statut badge-nonpaye\">Non paye</span>";
       var badgeAnnulee = r.statut === "annulee" ? "<span class=\"badge-statut badge-annulee\">Annulee</span>" : "";
       html += "<div class=\"carte-item\">" +
-                "<h3>" + (r.prenom || "") + " " + (r.nom_famille || r.client_nom || "") + " &mdash; Chaise " + r.siege + "</h3>" +
-                "<p>Telephone : " + r.client_telephone + "</p>" +
-                (r.village_depart ? "<p>Village de depart : " + r.village_depart + "</p>" : "") +
+                "<h3>" + escapeHtml(r.prenom || "") + " " + escapeHtml(r.nom_famille || r.client_nom || "") + " &mdash; Chaise " + escapeHtml(r.siege) + "</h3>" +
+                "<p>Telephone : " + escapeHtml(r.client_telephone) + "</p>" +
+                (r.village_depart ? "<p>Village de depart : " + escapeHtml(r.village_depart) + "</p>" : "") +
                 (r.prix_total ? "<p>Prix : " + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</p>" : "") +
                 "<div class=\"ligne-badges\">" + badgePaiement + badgeAnnulee + "</div>" +
                 (r.statut !== "annulee" ? "<button type=\"button\" class=\"btn-annuler btn-annuler-resa\" data-id=\"" + r.id + "\">Annuler cette reservation</button>" : "") +
@@ -222,11 +232,11 @@ function chargerCourses() {
       var classeBadge = CLASSES_COURSE[c.statut] || "badge-neutre";
       var texteBadge = LIBELLES_COURSE[c.statut] || c.statut;
       html += "<div class=\"carte-item\">" +
-                "<h3>" + c.client_nom + "</h3>" +
-                "<p>Telephone : " + c.client_telephone + "</p>" +
-                "<p>Destination : " + c.lieu_arrivee + "</p>" +
-                (c.distance_km ? "<p>Distance : " + c.distance_km + " km</p>" : "") +
-                (c.prix_total ? "<p>Prix : " + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA (" + c.mode_paiement + ")</p>" : "<p>Paiement : " + c.mode_paiement + "</p>") +
+                "<h3>" + escapeHtml(c.client_nom) + "</h3>" +
+                "<p>Telephone : " + escapeHtml(c.client_telephone) + "</p>" +
+                "<p>Destination : " + escapeHtml(c.lieu_arrivee) + "</p>" +
+                (c.distance_km ? "<p>Distance : " + escapeHtml(c.distance_km) + " km</p>" : "") +
+                (c.prix_total ? "<p>Prix : " + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA (" + escapeHtml(c.mode_paiement) + ")</p>" : "<p>Paiement : " + escapeHtml(c.mode_paiement) + "</p>") +
                 "<p>" + (c.livreur_id ? "Livreur assigne" : "Aucun livreur assigne") + "</p>" +
                 "<div class=\"ligne-badges\"><span class=\"badge-statut " + classeBadge + "\">" + texteBadge + "</span></div>" +
               "</div>";
