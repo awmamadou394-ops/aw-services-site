@@ -64,6 +64,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var VAPID_PUBLIC_KEY = "BJw5df2L2JS-HB2BoXP7QNx1caYe4F1PaLbXy6kY1KI7SY9Evt5GjH19HsacU1iT9547pf6sjUeVsThHd8mOkr0";
 var clientCourant = null;
 
@@ -110,8 +120,8 @@ function chargerEspace() {
 
       zone.innerHTML =
         "<div class=\"aw-carte\">" +
-          "<p class=\"aw-section-titre\">Bonjour, " + client.nom + "</p>" +
-          "<p style=\"color:var(--texte-doux);font-size:13px;\">Telephone : " + (client.telephone || "-") + "</p>" +
+          "<p class=\"aw-section-titre\">Bonjour, " + escapeHtml(client.nom) + "</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13px;\">Telephone : " + escapeHtml(client.telephone || "-") + "</p>" +
         "</div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
           "<p class=\"aw-section-titre\">Notifications</p>" +
@@ -282,7 +292,7 @@ function chargerCommandes() {
 
       html += "<div class=\"commande-carte\">" +
                 "<div class=\"date\">" + dateAffichee + "</div>" +
-                "<h3>" + c.produit + "</h3>";
+                "<h3>" + escapeHtml(c.produit) + "</h3>";
       if (c.total) {
         html += "<div class=\"total\">Total : " + Number(c.total).toLocaleString("fr-FR") + " FCFA</div>";
       }
@@ -359,9 +369,9 @@ function chargerCoursesClient() {
       var texteBadge = LIBELLES_COURSE_CLIENT[c.statut] || c.statut;
 
       html += "<div class=\"commande-carte\">" +
-                "<h3>Vers " + c.lieu_arrivee + "</h3>" +
+                "<h3>Vers " + escapeHtml(c.lieu_arrivee) + "</h3>" +
                 (c.distance_km ? "<p>Distance : " + c.distance_km + " km</p>" : "") +
-                (c.prix_total ? "<div class=\"total\">" + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA (" + c.mode_paiement + ")</div>" : "") +
+                (c.prix_total ? "<div class=\"total\">" + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA (" + escapeHtml(c.mode_paiement) + ")</div>" : "") +
                 "<span class=\"badge-statut " + classeBadge + "\">" + texteBadge + "</span>" +
               "</div>";
     }
