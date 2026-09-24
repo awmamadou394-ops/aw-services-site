@@ -61,6 +61,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var filtreLivreurs = "approuve";
 
 document.getElementById("btnDeconnexion").addEventListener("click", function() {
@@ -165,10 +175,10 @@ function chargerLivreurs() {
       var l = data[i];
       var badgeStatut = l.statut === "approuve" ? "<span class=\"badge-statut badge-approuve\">Approuve</span>" : "<span class=\"badge-statut badge-attente\">En attente</span>";
       html += "<div class=\"carte-item\">" +
-                "<h3>" + l.nom + "</h3>" +
-                "<p>Telephone : " + l.telephone + "</p>" +
-                (l.zone ? "<p>Zone : " + l.zone + "</p>" : "") +
-                (l.vehicule ? "<p>Vehicule : " + l.vehicule + "</p>" : "") +
+                "<h3>" + escapeHtml(l.nom) + "</h3>" +
+                "<p>Telephone : " + escapeHtml(l.telephone) + "</p>" +
+                (l.zone ? "<p>Zone : " + escapeHtml(l.zone) + "</p>" : "") +
+                (l.vehicule ? "<p>Vehicule : " + escapeHtml(l.vehicule) + "</p>" : "") +
                 "<div class=\"solde-item\">" + Number(l.solde_compte || 0).toLocaleString("fr-FR") + " FCFA</div>" +
                 "<div class=\"ligne-badges\">" + badgeStatut + "</div>" +
               "</div>";
@@ -206,8 +216,8 @@ function chargerRecharges() {
         var dateAffichee = r.date_creation ? new Date(r.date_creation).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
         var badge = r.statut_paiement === "paye" ? "<span class=\"badge-statut badge-paye\">Payee</span>" : "<span class=\"badge-statut badge-nonpaye\">Non payee</span>";
         html += "<div class=\"carte-item\">" +
-                  "<h3>" + nomLivreur + "</h3>" +
-                  "<p>" + dateAffichee + "</p>" +
+                  "<h3>" + escapeHtml(nomLivreur) + "</h3>" +
+                  "<p>" + escapeHtml(dateAffichee) + "</p>" +
                   "<div class=\"solde-item\">" + Number(r.montant).toLocaleString("fr-FR") + " FCFA</div>" +
                   "<div class=\"ligne-badges\">" + badge + "</div>" +
                 "</div>";
