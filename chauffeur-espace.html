@@ -81,6 +81,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var chauffeurCourant = null;
 
 var MOIS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
@@ -119,16 +129,16 @@ function chargerEspace() {
 
       zone.innerHTML =
         "<div class=\"aw-carte\">" +
-          "<p class=\"aw-section-titre\">Bienvenue, " + chauffeur.nom + "</p>" +
+          "<p class=\"aw-section-titre\">Bienvenue, " + escapeHtml(chauffeur.nom) + "</p>" +
           "<span class=\"aw-badge " + classeStatut + "\">" + statutLabel + "</span>" +
-          "<p style=\"margin-top:10px;\">Telephone : " + chauffeur.telephone + "</p>" +
-          "<p>" + chauffeur.vehicule + "</p>" +
+          "<p style=\"margin-top:10px;\">Telephone : " + escapeHtml(chauffeur.telephone) + "</p>" +
+          "<p>" + escapeHtml(chauffeur.vehicule) + "</p>" +
         "</div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
           "<p class=\"aw-section-titre\">Point de rassemblement (Dakar &#8594; Bokidiawe)</p>" +
           "<p>Les clients qui prennent ce trajet verront ce point comme lieu de depart, sans avoir a partager leur position.</p>" +
           "<label class=\"aw-label\">Description du lieu</label>" +
-          "<textarea class=\"aw-textarea\" id=\"lieuRassemblement\" rows=\"2\" placeholder=\"Ex : Gare routiere de Baux Maraichers, devant le hangar 3\">" + (chauffeur.lieu_rassemblement || "") + "</textarea>" +
+          "<textarea class=\"aw-textarea\" id=\"lieuRassemblement\" rows=\"2\" placeholder=\"Ex : Gare routiere de Baux Maraichers, devant le hangar 3\">" + escapeHtml(chauffeur.lieu_rassemblement || "") + "</textarea>" +
           "<button type=\"button\" class=\"aw-btn aw-btn-secondaire\" id=\"btnPositionRassemblement\" style=\"width:100%;margin-top:10px;\">&#128205; Utiliser ma position actuelle (optionnel)</button>" +
           "<p class=\"msg-zone\" id=\"msgPosition\"></p>" +
           "<button type=\"button\" class=\"aw-btn aw-btn-primaire\" id=\"btnEnregistrerRassemblement\" style=\"width:100%;margin-top:10px;\">Enregistrer le point de rassemblement</button>" +
@@ -345,12 +355,12 @@ document.getElementById("fenetreFond").addEventListener("click", function(e) {
 function ouvrirFenetre(id) {
   var r = reservationsIndex[id];
   if (!r) return;
-  var html = "<p>Nom : " + (r.prenom || "") + " " + (r.nom_famille || r.client_nom) + "</p>" +
+  var html = "<p>Nom : " + escapeHtml(r.prenom || "") + " " + escapeHtml(r.nom_famille || r.client_nom) + "</p>" +
              "<p>Date : " + formatDateFr(r.date_voyage) + "</p>";
-  if (r.cni_passeport) html += "<p>CNI/Passeport : " + r.cni_passeport + "</p>";
-  if (r.direction === "retour" && r.village_depart) html += "<p>Village de depart : " + r.village_depart + "</p>";
-  html += "<p>Telephone : " + r.client_telephone + "</p>";
-  html += "<p>Paiement : " + r.mode_paiement + "</p>";
+  if (r.cni_passeport) html += "<p>CNI/Passeport : " + escapeHtml(r.cni_passeport) + "</p>";
+  if (r.direction === "retour" && r.village_depart) html += "<p>Village de depart : " + escapeHtml(r.village_depart) + "</p>";
+  html += "<p>Telephone : " + escapeHtml(r.client_telephone) + "</p>";
+  html += "<p>Paiement : " + escapeHtml(r.mode_paiement) + "</p>";
   if (r.prix_total) html += "<p style=\"font-family:var(--police-chiffres);color:var(--accent);font-weight:700;\">Prix : " + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</p>";
   if (r.direction === "retour") {
     if (r.latitude && r.longitude) {
