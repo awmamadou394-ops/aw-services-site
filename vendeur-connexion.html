@@ -268,7 +268,7 @@ document.getElementById("btnEnvoyerReset").addEventListener("click", function() 
   btn.textContent = "Envoi en cours...";
 
   sb.auth.resetPasswordForEmail(email, {
-    redirectTo: "https://awmamadou394-ops.github.io/aw-services-site/reinitialiser-mot-de-passe.html"
+    redirectTo: "https://awservices.sn/reinitialiser-mot-de-passe.html"
   }).then(function(reponse) {
     btn.disabled = false;
     btn.textContent = "Envoyer le lien de reinitialisation";
