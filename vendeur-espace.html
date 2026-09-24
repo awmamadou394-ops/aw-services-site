@@ -53,6 +53,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var VAPID_PUBLIC_KEY = "BJw5df2L2JS-HB2BoXP7QNx1caYe4F1PaLbXy6kY1KI7SY9Evt5GjH19HsacU1iT9547pf6sjUeVsThHd8mOkr0";
 var vendeurCourant = null;
 
@@ -95,20 +105,20 @@ function chargerEspace() {
 
       zone.innerHTML =
         "<div class=\"aw-carte\">" +
-          "<p class=\"aw-section-titre\">Bienvenue, " + vendeur.nom + "</p>" +
+          "<p class=\"aw-section-titre\">Bienvenue, " + escapeHtml(vendeur.nom) + "</p>" +
           "<span class=\"aw-badge " + classeStatut + "\">" + statutLabel + "</span>" +
-          "<p style=\"margin-top:10px;color:var(--texte-doux);font-size:14px;\">Telephone : " + vendeur.telephone + "</p>" +
-          "<p style=\"color:var(--texte-doux);font-size:14px;\">Produits : " + vendeur.produits_categorie + "</p>" +
+          "<p style=\"margin-top:10px;color:var(--texte-doux);font-size:14px;\">Telephone : " + escapeHtml(vendeur.telephone) + "</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:14px;\">Produits : " + escapeHtml(vendeur.produits_categorie) + "</p>" +
         "</div>" +
 
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
           "<p class=\"aw-section-titre\">Ma boutique publique</p>" +
           "<p style=\"color:var(--texte-doux);font-size:13.5px;margin-bottom:10px;\">Ces informations sont visibles par les clients sur la page Boutique.</p>" +
-          (vendeur.logo_url ? "<img src=\"" + vendeur.logo_url + "\" style=\"width:70px;height:70px;border-radius:12px;object-fit:cover;margin-bottom:10px;display:block;\">" : "") +
+          (vendeur.logo_url ? "<img src=\"" + escapeHtml(vendeur.logo_url) + "\" style=\"width:70px;height:70px;border-radius:12px;object-fit:cover;margin-bottom:10px;display:block;\">" : "") +
           "<label class=\"aw-label\">Logo de la boutique</label>" +
           "<input type=\"file\" id=\"v_logo\" accept=\"image/*\" style=\"background-color:var(--fond);border:1px solid var(--bordure);border-radius:var(--rayon-petit);padding:10px;color:var(--texte-doux);font-size:12px;width:100%;\">" +
           "<label class=\"aw-label\" style=\"margin-top:10px;\">Description courte</label>" +
-          "<textarea class=\"aw-textarea\" id=\"v_description\" rows=\"2\" placeholder=\"Ex : Produits bio et naturels\">" + (vendeur.description || "") + "</textarea>" +
+          "<textarea class=\"aw-textarea\" id=\"v_description\" rows=\"2\" placeholder=\"Ex : Produits bio et naturels\">" + escapeHtml(vendeur.description || "") + "</textarea>" +
           "<label class=\"aw-label\" style=\"margin-top:10px;\">Zone de la boutique</label>" +
           "<select id=\"v_zone\"><option value=\"\">Chargement...</option></select>" +
           "<p style=\"color:var(--texte-doux);font-size:12px;margin-top:4px;\">Seuls les clients de cette zone verront votre boutique.</p>" +
@@ -266,13 +276,13 @@ function chargerCommandes() {
 
       html += "<div class=\"commande-carte\">" +
                 "<p class=\"date-commande\">" + dateAffichee + "</p>" +
-                "<h3>" + c.client_nom + "</h3>" +
-                "<p>Telephone : " + c.client_telephone + "</p>" +
-                "<p>" + c.produit + "</p>";
+                "<h3>" + escapeHtml(c.client_nom) + "</h3>" +
+                "<p>Telephone : " + escapeHtml(c.client_telephone) + "</p>" +
+                "<p>" + escapeHtml(c.produit) + "</p>";
       if (c.total) {
         html += "<p>Total : " + Number(c.total).toLocaleString("fr-FR") + " FCFA</p>";
       }
-      html += "<p>Adresse : " + c.adresse_livraison + "</p>" +
+      html += "<p>Adresse : " + escapeHtml(c.adresse_livraison) + "</p>" +
               "<span class=\"badge-statut badge-" + statutPrep + "\">" + libelle + "</span>";
 
       if (LIBELLES_LIV[statutLiv]) {
@@ -347,7 +357,7 @@ function chargerZonesVendeurEspace(zoneActuelle) {
     var html = "<option value=\"\">Choisir...</option>";
     for (var i = 0; i < data.length; i++) {
       var selectionne = data[i].nom === zoneActuelle ? " selected" : "";
-      html += "<option value=\"" + data[i].nom + "\"" + selectionne + ">" + data[i].nom + "</option>";
+      html += "<option value=\"" + escapeHtml(data[i].nom) + "\"" + selectionne + ">" + escapeHtml(data[i].nom) + "</option>";
     }
     select.innerHTML = html;
   });
@@ -415,11 +425,11 @@ function chargerProduits() {
     for (var i = 0; i < data.length; i++) {
       var p = data[i];
       html += "<div class=\"produit-carte\">" +
-                "<img src=\"" + (p.image_url || "") + "\" alt=\"\">" +
+                "<img src=\"" + escapeHtml(p.image_url || "") + "\" alt=\"\">" +
                 "<div class=\"produit-info\">" +
-                  "<h3>" + p.nom + "</h3>" +
-                  "<p class=\"prix-p\">" + p.prix + " FCFA</p>" +
-                  "<p>Stock : " + p.stock + "</p>" +
+                  "<h3>" + escapeHtml(p.nom) + "</h3>" +
+                  "<p class=\"prix-p\">" + escapeHtml(p.prix) + " FCFA</p>" +
+                  "<p>Stock : " + escapeHtml(p.stock) + "</p>" +
                   "<p>" + (p.statut === "approuve" ? "Visible sur le site" : "En attente de validation") + "</p>" +
                 "</div>" +
               "</div>";
