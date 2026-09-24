@@ -40,6 +40,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function verifierEtCharger() {
   sb.auth.getUser().then(function(reponseUser) {
     var user = reponseUser.data.user;
@@ -94,10 +104,10 @@ function chargerProduits() {
     for (var i = 0; i < data.length; i++) {
       var p = data[i];
       html += "<div class=\"prod-carte\">" +
-                "<img src=\"" + (p.image_url || "") + "\" alt=\"\">" +
+                "<img src=\"" + escapeHtml(p.image_url || "") + "\" alt=\"\">" +
                 "<div class=\"prod-info\">" +
-                  "<h3>" + p.nom + "</h3>" +
-                  "<p>" + p.prix + " FCFA - Stock : " + p.stock + " - " + p.statut + "</p>" +
+                  "<h3>" + escapeHtml(p.nom) + "</h3>" +
+                  "<p>" + escapeHtml(p.prix) + " FCFA - Stock : " + escapeHtml(p.stock) + " - " + escapeHtml(p.statut) + "</p>" +
                   "<button class=\"btn-suppr btn-suppr-prod\" data-id=\"" + p.id + "\">Supprimer</button>" +
                 "</div>" +
               "</div>";
