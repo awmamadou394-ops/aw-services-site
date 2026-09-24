@@ -48,6 +48,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function verifierEtCharger() {
   sb.auth.getUser().then(function(reponseUser) {
     var user = reponseUser.data.user;
@@ -126,10 +136,10 @@ function chargerBiens() {
         ? "<span class=\"badge-vendu\">Deja vendu</span>"
         : "<button class=\"btn-action btn-vendu-action\" data-id=\"" + b.id + "\">Marquer vendu</button>";
       html += "<div class=\"bien-carte\">" +
-                "<img src=\"" + image + "\" alt=\"\">" +
+                "<img src=\"" + escapeHtml(image) + "\" alt=\"\">" +
                 "<div class=\"bien-info\">" +
-                  "<h3>" + b.titre + "</h3>" +
-                  "<p>" + Number(b.prix).toLocaleString("fr-FR") + " FCFA - " + b.localisation + "</p>" +
+                  "<h3>" + escapeHtml(b.titre) + "</h3>" +
+                  "<p>" + Number(b.prix).toLocaleString("fr-FR") + " FCFA - " + escapeHtml(b.localisation) + "</p>" +
                   "<div class=\"boutons-bien\">" +
                     actionVente +
                     "<button class=\"btn-action btn-suppr btn-suppr-action\" data-id=\"" + b.id + "\">Supprimer</button>" +
