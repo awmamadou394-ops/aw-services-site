@@ -63,6 +63,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var toutesLesZones = [];
 var termeRecherche = "";
 
@@ -145,7 +155,7 @@ function afficherZones() {
     var aCoords = z.latitude && z.longitude;
     html += "<div class=\"carte-zone\">" +
               "<div class=\"ligne-zone\" style=\"margin-bottom:0;\">" +
-                "<span class=\"nom-zone" + (z.actif ? "" : " inactif") + "\">" + z.nom + "</span>" +
+                "<span class=\"nom-zone" + (z.actif ? "" : " inactif") + "\">" + escapeHtml(z.nom) + "</span>" +
                 "<label class=\"interrupteur\">" +
                   "<input type=\"checkbox\" class=\"toggle-zone\" data-id=\"" + z.id + "\"" + (z.actif ? " checked" : "") + ">" +
                   "<span class=\"glissiere\"></span>" +
