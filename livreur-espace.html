@@ -53,6 +53,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var VAPID_PUBLIC_KEY = "BJw5df2L2JS-HB2BoXP7QNx1caYe4F1PaLbXy6kY1KI7SY9Evt5GjH19HsacU1iT9547pf6sjUeVsThHd8mOkr0";
 var COMMISSION_COURSE = 100;
 var livreurCourant = null;
@@ -90,9 +100,9 @@ function chargerEspace() {
 
       zone.innerHTML =
         "<div class=\"aw-carte\">" +
-          "<p class=\"aw-section-titre\">Bienvenue, " + livreur.nom + "</p>" +
+          "<p class=\"aw-section-titre\">Bienvenue, " + escapeHtml(livreur.nom) + "</p>" +
           "<span class=\"aw-badge " + classeStatut + "\">" + statutLabel + "</span>" +
-          "<p style=\"margin-top:10px;color:var(--texte-doux);font-size:14px;\">Telephone : " + livreur.telephone + "</p>" +
+          "<p style=\"margin-top:10px;color:var(--texte-doux);font-size:14px;\">Telephone : " + escapeHtml(livreur.telephone) + "</p>" +
         "</div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
           "<p class=\"aw-section-titre\">Mon portefeuille</p>" +
@@ -334,11 +344,11 @@ function afficherListe(idZone, liste, avecBoutonAccepter) {
 
     html += "<div class=\"commande-carte\">" +
               "<p class=\"date-commande\">" + dateAffichee + "</p>" +
-              "<h3>" + c.client_nom + "</h3>" +
-              "<p>Telephone : " + c.client_telephone + "</p>" +
-              "<p>" + c.produit + "</p>" +
-              "<p>Adresse : " + c.adresse_livraison + "</p>" +
-              "<p>Paiement : " + c.mode_paiement + "</p>" +
+              "<h3>" + escapeHtml(c.client_nom) + "</h3>" +
+              "<p>Telephone : " + escapeHtml(c.client_telephone) + "</p>" +
+              "<p>" + escapeHtml(c.produit) + "</p>" +
+              "<p>Adresse : " + escapeHtml(c.adresse_livraison) + "</p>" +
+              "<p>Paiement : " + escapeHtml(c.mode_paiement) + "</p>" +
               "<div class=\"badges\"><span class=\"badge-statut badge-" + statutPrep + "\">" + libellePrep + "</span></div>";
 
     if (c.latitude && c.longitude) {
@@ -444,11 +454,11 @@ function afficherMesCourses(liste) {
   for (var i = 0; i < liste.length; i++) {
     var c = liste[i];
     html += "<div class=\"commande-carte\">" +
-              "<h3>" + c.client_nom + "</h3>" +
-              "<p>Telephone : " + c.client_telephone + "</p>" +
-              "<p>Destination : " + c.lieu_arrivee + "</p>" +
-              (c.lieu_depart ? "<p>Repere : " + c.lieu_depart + "</p>" : "") +
-              "<p>Paiement : " + c.mode_paiement + (c.prix_total ? " - " + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA" : "") + "</p>" +
+              "<h3>" + escapeHtml(c.client_nom) + "</h3>" +
+              "<p>Telephone : " + escapeHtml(c.client_telephone) + "</p>" +
+              "<p>Destination : " + escapeHtml(c.lieu_arrivee) + "</p>" +
+              (c.lieu_depart ? "<p>Repere : " + escapeHtml(c.lieu_depart) + "</p>" : "") +
+              "<p>Paiement : " + escapeHtml(c.mode_paiement) + (c.prix_total ? " - " + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA" : "") + "</p>" +
               (c.distance_km ? "<p>Distance : " + c.distance_km + " km</p>" : "") +
               "<div class=\"badges\"><span class=\"badge-statut badge-en_preparation\">" + (LIBELLES_COURSE[c.statut] || c.statut) + "</span></div>";
 
@@ -499,11 +509,11 @@ function afficherCoursesDisponibles(liste) {
       texteDistance = " - " + distanceKm(positionLivreur.lat, positionLivreur.lng, c.latitude, c.longitude).toFixed(1) + " km";
     }
     html += "<div class=\"commande-carte\">" +
-              "<h3>" + c.client_nom + texteDistance + "</h3>" +
-              "<p>Telephone : " + c.client_telephone + "</p>" +
-              "<p>Destination : " + c.lieu_arrivee + "</p>" +
-              (c.lieu_depart ? "<p>Repere : " + c.lieu_depart + "</p>" : "") +
-              "<p>Paiement : " + c.mode_paiement + (c.prix_total ? " - " + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA" : "") + "</p>";
+              "<h3>" + escapeHtml(c.client_nom) + texteDistance + "</h3>" +
+              "<p>Telephone : " + escapeHtml(c.client_telephone) + "</p>" +
+              "<p>Destination : " + escapeHtml(c.lieu_arrivee) + "</p>" +
+              (c.lieu_depart ? "<p>Repere : " + escapeHtml(c.lieu_depart) + "</p>" : "") +
+              "<p>Paiement : " + escapeHtml(c.mode_paiement) + (c.prix_total ? " - " + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA" : "") + "</p>";
     if (c.latitude && c.longitude) {
       html += "<a class=\"btn-maps\" href=\"https://www.google.com/maps/dir/?api=1&destination=" + c.latitude + "," + c.longitude + "\" target=\"_blank\">Itineraire vers le client</a>";
     }
