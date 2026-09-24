@@ -60,6 +60,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var MOIS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
 function formatDateFr(dateStr) {
   if (!dateStr) return "";
@@ -80,15 +90,15 @@ function afficherBillet(t) {
       "<div class=\"marque\">AW SERVICES &mdash; Billet de voyage</div>" +
       "<div class=\"trajet\">" + texteTrajet + "</div>" +
     "</div>" +
-    "<div class=\"billet-siege\"><div class=\"num\">Chaise " + t.siege + "</div><div class=\"txt\">Numero de place</div></div>" +
-    "<div class=\"billet-ligne\"><span class=\"label\">Passager</span><span class=\"valeur\">" + t.nom + "</span></div>" +
+    "<div class=\"billet-siege\"><div class=\"num\">Chaise " + escapeHtml(t.siege) + "</div><div class=\"txt\">Numero de place</div></div>" +
+    "<div class=\"billet-ligne\"><span class=\"label\">Passager</span><span class=\"valeur\">" + escapeHtml(t.nom) + "</span></div>" +
     "<div class=\"billet-ligne\"><span class=\"label\">Date de depart</span><span class=\"valeur\">" + formatDateFr(t.date_voyage) + "</span></div>" +
-    "<div class=\"billet-ligne\"><span class=\"label\">Telephone</span><span class=\"valeur\">" + t.telephone + "</span></div>";
+    "<div class=\"billet-ligne\"><span class=\"label\">Telephone</span><span class=\"valeur\">" + escapeHtml(t.telephone) + "</span></div>";
   if (t.village) {
-    html += "<div class=\"billet-ligne\"><span class=\"label\">Village de depart</span><span class=\"valeur\">" + t.village + "</span></div>";
+    html += "<div class=\"billet-ligne\"><span class=\"label\">Village de depart</span><span class=\"valeur\">" + escapeHtml(t.village) + "</span></div>";
   }
   if (t.valises) {
-    html += "<div class=\"billet-ligne\"><span class=\"label\">Valises supplementaires</span><span class=\"valeur\">" + t.valises + "</span></div>";
+    html += "<div class=\"billet-ligne\"><span class=\"label\">Valises supplementaires</span><span class=\"valeur\">" + escapeHtml(t.valises) + "</span></div>";
   }
   html += "<div class=\"billet-ligne\"><span class=\"label\">Total paye</span><span class=\"valeur\">" + Number(t.prix_total).toLocaleString("fr-FR") + " FCFA</span></div>" +
     "<div class=\"billet-qr\"><img src=\"" + qrUrl + "\" alt=\"QR code du billet\"></div>" +
