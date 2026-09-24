@@ -66,6 +66,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var MOIS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
 function formatDateFr(dateStr) {
   if (!dateStr) return "";
@@ -87,12 +97,12 @@ function construireBillet(r) {
       "<div class=\"marque\">AW SERVICES &mdash; Billet de voyage</div>" +
       "<div class=\"trajet\">" + texteTrajet + "</div>" +
     "</div>" +
-    "<div class=\"billet-siege\"><div class=\"num\">Chaise " + r.siege + "</div><div class=\"txt\">Numero de place</div></div>" +
-    "<div class=\"billet-ligne\"><span class=\"label\">Passager</span><span class=\"valeur\">" + nom + "</span></div>" +
+    "<div class=\"billet-siege\"><div class=\"num\">Chaise " + escapeHtml(r.siege) + "</div><div class=\"txt\">Numero de place</div></div>" +
+    "<div class=\"billet-ligne\"><span class=\"label\">Passager</span><span class=\"valeur\">" + escapeHtml(nom) + "</span></div>" +
     "<div class=\"billet-ligne\"><span class=\"label\">Date de depart</span><span class=\"valeur\">" + formatDateFr(r.date_voyage) + "</span></div>" +
-    "<div class=\"billet-ligne\"><span class=\"label\">Telephone</span><span class=\"valeur\">" + r.client_telephone + "</span></div>";
+    "<div class=\"billet-ligne\"><span class=\"label\">Telephone</span><span class=\"valeur\">" + escapeHtml(r.client_telephone) + "</span></div>";
   if (r.village_depart) {
-    html += "<div class=\"billet-ligne\"><span class=\"label\">Village de depart</span><span class=\"valeur\">" + r.village_depart + "</span></div>";
+    html += "<div class=\"billet-ligne\"><span class=\"label\">Village de depart</span><span class=\"valeur\">" + escapeHtml(r.village_depart) + "</span></div>";
   }
   if (r.prix_total) {
     html += "<div class=\"billet-ligne\"><span class=\"label\">Total paye</span><span class=\"valeur\">" + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</span></div>";
