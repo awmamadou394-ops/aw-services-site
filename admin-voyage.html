@@ -53,6 +53,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var PAYS_LISTE = ["Tous", "France", "Canada", "USA", "Maroc", "Belgique", "Russie"];
 var filtrePays = "Tous";
 
@@ -131,17 +141,17 @@ function chargerPreinscriptions() {
       if (p.documents && p.documents.length > 0) {
         htmlDocuments = "<div class=\"liste-documents\">";
         for (var d = 0; d < p.documents.length; d++) {
-          htmlDocuments += "<button type=\"button\" class=\"lien-document btn-doc-voyage\" data-chemin=\"" + p.documents[d] + "\">Document " + (d + 1) + "</button>";
+          htmlDocuments += "<button type=\"button\" class=\"lien-document btn-doc-voyage\" data-chemin=\"" + escapeHtml(p.documents[d]) + "\">Document " + (d + 1) + "</button>";
         }
         htmlDocuments += "</div>";
       }
 
       html += "<div class=\"carte-item\">" +
-                "<h3>" + p.nom + "</h3>" +
-                "<p>Telephone : " + p.telephone + "</p>" +
-                "<p>Niveau : " + p.niveau + "</p>" +
+                "<h3>" + escapeHtml(p.nom) + "</h3>" +
+                "<p>Telephone : " + escapeHtml(p.telephone) + "</p>" +
+                "<p>Niveau : " + escapeHtml(p.niveau) + "</p>" +
                 "<div class=\"ligne-badges\">" +
-                  "<span class=\"badge-statut badge-pays\">" + p.pays + "</span>" +
+                  "<span class=\"badge-statut badge-pays\">" + escapeHtml(p.pays) + "</span>" +
                   badgePaiement +
                 "</div>" +
                 htmlDocuments +
