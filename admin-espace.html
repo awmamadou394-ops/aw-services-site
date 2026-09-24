@@ -274,7 +274,6 @@ function chargerChauffeurs() {
       html += "<div class=\"carte-attente\">" +
                 "<h3>" + c.nom + "</h3>" +
                 "<p>Telephone : " + c.telephone + "</p>" +
-                "<p>" + c.vehicule + "</p>" +
                 (c.permis_url ?
                   "<button class=\"btn-doc btn-c-doc\" data-chemin=\"" + c.permis_url + "\">Voir le permis</button>"
                   : "<p class=\"doc-absent\">Aucun permis enregistre</p>") +
