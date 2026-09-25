@@ -537,19 +537,24 @@ function accepterCourse(id) {
     return;
   }
 
-  sb.from("courses_moto").update({ livreur_id: livreurCourant.id, statut: "acceptee" }).eq("id", id).eq("statut", "nouvelle").then(function(reponse) {
+  sb.rpc("accepter_course", { p_course_id: id }).then(function(reponse) {
     if (reponse.error) {
-      alert("Erreur : cette course a peut-etre deja ete prise par un autre livreur.");
+      var message = reponse.error.message || "";
+      if (message.indexOf("Solde insuffisant") !== -1) {
+        alert("Solde insuffisant pour accepter une course (commission de " + COMMISSION_COURSE + " FCFA requise). Rechargez votre solde dans la section \"Mon portefeuille\".");
+      } else if (message.indexOf("deja prise") !== -1) {
+        alert("Cette course vient d'etre prise par un autre livreur.");
+      } else {
+        alert("Erreur : " + message);
+      }
       chargerCourses();
       return;
     }
 
-    var nouveauSolde = soldeActuel - COMMISSION_COURSE;
-    sb.from("livreurs").update({ solde_compte: nouveauSolde }).eq("id", livreurCourant.id).then(function() {
-      livreurCourant.solde_compte = nouveauSolde;
-      var affichage = document.getElementById("soldeAffiche");
-      if (affichage) affichage.textContent = Number(nouveauSolde).toLocaleString("fr-FR") + " FCFA";
-    });
+    var nouveauSolde = Number(reponse.data) || 0;
+    livreurCourant.solde_compte = nouveauSolde;
+    var affichage = document.getElementById("soldeAffiche");
+    if (affichage) affichage.textContent = Number(nouveauSolde).toLocaleString("fr-FR") + " FCFA";
 
     demarrerPartagePosition(id);
     chargerCourses();
