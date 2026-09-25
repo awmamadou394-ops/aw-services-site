@@ -328,7 +328,7 @@ function chargerReservationsClient() {
 
       html += "<div class=\"commande-carte\">" +
                 "<div class=\"date\">" + formatDateFr(r.date_voyage) + "</div>" +
-                "<h3>" + texteTrajet + " &mdash; Chaise " + r.siege + "</h3>" +
+                "<h3>" + texteTrajet + " &mdash; Chaise " + escapeHtml(r.siege) + "</h3>" +
                 (r.prix_total ? "<div class=\"total\">" + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</div>" : "") +
                 "<span class=\"badge-statut " + classeBadge + "\">" + texteBadge + "</span>" +
                 (r.statut === "annulee" ? " <span class=\"badge-statut badge-annulee\">Annulee</span>" : "") +
