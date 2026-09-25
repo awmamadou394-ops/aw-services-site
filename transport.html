@@ -510,7 +510,10 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
   var distanceCalculee = distanceEntrePointsMoto(positionMoto.lat, positionMoto.lng, destinationChoisie.lat, destinationChoisie.lng);
   var prixCalcule = calculerPrixCourse(distanceCalculee);
 
+  var idNouvelleCourse = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
+
   var donneesCourse = {
+    id: idNouvelleCourse,
     client_nom: nom,
     client_telephone: telephone,
     lieu_depart: repere || "Position GPS",
@@ -530,17 +533,16 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
 
   var positionClientPourSuivi = { lat: positionMoto.lat, lng: positionMoto.lng };
 
-  sb.from("courses_moto").insert([donneesCourse]).select().then(function(reponse) {
+  sb.from("courses_moto").insert([donneesCourse]).then(function(reponse) {
     btn.disabled = false;
     btn.textContent = "Demander une course";
 
-    if (reponse.error || !reponse.data || !reponse.data[0]) {
+    if (reponse.error) {
       msg.innerHTML = "<div class=\"msg erreur\">Erreur : la course n'a pas pu etre enregistree. Reessayez.</div>";
       return;
     }
 
-    var courseCreee = reponse.data[0];
-    idCourseActuelle = courseCreee.id;
+    idCourseActuelle = idNouvelleCourse;
 
     var message = "Bonjour, je demande une course moto :\nDestination : " + arrivee +
                    "\nNom : " + nom + "\nTelephone : " + telephone + "\nPaiement : " + paiement +
@@ -552,7 +554,7 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
     document.getElementById("carteSuivi").style.display = "block";
     document.getElementById("texteConvenuMoto").textContent = "Prix convenu : " + prixCalcule.toLocaleString("fr-FR") + " FCFA (" + donneesCourse.distance_km + " km)";
     demanderWakeLockClient();
-    demarrerSuivi(courseCreee.id, positionClientPourSuivi);
+    demarrerSuivi(idNouvelleCourse, positionClientPourSuivi);
   });
 });
 
@@ -589,24 +591,26 @@ document.getElementById("btnAnnulerCourse").addEventListener("click", function()
   btnAnnuler.disabled = true;
   btnAnnuler.textContent = "Annulation en cours...";
 
-  sb.from("courses_moto").select("livreur_id, statut").eq("id", idCourseActuelle).single().then(function(reponse) {
-    var course = reponse.data;
+  sb.rpc("annuler_course", { p_course_id: idCourseActuelle }).then(function(reponse) {
+    btnAnnuler.disabled = false;
+    btnAnnuler.textContent = "Annuler ma course";
 
-    sb.from("courses_moto").update({ statut: "annulee" }).eq("id", idCourseActuelle).then(function() {
-      if (course && course.livreur_id && course.statut !== "nouvelle") {
-        sb.from("livreurs").select("solde_compte").eq("id", course.livreur_id).single().then(function(r2) {
-          var soldeActuel = (r2.data && r2.data.solde_compte) || 0;
-          sb.from("livreurs").update({ solde_compte: soldeActuel + COMMISSION_COURSE }).eq("id", course.livreur_id).then(function() {});
-        });
+    if (reponse.error) {
+      var message = reponse.error.message || "";
+      if (message.indexOf("ne peut plus etre annulee") !== -1) {
+        alert("Cette course ne peut plus etre annulee : le livreur vous a deja pris en charge.");
+        document.getElementById("btnAnnulerCourse").style.display = "none";
+      } else {
+        alert("Erreur : l'annulation n'a pas pu etre effectuee. Reessayez.");
       }
-      btnAnnuler.disabled = false;
-      btnAnnuler.textContent = "Annuler ma course";
-      document.getElementById("texteSuiviStatut").textContent = "Course annulee.";
-      document.getElementById("btnAnnulerCourse").style.display = "none";
-      document.getElementById("btnNouvelleCourse").style.display = "block";
-      clearInterval(minuteurSuivi);
-      relacherWakeLockClient();
-    });
+      return;
+    }
+
+    document.getElementById("texteSuiviStatut").textContent = "Course annulee.";
+    document.getElementById("btnAnnulerCourse").style.display = "none";
+    document.getElementById("btnNouvelleCourse").style.display = "block";
+    clearInterval(minuteurSuivi);
+    relacherWakeLockClient();
   });
 });
 
@@ -630,8 +634,8 @@ function demarrerSuivi(idCourse, positionClient) {
   }, 150);
 
   function actualiser() {
-    sb.from("courses_moto").select("*").eq("id", idCourse).single().then(function(reponse) {
-      var c = reponse.data;
+    sb.rpc("suivi_course", { p_course_id: idCourse }).then(function(reponse) {
+      var c = reponse.data && reponse.data[0];
       if (!c) return;
 
       if (c.statut === "nouvelle") {
@@ -640,6 +644,14 @@ function demarrerSuivi(idCourse, positionClient) {
         document.getElementById("texteSuiviStatut").textContent = "Un livreur a accepte votre course et arrive.";
       } else if (c.statut === "en_cours") {
         document.getElementById("texteSuiviStatut").textContent = "Vous etes en route vers votre destination.";
+        document.getElementById("btnAnnulerCourse").style.display = "none";
+      } else if (c.statut === "annulee") {
+        document.getElementById("texteSuiviStatut").textContent = "Course annulee.";
+        document.getElementById("btnAnnulerCourse").style.display = "none";
+        document.getElementById("btnNouvelleCourse").style.display = "block";
+        relacherWakeLockClient();
+        clearInterval(minuteurSuivi);
+        return;
       } else if (c.statut === "terminee") {
         document.getElementById("texteSuiviStatut").textContent = "Course terminee. Merci d'avoir utilise AW SERVICES !";
         document.getElementById("btnAnnulerCourse").style.display = "none";
