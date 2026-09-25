@@ -278,6 +278,16 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 var NUMERO_WHATSAPP = "221777589444";
 var COMMISSION_COURSE = 100;
 var positionMoto = null;
@@ -728,7 +738,7 @@ function afficherZoneDirection() {
       var c = reponse.data && reponse.data[0];
       if (c) {
         var lienCarte = (c.latitude && c.longitude) ? " <a href=\"https://www.google.com/maps?q=" + c.latitude + "," + c.longitude + "\" target=\"_blank\" style=\"color:var(--accent);\">Voir sur la carte</a>" : "";
-        zoneRassemblement.innerHTML = "<p style=\"background-color:var(--fond);border:1px solid var(--bordure);border-radius:8px;padding:10px;font-size:13px;color:var(--texte-doux);margin-top:12px;\">&#128205; Point de rassemblement : " + c.lieu_rassemblement + lienCarte + "</p>";
+        zoneRassemblement.innerHTML = "<p style=\"background-color:var(--fond);border:1px solid var(--bordure);border-radius:8px;padding:10px;font-size:13px;color:var(--texte-doux);margin-top:12px;\">&#128205; Point de rassemblement : " + escapeHtml(c.lieu_rassemblement) + lienCarte + "</p>";
       } else {
         zoneRassemblement.innerHTML = "<p style=\"color:var(--accent);font-size:12px;margin-top:12px;\">Point de rassemblement pas encore renseigne, contactez-nous.</p>";
       }
