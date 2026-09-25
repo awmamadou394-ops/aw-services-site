@@ -411,7 +411,7 @@ function afficherAller(liste) {
     for (var i = 0; i < groupe.length; i++) {
       var r = groupe[i];
       reservationsIndex[r.id] = r;
-      html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">Chaise " + r.siege + "</div>";
+      html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">Chaise " + escapeHtml(r.siege) + "</div>";
     }
     html += "</div>";
   }
@@ -438,7 +438,7 @@ function afficherRetour(liste) {
     for (var i = 0; i < groupe.length; i++) {
       var r = groupe[i];
       reservationsIndex[r.id] = r;
-      html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">Chaise " + r.siege + "</div>";
+      html += "<div class=\"reservation-carte\" data-id=\"" + r.id + "\">Chaise " + escapeHtml(r.siege) + "</div>";
     }
     html += "</div>";
   }
