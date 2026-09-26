@@ -34,6 +34,9 @@
   .billet-qr img { border-radius: var(--rayon-petit); background-color: #fff; padding: 8px; }
   .billet-ref { text-align: center; font-family: var(--police-chiffres); font-size: 13px; color: var(--texte-discret); margin-top: 8px; letter-spacing: 0.05em; }
   .billet-statut { text-align: center; font-size: 12px; margin-top: 8px; }
+  .billet.non-paye { border-color: var(--alerte); }
+  .bandeau-non-paye { background-color: rgba(232,72,58,0.15); border: 1px solid var(--alerte); color: var(--alerte); border-radius: var(--rayon-petit); padding: 10px; text-align: center; font-weight: 700; font-size: 14px; margin-bottom: 12px; }
+  .bandeau-non-paye span { display: block; font-weight: 400; font-size: 12px; margin-top: 4px; }
   .msg { font-size: 13px; padding: 10px; border-radius: var(--rayon-petit); margin-top: 12px; }
   .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
 </style>
@@ -93,8 +96,13 @@ function construireBillet(r) {
   var reference = (r.id || "").replace(/-/g, "").slice(0, 8).toUpperCase();
   var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=" + encodeURIComponent(r.id || "");
   var nom = (r.prenom || "") + " " + (r.nom_famille || r.client_nom || "");
+  var estPaye = r.statut_paiement === "paye";
 
-  var html = "<div class=\"billet\">" +
+  var html = "<div class=\"billet" + (estPaye ? "" : " non-paye") + "\">";
+  if (!estPaye) {
+    html += "<div class=\"bandeau-non-paye\">NON PAYE &mdash; billet non valable<span>Le paiement de cette reservation n'a pas ete confirme. Ce billet ne permet pas de voyager.</span></div>";
+  }
+  html +=
     "<div class=\"billet-entete\">" +
       "<div class=\"marque\">AW SERVICES &mdash; Billet de voyage</div>" +
       "<div class=\"trajet\">" + texteTrajet + "</div>" +
@@ -107,13 +115,12 @@ function construireBillet(r) {
     html += "<div class=\"billet-ligne\"><span class=\"label\">Village de depart</span><span class=\"valeur\">" + escapeHtml(r.village_depart) + "</span></div>";
   }
   if (r.prix_total) {
-    html += "<div class=\"billet-ligne\"><span class=\"label\">Total paye</span><span class=\"valeur\">" + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</span></div>";
+    html += "<div class=\"billet-ligne\"><span class=\"label\">" + (estPaye ? "Total paye" : "Total a payer") + "</span><span class=\"valeur\">" + Number(r.prix_total).toLocaleString("fr-FR") + " FCFA</span></div>";
   }
-  html += "<div class=\"billet-qr\"><img src=\"" + qrUrl + "\" alt=\"QR code du billet\"></div>" +
-    "<div class=\"billet-ref\">Reference : " + reference + "</div>";
-  if (r.statut_paiement !== "paye") {
-    html += "<p class=\"billet-statut\" style=\"color:var(--alerte);\">Paiement non confirme pour cette reservation.</p>";
+  if (estPaye) {
+    html += "<div class=\"billet-qr\"><img src=\"" + qrUrl + "\" alt=\"QR code du billet\"></div>";
   }
+  html += "<div class=\"billet-ref\">Reference : " + reference + "</div>";
   html += "</div>";
   return html;
 }
