@@ -587,7 +587,7 @@ function envoyerCommande(event) {
     var a = panier[i];
     resumeArticles.push(a.nom + " x" + a.quantite);
     messageArticles.push("- " + a.nom + " x" + a.quantite + " (" + (a.prix * a.quantite).toLocaleString("fr-FR") + " FCFA)");
-    produitsStructures.push({ nom: a.nom, prix: a.prix, quantite: a.quantite });
+    produitsStructures.push({ id: a.id, nom: a.nom, prix: a.prix, quantite: a.quantite });
   }
   var total = calculerTotal();
   var idCommande = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
@@ -618,7 +618,11 @@ function envoyerCommande(event) {
     if (reponse.error) {
       btn.disabled = false;
       btn.textContent = "Confirmer la commande";
-      alert("Erreur : la commande n'a pas pu etre enregistree. Reessayez.");
+      if ((reponse.error.message || "").indexOf("Produit indisponible") !== -1) {
+        alert("Un article de votre panier n'est plus disponible. Retirez-le du panier puis reessayez.");
+      } else {
+        alert("Erreur : la commande n'a pas pu etre enregistree. Reessayez.");
+      }
       return;
     }
 
