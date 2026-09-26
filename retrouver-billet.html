@@ -48,11 +48,13 @@
 <a href="transport.html" class="back">&#8592; Retour au transport</a>
 
 <div class="aw-conteneur">
-  <p class="intro">Entrez le numero de telephone utilise lors de la reservation pour retrouver vos billets.</p>
+  <p class="intro">Entrez le numero de telephone et le numero de CNI ou passeport utilises lors de la reservation pour retrouver vos billets.</p>
 
   <div class="aw-carte">
     <label class="aw-label">Numero de telephone</label>
     <input class="aw-input" type="tel" id="champTelephone" placeholder="Ex : 77 123 45 67">
+    <label class="aw-label">Numero CNI ou passeport</label>
+    <input class="aw-input" type="text" id="champPiece" placeholder="Celui indique lors de la reservation">
     <button type="button" class="aw-btn aw-btn-primaire" id="btnChercher" style="width:100%;margin-top:14px;">Rechercher mes billets</button>
     <div id="msgRecherche"></div>
   </div>
@@ -121,25 +123,26 @@ document.getElementById("btnChercher").addEventListener("click", function() {
   var msg = document.getElementById("msgRecherche");
   var zone = document.getElementById("zoneBillets");
   var tel = document.getElementById("champTelephone").value.trim();
+  var piece = document.getElementById("champPiece").value.trim();
 
   msg.innerHTML = "";
   zone.innerHTML = "";
 
-  if (!tel) {
-    msg.innerHTML = "<div class=\"msg erreur\">Entrez un numero de telephone.</div>";
+  if (!tel || !piece) {
+    msg.innerHTML = "<div class=\"msg erreur\">Entrez le numero de telephone et le numero de CNI ou passeport.</div>";
     return;
   }
 
   btn.disabled = true;
   btn.textContent = "Recherche en cours...";
 
-  sb.from("reservations_voiture").select("*").eq("client_telephone", tel).neq("statut", "annulee").order("date_voyage", { ascending: false }).then(function(reponse) {
+  sb.rpc("retrouver_billets", { p_telephone: tel, p_piece: piece }).then(function(reponse) {
     btn.disabled = false;
     btn.textContent = "Rechercher mes billets";
 
     var data = reponse.data || [];
     if (reponse.error || data.length === 0) {
-      msg.innerHTML = "<div class=\"msg erreur\">Aucun billet trouve pour ce numero. Verifiez le numero utilise lors de la reservation.</div>";
+      msg.innerHTML = "<div class=\"msg erreur\">Aucun billet trouve. Verifiez le numero de telephone et le numero de CNI ou passeport utilises lors de la reservation.</div>";
       return;
     }
 
