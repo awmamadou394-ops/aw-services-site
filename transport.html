@@ -56,9 +56,9 @@
   }
   .grille-sieges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .siege {
-    background-color: var(--fond);
-    border: 1px solid var(--bordure);
-    color: var(--texte);
+    background-color: rgba(63,163,77,0.18);
+    border: 1px solid var(--succes);
+    color: var(--succes);
     border-radius: var(--rayon-petit);
     padding: 13px 0;
     text-align: center;
@@ -68,14 +68,14 @@
     transition: transform 0.1s ease;
   }
   .siege:active:not(:disabled) { transform: scale(0.94); }
-  .siege.pris { background-color: var(--surface); border-color: var(--bordure); color: var(--texte-discret); text-decoration: line-through; }
-  .siege.selectionne { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
+  .siege.pris { background-color: rgba(232,72,58,0.18); border-color: var(--alerte); color: var(--alerte); text-decoration: line-through; }
+  .siege.selectionne { background-color: #F5C518; border-color: #F5C518; color: #1C1200; }
   .legende { display: flex; gap: 14px; margin-top: var(--espace-sm); font-size: 11px; color: var(--texte-doux); flex-wrap: wrap; }
   .legende span { display: inline-flex; align-items: center; gap: 5px; }
   .pastille { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-  .pastille.libre { background-color: var(--fond); border: 1px solid var(--bordure); }
-  .pastille.occupe { background-color: var(--surface); border: 1px solid var(--bordure); }
-  .pastille.choisi { background-color: var(--accent); }
+  .pastille.libre { background-color: var(--succes); }
+  .pastille.occupe { background-color: var(--alerte); }
+  .pastille.choisi { background-color: #F5C518; }
 
   .recap-prix {
     margin-top: var(--espace-md);
@@ -288,7 +288,6 @@ function escapeHtml(texte) {
     .replace(/'/g, "&#39;");
 }
 
-var NUMERO_WHATSAPP = "221777589444";
 var COMMISSION_COURSE = 100;
 var positionMoto = null;
 var idCourseActuelle = null;
@@ -404,7 +403,7 @@ function calculerPrixCourse(distanceKmVal) {
   if (distanceKmVal <= 2) {
     return 350;
   }
-  return Math.round(350 + 250 * distanceKmVal);
+  return Math.round(250 * distanceKmVal);
 }
 
 function mettreAJourPrixCourseMoto() {
@@ -434,6 +433,9 @@ function distanceEntrePointsMoto(lat1, lon1, lat2, lon2) {
 document.getElementById("btnConfirmerDestination").addEventListener("click", function() {
   var pos = marqueurChoix.getPosition();
   destinationChoisie = { lat: pos.lat(), lng: pos.lng() };
+  if (!document.getElementById("m_arrivee").value) {
+    document.getElementById("m_arrivee").value = "Point sur la carte (" + destinationChoisie.lat.toFixed(5) + ", " + destinationChoisie.lng.toFixed(5) + ")";
+  }
   document.getElementById("msgDestinationChoisie").className = "msg-position ok";
   document.getElementById("msgDestinationChoisie").textContent = "Destination choisie sur la carte.";
   document.getElementById("fenetreCarte").classList.remove("visible");
@@ -517,7 +519,7 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
     client_nom: nom,
     client_telephone: telephone,
     lieu_depart: repere || "Position GPS",
-    lieu_arrivee: arrivee || "Choisie sur la carte",
+    lieu_arrivee: arrivee || ("Point sur la carte (" + destinationChoisie.lat.toFixed(5) + ", " + destinationChoisie.lng.toFixed(5) + ")"),
     latitude: positionMoto.lat,
     longitude: positionMoto.lng,
     destination_latitude: destinationChoisie.lat,
@@ -543,12 +545,6 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
     }
 
     idCourseActuelle = idNouvelleCourse;
-
-    var message = "Bonjour, je demande une course moto :\nDestination : " + arrivee +
-                   "\nNom : " + nom + "\nTelephone : " + telephone + "\nPaiement : " + paiement +
-                   "\nPrix : " + prixCalcule.toLocaleString("fr-FR") + " FCFA" +
-                   "\nPosition : https://www.google.com/maps?q=" + positionMoto.lat + "," + positionMoto.lng;
-    window.open("https://wa.me/" + NUMERO_WHATSAPP + "?text=" + encodeURIComponent(message), "_blank");
 
     document.getElementById("formMoto").style.display = "none";
     document.getElementById("carteSuivi").style.display = "block";
@@ -855,7 +851,7 @@ function chargerSieges() {
   fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/liberer-chaises", { method: "POST" })
     .catch(function() {})
     .then(function() {
-      sb.from("reservations_voiture").select("siege").eq("date_voyage", dateVoyage).eq("direction", direction).neq("statut", "annulee").then(function(reponse) {
+      sb.rpc("sieges_pris", { p_date: dateVoyage, p_direction: direction }).then(function(reponse) {
         siegesPris = (reponse.data || []).map(function(r) { return r.siege; });
         afficherGrilleSieges();
       });
