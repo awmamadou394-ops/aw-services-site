@@ -35,6 +35,8 @@
 
   form.form-preinscription, form.form-billet { background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: var(--espace-md); display: flex; flex-direction: column; gap: 4px; margin-top: var(--espace-md); }
   form h4 { color: var(--accent); font-size: 14px; margin-bottom: 4px; font-family: var(--police-titre); }
+  .bandeau-connexion { background-color: rgba(242,169,59,0.12); border: 1px solid var(--accent); border-radius: var(--rayon-petit); padding: 10px; font-size: 13px; color: var(--texte); margin-bottom: 8px; line-height: 1.5; }
+  .bandeau-connexion a { color: var(--accent); font-weight: 700; text-decoration: none; }
   select { width: 100%; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
   input[type="file"] { width: 100%; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; color: var(--texte-doux); font-size: 12px; }
   .msg { font-size: 13px; padding: 10px; border-radius: var(--rayon-petit); }
@@ -485,6 +487,50 @@ for (var f = 0; f < formulaires.length; f++) {
   formulaires[f].addEventListener("submit", envoyerPreinscription);
 }
 
+var clientConnecte = null;
+var LIEN_CONNEXION = "client-connexion.html?retour=voyage.html";
+
+function afficherBandeauxConnexion() {
+  for (var i = 0; i < formulaires.length; i++) {
+    var form = formulaires[i];
+    if (form.querySelector(".bandeau-connexion")) continue;
+    var bandeau = document.createElement("div");
+    bandeau.className = "bandeau-connexion";
+    bandeau.innerHTML = "&#128274; Un compte est necessaire pour postuler et suivre votre dossier. <a href=\"" + LIEN_CONNEXION + "\">Se connecter ou creer un compte</a>";
+    var titre = form.querySelector("h4");
+    if (titre && titre.nextSibling) {
+      form.insertBefore(bandeau, titre.nextSibling);
+    } else {
+      form.insertBefore(bandeau, form.firstChild);
+    }
+  }
+}
+
+function preRemplirFormulaires() {
+  for (var i = 0; i < formulaires.length; i++) {
+    var champNom = formulaires[i].querySelector(".p_nom");
+    var champTel = formulaires[i].querySelector(".p_tel");
+    if (champNom && !champNom.value) champNom.value = clientConnecte.nom || "";
+    if (champTel && !champTel.value) champTel.value = clientConnecte.telephone || "";
+  }
+}
+
+sb.auth.getUser().then(function(reponseUser) {
+  var user = reponseUser.data.user;
+  if (!user) {
+    afficherBandeauxConnexion();
+    return;
+  }
+  sb.from("clients").select("*").eq("user_id", user.id).single().then(function(reponse) {
+    if (reponse.data) {
+      clientConnecte = reponse.data;
+      preRemplirFormulaires();
+    } else {
+      afficherBandeauxConnexion();
+    }
+  });
+});
+
 var FRAIS_DOSSIER = {
   "Canada": 150000,
   "USA": 400000,
@@ -525,6 +571,12 @@ function envoyerPreinscription(event) {
   var pays = form.getAttribute("data-pays");
   var btn = form.querySelector(".btn_preinscription");
   var zoneMsg = form.querySelector(".zoneMessagePre");
+
+  if (!clientConnecte) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Connectez-vous pour postuler : <a href=\"" + LIEN_CONNEXION + "\" style=\"color:var(--accent);font-weight:700;\">se connecter ou creer un compte</a>.</div>";
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = "Envoi en cours...";
   zoneMsg.innerHTML = "";
@@ -543,10 +595,17 @@ function envoyerPreinscription(event) {
   }
 
   var urls = [];
+  var echecsEnvoi = 0;
   var total = fichiers.length;
   var compteur = 0;
 
   function finaliser() {
+    if (echecsEnvoi > 0) {
+      btn.disabled = false;
+      btn.textContent = "Postuler pour " + pays;
+      zoneMsg.innerHTML = "<div class=\"msg erreur\">" + echecsEnvoi + " document(s) n'ont pas pu etre envoyes (10 Mo maximum par fichier). Reessayez avec des fichiers plus legers.</div>";
+      return;
+    }
     var idPreinscription = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
 
     var donnees = {
@@ -555,8 +614,13 @@ function envoyerPreinscription(event) {
       telephone: tel,
       pays: pays,
       niveau: niveau,
-      documents: urls
+      documents: urls,
+      client_id: clientConnecte.id
     };
+
+    if (pays === "France") {
+      donnees.type_etablissement = form.querySelector(".p_type_etablissement").value;
+    }
 
     if (pays !== "Russie") {
       donnees.montant_frais = montant;
@@ -578,6 +642,7 @@ function envoyerPreinscription(event) {
         window.open("https://wa.me/221777589444?text=" + encodeURIComponent(message), "_blank");
         zoneMsg.innerHTML = "<div class=\"msg succes\">Pre-inscription envoyee avec succes ! Nous vous contactons pour le tarif.</div>";
         form.reset();
+        preRemplirFormulaires();
         return;
       }
 
@@ -622,10 +687,13 @@ function envoyerPreinscription(event) {
 
   for (var i = 0; i < total; i++) {
     (function(fichier, index) {
-      var nomFichier = "doc_" + Date.now() + "_" + index + "_" + fichier.name;
+      var nomPropre = fichier.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      var nomFichier = "doc_" + Date.now() + "_" + index + "_" + nomPropre;
       sb.storage.from("documents-voyage").upload(nomFichier, fichier).then(function(reponseUpload) {
         if (!reponseUpload.error) {
           urls.push(nomFichier);
+        } else {
+          echecsEnvoi++;
         }
         compteur++;
         if (compteur === total) finaliser();
