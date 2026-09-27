@@ -32,6 +32,18 @@
 
   .liste-documents { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
   .lien-document { background-color: var(--fond); border: 1px solid var(--bordure); color: var(--accent); text-decoration: none; padding: 5px 10px; border-radius: var(--rayon-petit); font-size: 11.5px; font-weight: 600; }
+  .date-depot { font-size: 11px; color: var(--texte-discret); margin-bottom: 6px; }
+  .badge-dossier { background-color: rgba(242,169,59,0.15); color: var(--accent); }
+  .badge-refuse { background-color: rgba(232,72,58,0.15); color: var(--alerte); }
+  .badge-termine { background-color: rgba(63,163,77,0.15); color: var(--succes); }
+  .zone-suivi { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--bordure); }
+  .zone-suivi label { font-size: 12px; color: var(--texte-doux); display: block; margin: 6px 0 4px; }
+  .zone-suivi select, .zone-suivi textarea { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; color: var(--texte); font-family: var(--police-texte); font-size: 13.5px; }
+  .zone-suivi textarea { min-height: 70px; resize: vertical; }
+  .btn-enregistrer { width: 100%; margin-top: 8px; background-color: var(--accent); color: #1C1200; border: none; padding: 10px; border-radius: var(--rayon-petit); font-weight: 700; font-size: 13px; font-family: var(--police-texte); }
+  .msg-suivi { font-size: 12px; margin-top: 6px; }
+  .msg-suivi.ok { color: var(--succes); }
+  .msg-suivi.err { color: var(--alerte); }
 </style>
 </head>
 <body>
@@ -65,6 +77,22 @@ function escapeHtml(texte) {
 
 var PAYS_LISTE = ["Tous", "France", "Canada", "USA", "Maroc", "Belgique", "Russie"];
 var filtrePays = "Tous";
+
+var STATUTS_DOSSIER = [
+  { valeur: "recu", libelle: "Dossier recu" },
+  { valeur: "en_cours", libelle: "En cours de traitement" },
+  { valeur: "admission", libelle: "Admission obtenue" },
+  { valeur: "visa", libelle: "Visa en cours" },
+  { valeur: "termine", libelle: "Termine" },
+  { valeur: "refuse", libelle: "Refuse" }
+];
+
+function libelleStatut(valeur) {
+  for (var i = 0; i < STATUTS_DOSSIER.length; i++) {
+    if (STATUTS_DOSSIER[i].valeur === valeur) return STATUTS_DOSSIER[i].libelle;
+  }
+  return "Dossier recu";
+}
 
 document.getElementById("btnDeconnexion").addEventListener("click", function() {
   sb.auth.signOut().then(function() {
@@ -117,7 +145,7 @@ function chargerPreinscriptions() {
   var zone = document.getElementById("listePreinscriptions");
   zone.innerHTML = "<p class=\"vide\">Chargement...</p>";
 
-  var requete = sb.from("preinscriptions_voyage").select("*").limit(100);
+  var requete = sb.from("preinscriptions_voyage").select("*").order("date_soumission", { ascending: false }).limit(100);
   if (filtrePays !== "Tous") {
     requete = requete.eq("pays", filtrePays);
   }
@@ -146,19 +174,39 @@ function chargerPreinscriptions() {
         htmlDocuments += "</div>";
       }
 
+      var statut = p.statut_dossier || "recu";
+      var classeDossier = statut === "refuse" ? "badge-refuse" : (statut === "termine" ? "badge-termine" : "badge-dossier");
+      var options = "";
+      for (var s = 0; s < STATUTS_DOSSIER.length; s++) {
+        options += "<option value=\"" + STATUTS_DOSSIER[s].valeur + "\"" + (STATUTS_DOSSIER[s].valeur === statut ? " selected" : "") + ">" + STATUTS_DOSSIER[s].libelle + "</option>";
+      }
+      var dateDepot = p.date_soumission ? new Date(p.date_soumission).toLocaleDateString("fr-FR") : "";
+
       html += "<div class=\"carte-item\">" +
+                "<div class=\"date-depot\">Depose le " + dateDepot + (p.client_id ? "" : " - sans compte client") + "</div>" +
                 "<h3>" + escapeHtml(p.nom) + "</h3>" +
                 "<p>Telephone : " + escapeHtml(p.telephone) + "</p>" +
                 "<p>Niveau : " + escapeHtml(p.niveau) + "</p>" +
+                (p.type_etablissement ? "<p>Etablissement : " + escapeHtml(p.type_etablissement) + "</p>" : "") +
                 "<div class=\"ligne-badges\">" +
                   "<span class=\"badge-statut badge-pays\">" + escapeHtml(p.pays) + "</span>" +
                   badgePaiement +
+                  "<span class=\"badge-statut " + classeDossier + "\">" + libelleStatut(statut) + "</span>" +
                 "</div>" +
                 htmlDocuments +
+                "<div class=\"zone-suivi\">" +
+                  "<label>Statut du dossier</label>" +
+                  "<select class=\"select-statut\" data-id=\"" + p.id + "\">" + options + "</select>" +
+                  "<label>Message a l'etudiant (visible dans son espace)</label>" +
+                  "<textarea class=\"texte-message\" data-id=\"" + p.id + "\" placeholder=\"Ex : Votre dossier a ete soumis a Campus France. Entretien prevu le...\">" + escapeHtml(p.message_admin || "") + "</textarea>" +
+                  "<button type=\"button\" class=\"btn-enregistrer\" data-id=\"" + p.id + "\">Enregistrer le suivi</button>" +
+                  "<p class=\"msg-suivi\" id=\"msg-" + p.id + "\"></p>" +
+                "</div>" +
               "</div>";
     }
     zone.innerHTML = html;
     attacherBoutonsDocVoyage();
+    attacherBoutonsSuivi();
   });
 }
 
@@ -179,6 +227,40 @@ function attacherBoutonsDocVoyage() {
           return;
         }
         window.open(reponse.data.signedUrl, "_blank");
+      });
+    });
+  }
+}
+
+function attacherBoutonsSuivi() {
+  var boutons = document.getElementsByClassName("btn-enregistrer");
+  for (var i = 0; i < boutons.length; i++) {
+    boutons[i].addEventListener("click", function(e) {
+      var btn = e.target;
+      var id = btn.getAttribute("data-id");
+      var carte = btn.closest(".zone-suivi");
+      var statut = carte.querySelector(".select-statut").value;
+      var message = carte.querySelector(".texte-message").value.trim();
+      var msg = document.getElementById("msg-" + id);
+
+      btn.disabled = true;
+      btn.textContent = "Enregistrement...";
+      msg.className = "msg-suivi";
+      msg.textContent = "";
+
+      sb.from("preinscriptions_voyage").update({
+        statut_dossier: statut,
+        message_admin: message || null
+      }).eq("id", id).select("id").then(function(reponse) {
+        btn.disabled = false;
+        btn.textContent = "Enregistrer le suivi";
+        if (reponse.error || !reponse.data || reponse.data.length === 0) {
+          msg.className = "msg-suivi err";
+          msg.textContent = "Erreur : le suivi n'a pas pu etre enregistre.";
+          return;
+        }
+        msg.className = "msg-suivi ok";
+        msg.textContent = "Suivi enregistre. L'etudiant le voit dans son espace.";
       });
     });
   }
