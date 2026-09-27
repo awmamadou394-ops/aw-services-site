@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AW SERVICES - Mes Commandes</title>
+<title>AW SERVICES - Mon Compte</title>
 <link rel="stylesheet" href="style-global.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -37,6 +37,10 @@
   .badge-nonpaye { background-color: rgba(232,72,58,0.15); color: var(--alerte); }
   .badge-annulee { background-color: var(--fond); color: var(--texte-discret); }
   .badge-neutre { background-color: rgba(107,169,255,0.15); color: #6aa9ff; }
+  .message-admin { background-color: var(--fond); border-left: 3px solid var(--accent); border-radius: var(--rayon-petit); padding: 10px; font-size: 13px; color: var(--texte); margin-top: 10px; line-height: 1.5; }
+  .message-admin .titre-msg { font-size: 11px; color: var(--accent); font-weight: 700; margin-bottom: 4px; }
+  .dossier-refuse { color: var(--alerte); font-size: 13px; font-weight: 700; margin-top: 10px; }
+  .lien-contact { display: block; text-align: center; border: 1px solid var(--bordure); color: var(--texte); text-decoration: none; padding: 12px; border-radius: var(--rayon-petit); font-weight: 600; font-size: 13.5px; margin-bottom: var(--espace-md); }
 
   .etapes { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
   .etape { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--texte-discret); }
@@ -50,7 +54,7 @@
 <body>
 
 <header class="aw-header">
-  <h1>Mes Commandes</h1>
+  <h1>Mon Compte</h1>
   <button class="deconnexion" id="btnDeconnexion">Deconnexion</button>
 </header>
 
@@ -130,11 +134,13 @@ function chargerEspace() {
           "<p class=\"msg-notif\" id=\"msgNotif\"></p>" +
         "</div>" +
         "<a href=\"catalogue.html\" class=\"lien-boutique\" style=\"margin-top:15px;\">Parcourir la boutique</a>" +
+        "<a href=\"https://wa.me/221777589444\" target=\"_blank\" class=\"lien-contact\">&#128172; Nous contacter sur WhatsApp</a>" +
 
         "<div class=\"onglets\">" +
           "<div class=\"onglet actif\" id=\"ongletAchats\">Achats</div>" +
           "<div class=\"onglet\" id=\"ongletTransport\">Reservations</div>" +
           "<div class=\"onglet\" id=\"ongletCourses\">Courses moto</div>" +
+          "<div class=\"onglet\" id=\"ongletVoyage\">Voyage</div>" +
         "</div>" +
 
         "<div class=\"panneau visible\" id=\"panneauAchats\">" +
@@ -145,17 +151,23 @@ function chargerEspace() {
         "</div>" +
         "<div class=\"panneau\" id=\"panneauCourses\">" +
           "<div id=\"listeCoursesClient\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"panneau\" id=\"panneauVoyage\">" +
+          "<div id=\"listeDossiersVoyage\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>";
 
       document.getElementById("ongletAchats").addEventListener("click", function() { basculerOnglet("Achats"); });
       document.getElementById("ongletTransport").addEventListener("click", function() { basculerOnglet("Transport"); });
       document.getElementById("ongletCourses").addEventListener("click", function() { basculerOnglet("Courses"); });
+      document.getElementById("ongletVoyage").addEventListener("click", function() { basculerOnglet("Voyage"); });
 
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
       verifierEtatNotifications();
       chargerCommandes();
       chargerReservationsClient();
       chargerCoursesClient();
+      chargerDossiersVoyage();
+      if (window.location.hash === "#voyage") basculerOnglet("Voyage");
       setInterval(chargerCommandes, 20000);
       setInterval(chargerReservationsClient, 20000);
       setInterval(chargerCoursesClient, 20000);
@@ -164,8 +176,8 @@ function chargerEspace() {
 }
 
 function basculerOnglet(nom) {
-  var onglets = { Achats: "ongletAchats", Transport: "ongletTransport", Courses: "ongletCourses" };
-  var panneaux = { Achats: "panneauAchats", Transport: "panneauTransport", Courses: "panneauCourses" };
+  var onglets = { Achats: "ongletAchats", Transport: "ongletTransport", Courses: "ongletCourses", Voyage: "ongletVoyage" };
+  var panneaux = { Achats: "panneauAchats", Transport: "panneauTransport", Courses: "panneauCourses", Voyage: "panneauVoyage" };
   for (var cle in onglets) {
     document.getElementById(onglets[cle]).classList.toggle("actif", cle === nom);
     document.getElementById(panneaux[cle]).classList.toggle("visible", cle === nom);
@@ -374,6 +386,73 @@ function chargerCoursesClient() {
                 (c.prix_total ? "<div class=\"total\">" + Number(c.prix_total).toLocaleString("fr-FR") + " FCFA (" + escapeHtml(c.mode_paiement) + ")</div>" : "") +
                 "<span class=\"badge-statut " + classeBadge + "\">" + texteBadge + "</span>" +
               "</div>";
+    }
+    zone.innerHTML = html;
+  });
+}
+
+var ETAPES_DOSSIER = ["recu", "en_cours", "admission", "visa", "termine"];
+var LIBELLES_DOSSIER = {
+  recu: "Dossier recu",
+  en_cours: "En cours de traitement",
+  admission: "Admission obtenue",
+  visa: "Visa en cours",
+  termine: "Termine",
+  refuse: "Refuse"
+};
+
+function chargerDossiersVoyage() {
+  sb.from("preinscriptions_voyage").select("*").eq("client_id", clientCourant.id).order("date_soumission", { ascending: false }).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeDossiersVoyage");
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p class=\"vide\">Vous n'avez pas encore de dossier d'etudes a l'etranger. <a href=\"voyage.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">Voir les destinations</a></p>";
+      return;
+    }
+
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var d = data[i];
+      var statut = d.statut_dossier || "recu";
+      var dateAffichee = d.date_soumission ? new Date(d.date_soumission).toLocaleDateString("fr-FR") : "";
+      var badgePaiement = "";
+      if (d.pays === "Russie" && !d.montant_frais) {
+        badgePaiement = "<span class=\"badge-statut badge-neutre\">Tarif sur devis</span>";
+      } else if (d.statut_paiement === "paye") {
+        badgePaiement = "<span class=\"badge-statut badge-paye\">Frais de dossier payes</span>";
+      } else {
+        badgePaiement = "<span class=\"badge-statut badge-nonpaye\">Frais de dossier non payes</span>";
+      }
+
+      html += "<div class=\"commande-carte\">" +
+                "<div class=\"date\">Depose le " + dateAffichee + "</div>" +
+                "<h3>Etudes : " + escapeHtml(d.pays) + (d.type_etablissement ? " (" + escapeHtml(d.type_etablissement) + ")" : "") + "</h3>" +
+                "<p>Niveau : " + escapeHtml(d.niveau) + "</p>" +
+                (d.montant_frais ? "<div class=\"total\">" + Number(d.montant_frais).toLocaleString("fr-FR") + " FCFA</div>" : "") +
+                badgePaiement;
+
+      if (statut === "refuse") {
+        html += "<p class=\"dossier-refuse\">Dossier refuse</p>";
+      } else {
+        var indexActuel = ETAPES_DOSSIER.indexOf(statut);
+        if (indexActuel === -1) indexActuel = 0;
+        html += "<div class=\"etapes\">";
+        for (var j = 0; j < ETAPES_DOSSIER.length; j++) {
+          var classe = "etape";
+          if (j < indexActuel || (j === indexActuel && statut === "termine")) classe += " faite";
+          if (j === indexActuel && statut !== "termine") classe += " active";
+          html += "<div class=\"" + classe + "\"><span class=\"pastille-etape\"></span>" + LIBELLES_DOSSIER[ETAPES_DOSSIER[j]] + "</div>";
+        }
+        html += "</div>";
+      }
+
+      if (d.message_admin) {
+        html += "<div class=\"message-admin\">" +
+                  "<div class=\"titre-msg\">Message d'AW SERVICES" + (d.date_maj_dossier ? " - " + new Date(d.date_maj_dossier).toLocaleDateString("fr-FR") : "") + "</div>" +
+                  escapeHtml(d.message_admin) +
+                "</div>";
+      }
+      html += "</div>";
     }
     zone.innerHTML = html;
   });
