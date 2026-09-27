@@ -11,6 +11,7 @@
   .aw-btn { width: 100%; }
   .modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--espace-md); }
   footer { text-align: center; padding: var(--espace-lg); color: var(--texte-discret); font-size: 12px; }
+  .point-compte { display: none; position: absolute; top: -2px; right: -6px; width: 10px; height: 10px; border-radius: 50%; background-color: var(--succes); border: 2px solid var(--surface); }
   .badge-panier-nav { position: absolute; top: -6px; right: -10px; background-color: var(--alerte); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 999px; align-items: center; justify-content: center; font-family: var(--police-chiffres); padding: 0 3px; }
 </style>
 <link rel="manifest" href="./manifest.json">
@@ -116,7 +117,13 @@ if ('serviceWorker' in navigator) {
     </span>
     Panier
   </a>
-  <a href="https://wa.me/221777589444" target="_blank" class="aw-nav-item"><span class="icone">&#128172;</span>Contact</a>
+  <a href="client-connexion.html" class="aw-nav-item" id="navCompte">
+    <span class="icone" style="position:relative;display:inline-block;">
+      &#128100;
+      <span class="point-compte" id="pointCompte"></span>
+    </span>
+    <span id="texteCompte">Compte</span>
+  </a>
 </nav>
 
 <script>
@@ -161,6 +168,27 @@ function majBadgePanierNav() {
   }
 }
 majBadgePanierNav();
+
+function majNavCompte() {
+  var lien = document.getElementById("navCompte");
+  if (!lien) return;
+  var session = null;
+  try {
+    session = JSON.parse(localStorage.getItem("sb-vnceunqygoiwglnwpgcr-auth-token"));
+  } catch (e) {
+    session = null;
+  }
+  if (!session || !session.user) return;
+
+  var nom = (session.user.user_metadata && session.user.user_metadata.nom) ? String(session.user.user_metadata.nom).trim() : "";
+  var prenom = nom ? nom.split(" ")[0] : "Mon compte";
+  if (prenom.length > 10) prenom = prenom.slice(0, 9) + ".";
+
+  lien.setAttribute("href", "client-espace.html");
+  document.getElementById("texteCompte").textContent = prenom;
+  document.getElementById("pointCompte").style.display = "block";
+}
+majNavCompte();
 </script>
 
 </body>
