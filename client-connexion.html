@@ -84,6 +84,21 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+var PAGES_RETOUR_AUTORISEES = ["voyage.html", "catalogue.html", "transport.html", "volaille.html", "client-espace.html"];
+var retourDemande = new URLSearchParams(window.location.search).get("retour");
+if (retourDemande && PAGES_RETOUR_AUTORISEES.indexOf(retourDemande) !== -1) {
+  localStorage.setItem("aw_retour_connexion", retourDemande);
+}
+
+function pageApresConnexion() {
+  var retour = localStorage.getItem("aw_retour_connexion");
+  localStorage.removeItem("aw_retour_connexion");
+  if (retour && PAGES_RETOUR_AUTORISEES.indexOf(retour) !== -1) {
+    return retour;
+  }
+  return "client-espace.html";
+}
+
 document.getElementById("ongletInscription").addEventListener("click", function() {
   document.getElementById("ongletInscription").classList.add("actif");
   document.getElementById("ongletConnexion").classList.remove("actif");
@@ -119,7 +134,10 @@ document.getElementById("formInscription").addEventListener("submit", function(e
   sb.auth.signUp({
     email: email,
     password: password,
-    options: { data: { nom: nom, telephone: telephone } }
+    options: {
+      data: { nom: nom, telephone: telephone },
+      emailRedirectTo: "https://awservices.sn/client-connexion.html"
+    }
   }).then(function(reponse) {
     btn.disabled = false;
     btn.textContent = "Creer mon compte";
@@ -156,7 +174,7 @@ document.getElementById("formConnexion").addEventListener("submit", function(eve
         if (!reponseProfil.data.email) {
           sb.from("clients").update({ email: user.email }).eq("user_id", user.id).then(function() {});
         }
-        window.location.href = "client-espace.html";
+        window.location.href = pageApresConnexion();
         return;
       }
       var nomStocke = (user.user_metadata && user.user_metadata.nom) ? user.user_metadata.nom : user.email;
@@ -173,7 +191,7 @@ document.getElementById("formConnexion").addEventListener("submit", function(eve
           msg.innerHTML = "<div class=\"msg erreur\">Erreur profil : " + reponseInsert.error.message + "</div>";
           return;
         }
-        window.location.href = "client-espace.html";
+        window.location.href = pageApresConnexion();
       });
     });
   });
