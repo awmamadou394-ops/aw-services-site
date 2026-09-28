@@ -498,7 +498,7 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
   }
 
   btn.disabled = true;
-  btn.textContent = "Envoi en cours...";
+  btn.textContent = "Recherche d'un chauffeur...";
   msg.innerHTML = "";
 
   var repere = document.getElementById("m_repere").value;
@@ -535,22 +535,31 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
 
   var positionClientPourSuivi = { lat: positionMoto.lat, lng: positionMoto.lng };
 
-  sb.from("courses_moto").insert([donneesCourse]).then(function(reponse) {
-    btn.disabled = false;
-    btn.textContent = "Demander une course";
-
-    if (reponse.error) {
-      msg.innerHTML = "<div class=\"msg erreur\">Erreur : la course n'a pas pu etre enregistree. Reessayez.</div>";
+  sb.rpc("livreurs_disponibles", { p_lat: positionMoto.lat, p_lng: positionMoto.lng, p_zone: null }).then(function(reponseDispo) {
+    if (reponseDispo.error || !reponseDispo.data || Number(reponseDispo.data) === 0) {
+      btn.disabled = false;
+      btn.textContent = "Demander une course";
+      msg.innerHTML = "<div class=\"msg erreur\">Aucun chauffeur disponible pres de vous pour le moment (rayon de 5 km). Reessayez dans quelques minutes.</div>";
       return;
     }
 
-    idCourseActuelle = idNouvelleCourse;
+    sb.from("courses_moto").insert([donneesCourse]).then(function(reponse) {
+      btn.disabled = false;
+      btn.textContent = "Demander une course";
 
-    document.getElementById("formMoto").style.display = "none";
-    document.getElementById("carteSuivi").style.display = "block";
-    document.getElementById("texteConvenuMoto").textContent = "Prix convenu : " + prixCalcule.toLocaleString("fr-FR") + " FCFA (" + donneesCourse.distance_km + " km)";
-    demanderWakeLockClient();
-    demarrerSuivi(idNouvelleCourse, positionClientPourSuivi);
+      if (reponse.error) {
+        msg.innerHTML = "<div class=\"msg erreur\">Erreur : la course n'a pas pu etre enregistree. Reessayez.</div>";
+        return;
+      }
+
+      idCourseActuelle = idNouvelleCourse;
+
+      document.getElementById("formMoto").style.display = "none";
+      document.getElementById("carteSuivi").style.display = "block";
+      document.getElementById("texteConvenuMoto").textContent = "Prix convenu : " + prixCalcule.toLocaleString("fr-FR") + " FCFA (" + donneesCourse.distance_km + " km)";
+      demanderWakeLockClient();
+      demarrerSuivi(idNouvelleCourse, positionClientPourSuivi);
+    });
   });
 });
 
