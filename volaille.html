@@ -32,6 +32,7 @@
   select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
   .msg-position { font-size: 12px; color: var(--texte-doux); margin-top: 6px; }
   .msg-position.ok { color: var(--succes); }
+  .point-compte { display: none; position: absolute; top: -2px; right: -6px; width: 10px; height: 10px; border-radius: 50%; background-color: var(--succes); border: 2px solid var(--surface); }
   .badge-panier-nav { position: absolute; top: -6px; right: -10px; background-color: var(--alerte); color: #fff; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 999px; align-items: center; justify-content: center; font-family: var(--police-chiffres); padding: 0 3px; }
 </style>
 </head>
@@ -149,7 +150,13 @@
     </span>
     Panier
   </a>
-  <a href="https://wa.me/221777589444" target="_blank" class="aw-nav-item"><span class="icone">&#128172;</span>Contact</a>
+  <a href="client-connexion.html?retour=volaille.html" class="aw-nav-item" id="navCompte">
+    <span class="icone" style="position:relative;display:inline-block;">
+      &#128100;
+      <span class="point-compte" id="pointCompte"></span>
+    </span>
+    <span id="texteCompte">Compte</span>
+  </a>
 </nav>
 
 <script>
@@ -198,7 +205,7 @@ function verifierConnexion() {
   sb.auth.getUser().then(function(reponseUser) {
     var user = reponseUser.data.user;
     if (!user) {
-      bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">connectez-vous ou creez un compte</a>.";
+      bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html?retour=volaille.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">connectez-vous ou creez un compte</a>.";
       return;
     }
     sb.from("clients").select("*").eq("user_id", user.id).single().then(function(reponse) {
@@ -208,7 +215,7 @@ function verifierConnexion() {
         document.getElementById("cmd_nom").value = clientConnecte.nom;
         document.getElementById("cmd_tel").value = clientConnecte.telephone;
       } else {
-        bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">connectez-vous ou creez un compte</a>.";
+        bandeau.innerHTML = "Pour suivre vos commandes, <a href=\"client-connexion.html?retour=volaille.html\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">connectez-vous ou creez un compte</a>.";
       }
     });
   });
@@ -371,6 +378,27 @@ function majBadgePanierNav() {
   }
 }
 majBadgePanierNav();
+
+function majNavCompte() {
+  var lien = document.getElementById("navCompte");
+  if (!lien) return;
+  var session = null;
+  try {
+    session = JSON.parse(localStorage.getItem("sb-vnceunqygoiwglnwpgcr-auth-token"));
+  } catch (e) {
+    session = null;
+  }
+  if (!session || !session.user) return;
+
+  var nom = (session.user.user_metadata && session.user.user_metadata.nom) ? String(session.user.user_metadata.nom).trim() : "";
+  var prenom = nom ? nom.split(" ")[0] : "Mon compte";
+  if (prenom.length > 10) prenom = prenom.slice(0, 9) + ".";
+
+  lien.setAttribute("href", "client-espace.html");
+  document.getElementById("texteCompte").textContent = prenom;
+  document.getElementById("pointCompte").style.display = "block";
+}
+majNavCompte();
 </script>
 
 </body>
