@@ -115,7 +115,7 @@ function chargerEspace() {
         "</div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
           "<p class=\"aw-section-titre\">Notifications</p>" +
-          "<p style=\"color:var(--texte-doux);font-size:13.5px;margin-bottom:10px;\">Recevez une alerte des qu'une nouvelle commande arrive.</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13.5px;margin-bottom:10px;\">Recevez une alerte des qu'une nouvelle commande ou course arrive a moins de 5 km. Quand cet espace est ouvert, une sonnerie retentit aussi (touchez l'ecran une fois pour activer le son).</p>" +
           "<button class=\"aw-btn aw-btn-primaire\" id=\"btnActiverNotif\" style=\"width:100%;\">Activer les notifications</button>" +
           "<p class=\"msg-notif\" id=\"msgNotif\"></p>" +
         "</div>" +
@@ -146,6 +146,7 @@ function chargerEspace() {
       reprendrePartageSiCourseActive();
       setInterval(chargerCommandes, 20000);
       setInterval(chargerCourses, 20000);
+      setInterval(localiserLivreur, 120000);
     });
   });
 }
@@ -155,12 +156,64 @@ function localiserLivreur() {
   navigator.geolocation.getCurrentPosition(function(position) {
     positionLivreur = { lat: position.coords.latitude, lng: position.coords.longitude };
     var info = document.getElementById("infoPositionLivreur");
-    if (info) info.textContent = "Triees par distance depuis votre position.";
-    chargerCourses();
+    if (info) info.textContent = "Courses a moins de 5 km de vous, triees par distance.";
+    sb.rpc("maj_position_livreur", { p_lat: positionLivreur.lat, p_lng: positionLivreur.lng }).then(function() {
+      chargerCommandes();
+      chargerCourses();
+    });
   }, function() {
     var info = document.getElementById("infoPositionLivreur");
-    if (info) info.textContent = "Position non disponible : activez la localisation pour trier par distance.";
-  });
+    if (info) info.textContent = "Position non disponible : activez la localisation. En attendant, seules les courses a moins de 5 km de votre village s'affichent.";
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+}
+
+var dejaVus = { courses: null, commandes: null };
+var contexteAudio = null;
+
+function debloquerSon() {
+  if (contexteAudio) return;
+  var Contexte = window.AudioContext || window.webkitAudioContext;
+  if (!Contexte) return;
+  try {
+    contexteAudio = new Contexte();
+  } catch (e) {
+    contexteAudio = null;
+  }
+}
+document.addEventListener("click", debloquerSon);
+document.addEventListener("touchstart", debloquerSon);
+
+function jouerAlerte() {
+  if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]);
+  if (!contexteAudio) return;
+  try {
+    if (contexteAudio.state === "suspended") contexteAudio.resume();
+    var debut = contexteAudio.currentTime;
+    for (var i = 0; i < 3; i++) {
+      var oscillateur = contexteAudio.createOscillator();
+      var volume = contexteAudio.createGain();
+      oscillateur.type = "sine";
+      oscillateur.frequency.value = 880;
+      volume.gain.setValueAtTime(0.0001, debut + i * 0.35);
+      volume.gain.exponentialRampToValueAtTime(0.6, debut + i * 0.35 + 0.02);
+      volume.gain.exponentialRampToValueAtTime(0.0001, debut + i * 0.35 + 0.25);
+      oscillateur.connect(volume);
+      volume.connect(contexteAudio.destination);
+      oscillateur.start(debut + i * 0.35);
+      oscillateur.stop(debut + i * 0.35 + 0.3);
+    }
+  } catch (e) {}
+}
+
+function detecterNouveautes(cle, liste) {
+  var ids = liste.map(function(element) { return element.id; });
+  if (dejaVus[cle] === null) {
+    dejaVus[cle] = ids;
+    return;
+  }
+  var nouveau = ids.some(function(id) { return dejaVus[cle].indexOf(id) === -1; });
+  dejaVus[cle] = ids;
+  if (nouveau) jouerAlerte();
 }
 
 function distanceKm(lat1, lon1, lat2, lon2) {
@@ -325,6 +378,7 @@ function chargerCommandes() {
 
     afficherListe("listeMesCommandes", mesCommandes, false);
     afficherListe("listeDisponibles", disponibles, true);
+    detecterNouveautes("commandes", disponibles);
   });
 }
 
@@ -441,6 +495,7 @@ function chargerCourses() {
 
     afficherMesCourses(mesCourses);
     afficherCoursesDisponibles(disponibles);
+    detecterNouveautes("courses", disponibles);
   });
 }
 
@@ -544,6 +599,8 @@ function accepterCourse(id) {
         alert("Solde insuffisant pour accepter une course (commission de " + COMMISSION_COURSE + " FCFA requise). Rechargez votre solde dans la section \"Mon portefeuille\".");
       } else if (message.indexOf("deja prise") !== -1) {
         alert("Cette course vient d'etre prise par un autre livreur.");
+      } else if (message.indexOf("hors de votre zone") !== -1) {
+        alert("Cette course est a plus de 5 km de vous. Rapprochez-vous ou laissez-la a un livreur plus proche.");
       } else {
         alert("Erreur : " + message);
       }
