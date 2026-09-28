@@ -577,7 +577,7 @@ function envoyerCommande(event) {
   event.preventDefault();
   var btn = document.getElementById("btn_commande");
   btn.disabled = true;
-  btn.textContent = "Envoi en cours...";
+  btn.textContent = "Recherche d'un livreur...";
 
   var nom = document.getElementById("cmd_nom").value;
   var tel = document.getElementById("cmd_tel").value;
@@ -621,6 +621,28 @@ function envoyerCommande(event) {
     donneesCommande.longitude = positionClient.lng;
   }
 
+  verifierLivreurDisponible(positionClient, village, function(disponible) {
+    if (!disponible) {
+      btn.disabled = false;
+      btn.textContent = "Confirmer la commande";
+      alert("Aucun livreur disponible pres de votre adresse pour le moment (rayon de 5 km). Votre commande n'a pas ete enregistree et vous n'avez rien paye. Reessayez dans quelques minutes.");
+      return;
+    }
+    enregistrerEtPayer(donneesCommande, idCommande, resumeArticles, total, tel, nom, btn);
+  });
+}
+
+function verifierLivreurDisponible(position, village, callback) {
+  sb.rpc("livreurs_disponibles", {
+    p_lat: position ? position.lat : null,
+    p_lng: position ? position.lng : null,
+    p_zone: village || null
+  }).then(function(reponse) {
+    callback(!reponse.error && Number(reponse.data) > 0);
+  });
+}
+
+function enregistrerEtPayer(donneesCommande, idCommande, resumeArticles, total, tel, nom, btn) {
   sb.from("commandes").insert([donneesCommande]).then(function(reponse) {
     if (reponse.error) {
       btn.disabled = false;
