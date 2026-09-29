@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Mon Espace Livreur</title>
 <link rel="stylesheet" href="style-global.css">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#12142B">
+<link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   .aw-header { display: flex; justify-content: space-between; align-items: center; text-align: left; }
@@ -33,6 +36,7 @@
   .msg-notif.ok { color: var(--succes); }
   .msg-notif.err { color: var(--alerte); }
 
+  .photo-livreur { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 10px; background-color: var(--fond); border: 2px solid var(--accent); }
   .solde-affiche { font-family: var(--police-chiffres); font-size: 30px; font-weight: 700; color: var(--accent); text-align: center; margin: 10px 0 16px; }
 </style>
 </head>
@@ -105,6 +109,19 @@ function chargerEspace() {
           "<p style=\"margin-top:10px;color:var(--texte-doux);font-size:14px;\">Telephone : " + escapeHtml(livreur.telephone) + "</p>" +
         "</div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+          "<p class=\"aw-section-titre\">Ma fiche chauffeur</p>" +
+          "<p style=\"color:var(--texte-doux);font-size:13px;margin-bottom:10px;\">Le client voit ces informations quand vous acceptez sa course.</p>" +
+          "<img class=\"photo-livreur\" id=\"apercuPhoto\" src=\"" + escapeHtml(livreur.photo_url || "icon-192.png") + "\" alt=\"\">" +
+          "<label class=\"aw-label\">Photo de vous (visage bien visible)</label>" +
+          "<input type=\"file\" id=\"champPhoto\" accept=\"image/*\" style=\"width:100%;color:var(--texte-doux);font-size:12px;\">" +
+          "<label class=\"aw-label\">Moto (marque et couleur)</label>" +
+          "<input class=\"aw-input\" type=\"text\" id=\"champVehicule\" placeholder=\"Ex : Jakarta rouge\" value=\"" + escapeHtml(livreur.vehicule || "") + "\">" +
+          "<label class=\"aw-label\">Plaque d'immatriculation</label>" +
+          "<input class=\"aw-input\" type=\"text\" id=\"champPlaque\" placeholder=\"Ex : MT-1234-A\" value=\"" + escapeHtml(livreur.plaque || "") + "\">" +
+          "<button class=\"aw-btn aw-btn-primaire\" id=\"btnEnregistrerFiche\" style=\"width:100%;margin-top:10px;\">Enregistrer ma fiche</button>" +
+          "<p class=\"msg-notif\" id=\"msgFiche\"></p>" +
+        "</div>" +
+        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
           "<p class=\"aw-section-titre\">Mon portefeuille</p>" +
           "<p style=\"color:var(--texte-doux);font-size:13.5px;margin-bottom:10px;\">Une commission de " + COMMISSION_COURSE + " FCFA est deduite de votre solde a chaque course moto acceptee. Rechargez pour continuer a recevoir des courses.</p>" +
           "<div class=\"solde-affiche\" id=\"soldeAffiche\">" + Number(livreur.solde_compte || 0).toLocaleString("fr-FR") + " FCFA</div>" +
@@ -138,6 +155,7 @@ function chargerEspace() {
         "</div>";
 
       document.getElementById("btnRecharger").addEventListener("click", lancerRecharge);
+      document.getElementById("btnEnregistrerFiche").addEventListener("click", enregistrerFiche);
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
       verifierEtatNotifications();
       localiserLivreur();
@@ -206,6 +224,7 @@ function jouerAlerte() {
 }
 
 function detecterNouveautes(cle, liste) {
+  if (document.visibilityState !== "visible") return;
   var ids = liste.map(function(element) { return element.id; });
   if (dejaVus[cle] === null) {
     dejaVus[cle] = ids;
@@ -214,6 +233,70 @@ function detecterNouveautes(cle, liste) {
   var nouveau = ids.some(function(id) { return dejaVus[cle].indexOf(id) === -1; });
   dejaVus[cle] = ids;
   if (nouveau) jouerAlerte();
+}
+
+function enregistrerFiche() {
+  var btn = document.getElementById("btnEnregistrerFiche");
+  var msg = document.getElementById("msgFiche");
+  var fichier = document.getElementById("champPhoto").files[0];
+  var vehicule = document.getElementById("champVehicule").value.trim();
+  var plaque = document.getElementById("champPlaque").value.trim().toUpperCase();
+
+  msg.className = "msg-notif";
+  msg.textContent = "";
+
+  if (fichier && fichier.size > 5 * 1024 * 1024) {
+    msg.className = "msg-notif err";
+    msg.textContent = "Photo trop lourde (5 Mo maximum).";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Enregistrement...";
+
+  function sauverInfos(urlPhoto) {
+    var donnees = { vehicule: vehicule || null, plaque: plaque || null };
+    if (urlPhoto) donnees.photo_url = urlPhoto;
+    sb.from("livreurs").update(donnees).eq("id", livreurCourant.id).select("id").then(function(reponse) {
+      btn.disabled = false;
+      btn.textContent = "Enregistrer ma fiche";
+      if (reponse.error || !reponse.data || reponse.data.length === 0) {
+        msg.className = "msg-notif err";
+        msg.textContent = "Erreur : la fiche n'a pas pu etre enregistree.";
+        return;
+      }
+      if (urlPhoto) {
+        livreurCourant.photo_url = urlPhoto;
+        document.getElementById("apercuPhoto").src = urlPhoto;
+      }
+      livreurCourant.vehicule = donnees.vehicule;
+      livreurCourant.plaque = donnees.plaque;
+      document.getElementById("champPlaque").value = plaque;
+      msg.className = "msg-notif ok";
+      msg.textContent = "Fiche enregistree.";
+    });
+  }
+
+  if (!fichier) {
+    sauverInfos(null);
+    return;
+  }
+
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    var chemin = user.id + "/photo";
+    sb.storage.from("photos-livreurs").upload(chemin, fichier, { upsert: true, contentType: fichier.type }).then(function(reponseUpload) {
+      if (reponseUpload.error) {
+        btn.disabled = false;
+        btn.textContent = "Enregistrer ma fiche";
+        msg.className = "msg-notif err";
+        msg.textContent = "Erreur : la photo n'a pas pu etre envoyee.";
+        return;
+      }
+      var url = sb.storage.from("photos-livreurs").getPublicUrl(chemin).data.publicUrl + "?v=" + Date.now();
+      sauverInfos(url);
+    });
+  });
 }
 
 function distanceKm(lat1, lon1, lat2, lon2) {
@@ -469,6 +552,7 @@ function majLivraison(id, nouveauStatut) {
 var LIBELLES_COURSE = {
   nouvelle: "En attente d'un livreur",
   acceptee: "En route vers le client",
+  arrivee: "Arrive chez le client",
   en_cours: "Client recupere, en route vers la destination"
 };
 
@@ -528,6 +612,8 @@ function afficherMesCourses(liste) {
     }
 
     if (c.statut === "acceptee") {
+      html += "<br><button class=\"btn-accepter btn-arrive-course\" data-id=\"" + c.id + "\">Je suis arrive</button>";
+    } else if (c.statut === "arrivee") {
       html += "<br><button class=\"btn-recupere btn-recupere-course\" data-id=\"" + c.id + "\">J'ai recupere le client</button>";
     } else if (c.statut === "en_cours") {
       html += "<br><button class=\"btn-livree btn-termine-course\" data-id=\"" + c.id + "\">Course terminee</button>";
@@ -536,6 +622,12 @@ function afficherMesCourses(liste) {
   }
   zone.innerHTML = html;
 
+  var boutonsArrive = document.getElementsByClassName("btn-arrive-course");
+  for (var ar = 0; ar < boutonsArrive.length; ar++) {
+    boutonsArrive[ar].addEventListener("click", function(e) {
+      majCourse(e.target.getAttribute("data-id"), "arrivee");
+    });
+  }
   var boutonsRecupere = document.getElementsByClassName("btn-recupere-course");
   for (var r = 0; r < boutonsRecupere.length; r++) {
     boutonsRecupere[r].addEventListener("click", function(e) {
@@ -682,7 +774,7 @@ function arreterPartagePosition() {
 }
 
 function reprendrePartageSiCourseActive() {
-  sb.from("courses_moto").select("id, statut").eq("livreur_id", livreurCourant.id).in("statut", ["acceptee", "en_cours"]).limit(1).then(function(reponse) {
+  sb.from("courses_moto").select("id, statut").eq("livreur_id", livreurCourant.id).in("statut", ["acceptee", "arrivee", "en_cours"]).limit(1).then(function(reponse) {
     if (reponse.data && reponse.data[0]) {
       demarrerPartagePosition(reponse.data[0].id);
     }
