@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Agence de Voyage</title>
 <link rel="stylesheet" href="style-global.css">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#12142B">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
