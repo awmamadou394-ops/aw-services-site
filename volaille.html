@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AW SERVICES - Foyre Bamtaare</title>
 <link rel="stylesheet" href="style-global.css">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#12142B">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   body { padding-bottom: 30px; }
@@ -261,7 +269,7 @@ function envoyerCommande(event) {
   }
 
   btn.disabled = true;
-  btn.textContent = "Envoi en cours...";
+  btn.textContent = "Recherche d'un livreur...";
 
   var nom = document.getElementById("cmd_nom").value;
   var tel = document.getElementById("cmd_tel").value;
@@ -296,6 +304,22 @@ function envoyerCommande(event) {
     donneesCommande.longitude = positionClient.lng;
   }
 
+  sb.rpc("livreurs_disponibles", {
+    p_lat: positionClient ? positionClient.lat : null,
+    p_lng: positionClient ? positionClient.lng : null,
+    p_zone: village || null
+  }).then(function(reponseDispo) {
+    if (reponseDispo.error || Number(reponseDispo.data) === 0) {
+      btn.disabled = false;
+      btn.textContent = "Confirmer la commande";
+      alert("Aucun livreur disponible pres de votre adresse pour le moment (rayon de 5 km). Votre commande n'a pas ete enregistree et vous n'avez rien paye. Reessayez dans quelques minutes.");
+      return;
+    }
+    enregistrerEtPayer(donneesCommande, idCommande, quantite, total, tel, nom, btn);
+  });
+}
+
+function enregistrerEtPayer(donneesCommande, idCommande, quantite, total, tel, nom, btn) {
   sb.from("commandes").insert([donneesCommande]).then(function(reponse) {
     if (reponse.error) {
       btn.disabled = false;
