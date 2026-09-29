@@ -13,32 +13,57 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');
 }
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDpAban2vaVHcHUO9GJnW6MNbA6vWJst6M&libraries=places"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDpAban2vaVHcHUO9GJnW6MNbA6vWJst6M&libraries=places,geometry"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   body { padding-bottom: 30px; }
   .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+  .msg { font-size: 13px; padding: 10px; border-radius: var(--rayon-petit); margin-top: 12px; }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
 
-  .onglets { display: flex; gap: 8px; margin-bottom: var(--espace-lg); }
-  .onglet {
-    flex: 1;
-    background-color: var(--surface);
-    border: 1px solid var(--bordure);
-    color: var(--texte-doux);
-    padding: 13px;
-    border-radius: var(--rayon-petit);
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-    font-family: var(--police-titre);
-  }
-  .onglet.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
+  /* Accueil : deux boutons ronds */
+  .accueil-services { text-align: center; padding-top: 10px; }
+  .accueil-services .intro { color: var(--texte-doux); font-size: 14px; margin-bottom: 26px; }
+  .choix-services { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; }
+  .btn-rond { background: none; border: none; padding: 0; width: 140px; display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--texte); font-family: var(--police-titre); font-size: 15px; font-weight: 700; cursor: pointer; }
+  .btn-rond .cercle { width: 120px; height: 120px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--accent); box-shadow: var(--ombre-accent); display: flex; align-items: center; justify-content: center; font-size: 50px; transition: transform 0.12s ease; }
+  .btn-rond:active .cercle { transform: scale(0.93); }
+  .btn-rond .sous { color: var(--texte-doux); font-family: var(--police-texte); font-size: 12px; font-weight: 400; }
 
   .panneau { display: none; }
   .panneau.visible { display: block; }
+  .btn-autres-services { background: none; border: none; color: var(--accent); font-size: 14px; font-weight: 600; padding: 0 0 14px 0; font-family: var(--police-texte); cursor: pointer; }
+  .carte p.desc, .aw-carte p.desc { color: var(--texte-doux); font-size: 13px; margin-bottom: var(--espace-md); line-height: 1.5; }
 
-  .carte p.desc { color: var(--texte-doux); font-size: 13px; margin-bottom: var(--espace-md); line-height: 1.5; }
+  /* Course moto */
+  .barre-recherche { position: relative; margin-bottom: 10px; }
+  .barre-recherche input { width: 100%; box-sizing: border-box; background-color: var(--surface); border: 2px solid var(--accent); border-radius: 30px; padding: 14px 18px; color: var(--texte); font-size: 15px; font-family: var(--police-texte); }
+  #carteMoto { width: 100%; height: 55vh; min-height: 320px; border-radius: var(--rayon); overflow: hidden; background-color: var(--surface); border: 1px solid var(--bordure); }
+  .aide-carte { color: var(--texte-doux); font-size: 12px; margin: 8px 0 0; text-align: center; }
+  .carte-trajet { margin-top: 12px; background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: var(--espace-md); }
+  .carte-trajet .ligne { display: flex; justify-content: space-between; color: var(--texte-doux); font-size: 13px; margin-bottom: 4px; }
+  .carte-trajet .prix { font-family: var(--police-chiffres); color: var(--accent); font-size: 24px; font-weight: 700; margin-top: 6px; }
+  .carte-trajet .note { font-size: 11.5px; color: var(--texte-discret); margin-top: 6px; }
 
+  .recherche-chauffeur { text-align: center; padding: 18px 0 8px; }
+  .pulsation { width: 70px; height: 70px; margin: 0 auto 12px; border-radius: 50%; background-color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 32px; animation: pulser 1.6s ease-out infinite; }
+  @keyframes pulser {
+    0% { box-shadow: 0 0 0 0 rgba(242,169,59,0.6); }
+    70% { box-shadow: 0 0 0 26px rgba(242,169,59,0); }
+    100% { box-shadow: 0 0 0 0 rgba(242,169,59,0); }
+  }
+  .fiche-chauffeur { display: flex; align-items: center; gap: 14px; }
+  .fiche-chauffeur img { width: 66px; height: 66px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); background-color: var(--fond); flex-shrink: 0; }
+  .fiche-chauffeur .avatar-vide { width: 66px; height: 66px; border-radius: 50%; border: 2px solid var(--accent); background-color: var(--fond); display: flex; align-items: center; justify-content: center; font-size: 30px; flex-shrink: 0; }
+  .fiche-chauffeur .nom { font-family: var(--police-titre); font-size: 17px; font-weight: 700; color: var(--texte); }
+  .fiche-chauffeur .moto { color: var(--texte-doux); font-size: 13px; margin-top: 2px; }
+  .fiche-chauffeur .plaque { display: inline-block; margin-top: 6px; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: 6px; padding: 3px 8px; font-family: var(--police-chiffres); font-size: 13px; color: var(--texte); }
+  .btn-appeler { display: block; text-align: center; text-decoration: none; margin-top: 12px; background-color: var(--succes); color: #fff; padding: 13px; border-radius: var(--rayon-petit); font-weight: 700; }
+  .bandeau-statut { border-radius: var(--rayon-petit); padding: 12px; font-size: 14px; font-weight: 600; text-align: center; margin-bottom: 12px; background-color: rgba(242,169,59,0.15); color: var(--accent); }
+  .bandeau-statut.arrive { background-color: var(--succes); color: #fff; font-size: 16px; }
+
+  /* Transport Dakar - Bokidiawe */
   .direction-choix { display: flex; gap: 8px; margin-top: 10px; }
   .btn-direction {
     flex: 1;
@@ -98,14 +123,6 @@ if ('serviceWorker' in navigator) {
   select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
   .msg-position { font-size: 12px; color: var(--texte-doux); margin-top: 6px; }
   .msg-position.ok { color: var(--succes); }
-  .msg { font-size: 13px; padding: 10px; border-radius: var(--rayon-petit); margin-top: 12px; }
-  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
-  .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
-
-  .fenetre-fond { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(10,10,25,0.75); z-index: 30; align-items: center; justify-content: center; padding: 20px; }
-  .fenetre-fond.visible { display: flex; }
-  .fenetre-contenu { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); padding: var(--espace-lg); width: 100%; box-shadow: var(--ombre-carte); }
-  .btn-fermer-fenetre { background-color: transparent; border: 1px solid var(--bordure); color: var(--texte); width: 100%; padding: 12px; border-radius: var(--rayon-petit); font-weight: 600; font-family: var(--police-texte); }
 </style>
 </head>
 <body>
@@ -119,80 +136,95 @@ if ('serviceWorker' in navigator) {
 
 <div class="aw-conteneur">
 
-  <div class="onglets">
-    <div class="onglet actif" id="ongletMoto">Course moto</div>
-    <div class="onglet" id="ongletVoiture">Dakar &#8596; Bokidiawe</div>
+  <div class="accueil-services" id="accueilServices">
+    <p class="intro">Que souhaitez-vous faire ?</p>
+    <div class="choix-services">
+      <button type="button" class="btn-rond" id="btnOuvrirMoto">
+        <span class="cercle">&#127949;&#65039;</span>
+        <span>Course moto</span>
+        <span class="sous">Un moto-taxi pres de vous</span>
+      </button>
+      <button type="button" class="btn-rond" id="btnOuvrirVoiture">
+        <span class="cercle">&#128656;</span>
+        <span>Transport</span>
+        <span class="sous">Dakar &#8596; Bokidiawe</span>
+      </button>
+    </div>
   </div>
 
-  <div class="panneau visible" id="panneauMoto">
-    <div class="aw-carte">
-      <p class="aw-section-titre">Course moto seule</p>
-      <p class="desc">Un moto-taxi rien que pour vous. Votre position sert de point de depart : les livreurs la voient et acceptent la course la plus proche.</p>
+  <div class="panneau" id="panneauMoto">
+    <button type="button" class="btn-autres-services" id="btnRetourServicesMoto">&#8592; Autres services</button>
 
-      <form id="formMoto">
-        <button type="button" class="aw-btn aw-btn-secondaire" id="btnPositionMoto" style="width:100%;">&#128205; Utiliser ma position actuelle (obligatoire)</button>
-        <p class="msg-position" id="msgPositionMoto">Le livreur en a besoin pour venir vous chercher.</p>
+    <div id="zoneRechercheDestination" class="barre-recherche">
+      <input type="text" id="rechercheDestination" placeholder="&#128269; Ou allez-vous ?" autocomplete="off">
+    </div>
 
-        <label class="aw-label">Point de repere (optionnel)</label>
-        <input class="aw-input" type="text" id="m_repere" placeholder="Ex : devant la pharmacie">
+    <div id="carteMoto"></div>
+    <p class="aide-carte" id="aideCarte">Recherchez un lieu ou touchez la carte pour choisir votre destination.</p>
+    <p class="msg-position" id="msgPositionMoto" style="text-align:center;">Localisation en cours...</p>
+    <button type="button" class="aw-btn aw-btn-secondaire" id="btnPositionMoto" style="width:100%;margin-top:8px;display:none;">&#128205; Reessayer ma position</button>
 
-        <label class="aw-label">Destination</label>
-        <input class="aw-input" type="text" id="m_arrivee" placeholder="Sera rempli automatiquement" readonly>
-        <button type="button" class="aw-btn aw-btn-secondaire" id="btnChoisirDestination" style="width:100%;margin-top:8px;">&#128506; Choisir la destination sur la carte</button>
-        <p class="msg-position" id="msgDestinationChoisie">Obligatoire : le tarif est calcule a partir de la distance.</p>
+    <div id="zoneCommandeMoto">
+      <div class="carte-trajet" id="carteTrajet" style="display:none;">
+        <div class="ligne"><span>Destination</span><span id="texteDestination" style="text-align:right;max-width:65%;"></span></div>
+        <div class="ligne"><span>Distance</span><span id="texteDistanceMoto"></span></div>
+        <div class="ligne"><span>Duree estimee</span><span id="texteDureeMoto"></span></div>
+        <div class="prix" id="texteTotalMoto"></div>
+        <p class="note" id="noteTrajet"></p>
+      </div>
 
-        <div class="recap-prix" id="recapPrixMoto" style="display:none;">
-          <p id="texteDistanceMoto"></p>
-          <div class="total" id="texteTotalMoto"></div>
+      <form id="formMoto" style="display:none;">
+        <div class="aw-carte" style="margin-top:12px;">
+          <label class="aw-label">Point de repere (optionnel)</label>
+          <input class="aw-input" type="text" id="m_repere" placeholder="Ex : devant la pharmacie">
+
+          <label class="aw-label">Nom complet</label>
+          <input class="aw-input" type="text" id="m_nom" required>
+
+          <label class="aw-label">Numero de telephone</label>
+          <input class="aw-input" type="tel" id="m_telephone" required>
+
+          <label class="aw-label">Mode de paiement</label>
+          <select id="m_paiement" required>
+            <option value="">Choisir...</option>
+            <option value="Wave">Wave</option>
+            <option value="Orange Money">Orange Money</option>
+            <option value="Free Money">Free Money</option>
+            <option value="Especes">Especes au chauffeur</option>
+          </select>
+
+          <button type="submit" class="aw-btn aw-btn-primaire" id="btnMoto" style="width:100%;margin-top:18px;">Demander une course</button>
+          <div id="msgMoto"></div>
         </div>
-
-        <label class="aw-label">Nom complet</label>
-        <input class="aw-input" type="text" id="m_nom" required>
-
-        <label class="aw-label">Numero de telephone</label>
-        <input class="aw-input" type="tel" id="m_telephone" required>
-
-        <label class="aw-label">Mode de paiement</label>
-        <select id="m_paiement" required>
-          <option value="">Choisir...</option>
-          <option value="Wave">Wave</option>
-          <option value="Orange Money">Orange Money</option>
-          <option value="Free Money">Free Money</option>
-          <option value="Especes">Especes au chauffeur</option>
-        </select>
-
-        <button type="submit" class="aw-btn aw-btn-primaire" id="btnMoto" style="width:100%;margin-top:18px;">Demander une course</button>
-        <div id="msgMoto"></div>
       </form>
     </div>
 
-    <div class="aw-carte" id="carteSuivi" style="display:none;">
-      <p class="aw-section-titre">Suivi de ma course</p>
-      <p class="desc" id="texteSuiviStatut">En attente qu'un livreur accepte votre course...</p>
-      <p class="aw-badge aw-badge-attente" id="texteConvenuMoto" style="display:block;"></p>
-      <div id="carteGoogleSuivi" style="width:100%;height:260px;border-radius:var(--rayon-petit);overflow:hidden;background-color:var(--fond);"></div>
-      <div class="recap-prix" id="recapSuivi" style="display:none;">
-        <p id="texteDistanceLivreur"></p>
+    <div class="aw-carte" id="carteSuivi" style="display:none;margin-top:12px;">
+      <div class="recherche-chauffeur" id="etatRecherche">
+        <div class="pulsation">&#127949;&#65039;</div>
+        <p style="font-weight:700;">Recherche d'un chauffeur pres de vous...</p>
+        <p style="color:var(--texte-doux);font-size:13px;margin-top:4px;">Les chauffeurs a moins de 5 km ont ete prevenus.</p>
+      </div>
+
+      <div id="blocChauffeur" style="display:none;">
+        <div class="bandeau-statut" id="texteSuiviStatut"></div>
+        <div class="fiche-chauffeur" id="ficheChauffeur"></div>
+        <a class="btn-appeler" id="btnAppeler" href="#" style="display:none;">&#128222; Appeler le chauffeur</a>
+      </div>
+
+      <div class="recap-prix">
+        <p id="texteConvenuMoto"></p>
+        <p id="texteDistanceLivreur" style="margin-top:4px;"></p>
         <div class="total" id="texteEtaLivreur"></div>
       </div>
-      <button type="button" class="aw-btn aw-btn-secondaire" id="btnAnnulerCourse" style="width:100%;margin-top:12px;border-color:var(--alerte);color:var(--alerte);">Annuler ma course</button>
-      <button type="button" class="aw-btn aw-btn-secondaire" id="btnNouvelleCourse" style="width:100%;margin-top:8px;display:none;">Demander une autre course</button>
-    </div>
-  </div>
 
-  <div class="fenetre-fond" id="fenetreCarte">
-    <div class="fenetre-contenu" style="max-width:480px;">
-      <p class="aw-section-titre">Choisir la destination</p>
-      <p class="desc" style="margin-bottom:10px;">Tapez pour rechercher un lieu (suggestions automatiques), ou deplacez le repere sur la carte.</p>
-      <input class="aw-input" type="text" id="rechercheDestination" placeholder="Rechercher un lieu, un quartier..." style="margin-bottom:10px;">
-      <p class="msg-position" id="msgRechercheDestination"></p>
-      <div id="carteGoogleChoix" style="width:100%;height:280px;border-radius:var(--rayon-petit);overflow:hidden;"></div>
-      <button type="button" class="aw-btn aw-btn-primaire" id="btnConfirmerDestination" style="width:100%;margin-top:12px;">Confirmer cette destination</button>
-      <button type="button" class="btn-fermer-fenetre" id="btnFermerCarte" style="margin-top:8px;">Annuler</button>
+      <button type="button" class="aw-btn aw-btn-secondaire" id="btnAnnulerCourse" style="width:100%;margin-top:12px;border-color:var(--alerte);color:var(--alerte);">Annuler ma course</button>
+      <button type="button" class="aw-btn aw-btn-primaire" id="btnNouvelleCourse" style="width:100%;margin-top:8px;display:none;">Demander une autre course</button>
     </div>
   </div>
 
   <div class="panneau" id="panneauVoiture">
+    <button type="button" class="btn-autres-services" id="btnRetourServicesVoiture">&#8592; Autres services</button>
     <div class="aw-carte">
       <p class="aw-section-titre">Reservation Dakar &#8596; Bokidiawe</p>
       <p class="desc">Voiture 14 places, region de Matam. Choisissez votre trajet, votre date et votre chaise.</p>
@@ -286,6 +318,10 @@ var sb = supabase.createClient(
   "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
 );
 
+var CLE_GOOGLE = "AIzaSyDpAban2vaVHcHUO9GJnW6MNbA6vWJst6M";
+var CENTRE_PAR_DEFAUT = { lat: 15.6556, lng: -13.2554 };
+var CLE_COURSE_LOCALE = "aw_course_en_cours";
+
 function escapeHtml(texte) {
   if (texte === null || texte === undefined) return "";
   return String(texte)
@@ -296,8 +332,38 @@ function escapeHtml(texte) {
     .replace(/'/g, "&#39;");
 }
 
-var COMMISSION_COURSE = 100;
-var positionMoto = null;
+/* ---------- Ouverture des services (boutons ronds) ---------- */
+
+function ouvrirService(nom) {
+  document.getElementById("accueilServices").style.display = "none";
+  document.getElementById("panneauMoto").classList.remove("visible");
+  document.getElementById("panneauVoiture").classList.remove("visible");
+  if (nom === "moto") {
+    document.getElementById("panneauMoto").classList.add("visible");
+    initialiserCarteMoto();
+    if (!positionMoto && !idCourseActuelle) {
+      demanderPositionMoto();
+    }
+  } else {
+    document.getElementById("panneauVoiture").classList.add("visible");
+  }
+  window.scrollTo(0, 0);
+}
+
+function revenirAuxServices() {
+  document.getElementById("panneauMoto").classList.remove("visible");
+  document.getElementById("panneauVoiture").classList.remove("visible");
+  document.getElementById("accueilServices").style.display = "block";
+  window.scrollTo(0, 0);
+}
+
+document.getElementById("btnOuvrirMoto").addEventListener("click", function() { ouvrirService("moto"); });
+document.getElementById("btnOuvrirVoiture").addEventListener("click", function() { ouvrirService("voiture"); });
+document.getElementById("btnRetourServicesMoto").addEventListener("click", revenirAuxServices);
+document.getElementById("btnRetourServicesVoiture").addEventListener("click", revenirAuxServices);
+
+/* ---------- Ecran allume pendant la course ---------- */
+
 var idCourseActuelle = null;
 var wakeLockClient = null;
 
@@ -319,6 +385,8 @@ document.addEventListener("visibilitychange", function() {
   }
 });
 
+/* ---------- Profil ---------- */
+
 function remplirProfilLocal() {
   var nom = localStorage.getItem("aw_client_nom");
   var tel = localStorage.getItem("aw_client_telephone");
@@ -338,10 +406,6 @@ function remplirProfilLocal() {
 }
 remplirProfilLocal();
 
-var destinationChoisie = null;
-var carteChoix = null;
-var marqueurChoix = null;
-var autocompleteDestination = null;
 var clientConnecte = null;
 
 function verifierConnexionClient() {
@@ -360,74 +424,123 @@ function verifierConnexionClient() {
 }
 verifierConnexionClient();
 
-document.getElementById("btnChoisirDestination").addEventListener("click", function() {
-  document.getElementById("fenetreCarte").classList.add("visible");
-  document.getElementById("msgRechercheDestination").textContent = "";
-  setTimeout(function() {
-    var centre = positionMoto ? { lat: positionMoto.lat, lng: positionMoto.lng } : { lat: 15.6556, lng: -13.2554 };
-    if (!carteChoix) {
-      carteChoix = new google.maps.Map(document.getElementById("carteGoogleChoix"), {
-        center: centre,
-        zoom: 14
-      });
-      marqueurChoix = new google.maps.Marker({
-        position: centre,
-        map: carteChoix,
-        draggable: true
-      });
-      carteChoix.addListener("click", function(e) {
-        marqueurChoix.setPosition(e.latLng);
-      });
+/* ---------- Carte de la course moto ---------- */
 
-      autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("rechercheDestination"), {
-        componentRestrictions: { country: "sn" }
-      });
-      autocompleteDestination.bindTo("bounds", carteChoix);
-      autocompleteDestination.addListener("place_changed", function() {
-        var lieu = autocompleteDestination.getPlace();
-        if (!lieu.geometry) {
-          document.getElementById("msgRechercheDestination").textContent = "Choisissez un lieu dans la liste de suggestions.";
-          return;
-        }
-        carteChoix.setCenter(lieu.geometry.location);
-        carteChoix.setZoom(16);
-        marqueurChoix.setPosition(lieu.geometry.location);
-        document.getElementById("m_arrivee").value = lieu.formatted_address || lieu.name;
-        document.getElementById("msgRechercheDestination").className = "msg-position ok";
-        document.getElementById("msgRechercheDestination").textContent = "Lieu trouve : " + (lieu.formatted_address || lieu.name);
-      });
-    } else {
-      carteChoix.setCenter(centre);
-      google.maps.event.trigger(carteChoix, "resize");
-    }
-  }, 150);
-});
+var carteMoto = null;
+var marqueurDepart = null;
+var marqueurDestination = null;
+var marqueurMoto = null;
+var traceTrajet = null;
+var autocompleteDestination = null;
 
-document.getElementById("btnFermerCarte").addEventListener("click", function() {
-  document.getElementById("fenetreCarte").classList.remove("visible");
-});
+var positionMoto = null;
+var destinationChoisie = null;
+var libelleDestination = "";
+var trajetCalcule = null;
+var numeroCalcul = 0;
 
-function calculerPrixCourse(distanceKmVal) {
-  if (distanceKmVal <= 2) {
-    return 350;
-  }
-  return Math.round(250 * distanceKmVal);
-}
-
-function mettreAJourPrixCourseMoto() {
-  var zone = document.getElementById("recapPrixMoto");
-  if (!positionMoto || !destinationChoisie) {
-    zone.style.display = "none";
+function initialiserCarteMoto() {
+  if (carteMoto) {
+    setTimeout(function() { google.maps.event.trigger(carteMoto, "resize"); }, 150);
     return;
   }
-  var dist = distanceEntrePointsMoto(positionMoto.lat, positionMoto.lng, destinationChoisie.lat, destinationChoisie.lng);
-  var prix = calculerPrixCourse(dist);
-  document.getElementById("texteDistanceMoto").textContent = "Distance estimee : " + dist.toFixed(1) + " km";
-  document.getElementById("texteTotalMoto").textContent = "Prix : " + prix.toLocaleString("fr-FR") + " FCFA";
-  zone.style.display = "block";
+  carteMoto = new google.maps.Map(document.getElementById("carteMoto"), {
+    center: CENTRE_PAR_DEFAUT,
+    zoom: 13,
+    disableDefaultUI: true,
+    zoomControl: true,
+    clickableIcons: false,
+    gestureHandling: "greedy"
+  });
+
+  carteMoto.addListener("click", function(e) {
+    if (idCourseActuelle) return;
+    definirDestination(e.latLng.lat(), e.latLng.lng(), "Point choisi sur la carte");
+  });
+
+  autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("rechercheDestination"), {
+    componentRestrictions: { country: "sn" },
+    fields: ["geometry", "name", "formatted_address"]
+  });
+  autocompleteDestination.bindTo("bounds", carteMoto);
+  autocompleteDestination.addListener("place_changed", function() {
+    var lieu = autocompleteDestination.getPlace();
+    if (!lieu || !lieu.geometry) {
+      document.getElementById("aideCarte").textContent = "Choisissez un lieu dans la liste de suggestions.";
+      return;
+    }
+    definirDestination(lieu.geometry.location.lat(), lieu.geometry.location.lng(), lieu.name || lieu.formatted_address || "Destination");
+  });
 }
 
-function distanceEntrePointsMoto(lat1, lon1, lat2, lon2) {
+function demanderPositionMoto() {
+  var msg = document.getElementById("msgPositionMoto");
+  var btn = document.getElementById("btnPositionMoto");
+
+  if (!navigator.geolocation) {
+    msg.textContent = "Localisation non disponible sur cet appareil.";
+    msg.className = "msg-position";
+    return;
+  }
+
+  msg.textContent = "Localisation en cours...";
+  msg.className = "msg-position";
+  btn.style.display = "none";
+
+  navigator.geolocation.getCurrentPosition(function(position) {
+    positionMoto = { lat: position.coords.latitude, lng: position.coords.longitude };
+    msg.textContent = "Votre position est le point de depart.";
+    msg.className = "msg-position ok";
+    if (!marqueurDepart) {
+      marqueurDepart = new google.maps.Marker({
+        position: positionMoto,
+        map: carteMoto,
+        title: "Vous",
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#4285F4", fillOpacity: 1, strokeColor: "#FFFFFF", strokeWeight: 3 }
+      });
+    } else {
+      marqueurDepart.setPosition(positionMoto);
+    }
+    if (!destinationChoisie) {
+      carteMoto.setCenter(positionMoto);
+      carteMoto.setZoom(15);
+    }
+    calculerTrajet();
+  }, function() {
+    msg.textContent = "Impossible d'obtenir votre position. Activez la localisation puis reessayez.";
+    msg.className = "msg-position";
+    btn.style.display = "block";
+  }, { enableHighAccuracy: true, timeout: 15000 });
+}
+
+document.getElementById("btnPositionMoto").addEventListener("click", demanderPositionMoto);
+
+function definirDestination(lat, lng, libelle) {
+  destinationChoisie = { lat: lat, lng: lng };
+  libelleDestination = libelle;
+  if (!marqueurDestination) {
+    marqueurDestination = new google.maps.Marker({
+      position: destinationChoisie,
+      map: carteMoto,
+      draggable: true,
+      title: "Destination"
+    });
+    marqueurDestination.addListener("dragend", function() {
+      var p = marqueurDestination.getPosition();
+      definirDestination(p.lat(), p.lng(), "Point choisi sur la carte");
+    });
+  } else {
+    marqueurDestination.setPosition(destinationChoisie);
+    marqueurDestination.setMap(carteMoto);
+  }
+  if (libelle === "Point choisi sur la carte") {
+    document.getElementById("rechercheDestination").value = "";
+  }
+  document.getElementById("aideCarte").textContent = "Vous pouvez deplacer le repere rouge pour ajuster la destination.";
+  calculerTrajet();
+}
+
+function distanceLigneDroite(lat1, lon1, lat2, lon2) {
   var R = 6371;
   var dLat = (lat2 - lat1) * Math.PI / 180;
   var dLon = (lon2 - lon1) * Math.PI / 180;
@@ -438,57 +551,110 @@ function distanceEntrePointsMoto(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-document.getElementById("btnConfirmerDestination").addEventListener("click", function() {
-  var pos = marqueurChoix.getPosition();
-  destinationChoisie = { lat: pos.lat(), lng: pos.lng() };
-  if (!document.getElementById("m_arrivee").value) {
-    document.getElementById("m_arrivee").value = "Point sur la carte (" + destinationChoisie.lat.toFixed(5) + ", " + destinationChoisie.lng.toFixed(5) + ")";
+/* Meme regle que la base de donnees : jamais moins que la ligne droite, jamais plus de 3 fois */
+function distanceFacturable(distanceRoute, ligneDroite) {
+  var d = distanceRoute;
+  if (d < ligneDroite) d = ligneDroite;
+  else if (d > ligneDroite * 3 + 2) d = ligneDroite * 3 + 2;
+  return Math.round(d * 10) / 10;
+}
+
+function calculerPrixCourse(distanceKmVal) {
+  if (distanceKmVal <= 2) {
+    return 350;
   }
-  document.getElementById("msgDestinationChoisie").className = "msg-position ok";
-  document.getElementById("msgDestinationChoisie").textContent = "Destination choisie sur la carte.";
-  document.getElementById("fenetreCarte").classList.remove("visible");
-  mettreAJourPrixCourseMoto();
-});
+  return Math.round(250 * distanceKmVal);
+}
 
-document.getElementById("btnPositionMoto").addEventListener("click", function() {
-  var msg = document.getElementById("msgPositionMoto");
-  var btn = document.getElementById("btnPositionMoto");
+function calculerTrajet() {
+  if (!positionMoto || !destinationChoisie) return;
+  var numero = ++numeroCalcul;
+  trajetCalcule = null;
 
-  if (!navigator.geolocation) {
-    msg.textContent = "Localisation non disponible sur cet appareil.";
-    return;
-  }
+  document.getElementById("carteTrajet").style.display = "block";
+  document.getElementById("formMoto").style.display = "none";
+  document.getElementById("texteDestination").textContent = libelleDestination;
+  document.getElementById("texteDistanceMoto").textContent = "...";
+  document.getElementById("texteDureeMoto").textContent = "...";
+  document.getElementById("texteTotalMoto").textContent = "Calcul du trajet...";
+  document.getElementById("noteTrajet").textContent = "";
 
-  btn.disabled = true;
-  btn.textContent = "Localisation en cours...";
+  var depart = positionMoto;
+  var arrivee = destinationChoisie;
+  var ligneDroite = distanceLigneDroite(depart.lat, depart.lng, arrivee.lat, arrivee.lng);
 
-  navigator.geolocation.getCurrentPosition(function(position) {
-    positionMoto = { lat: position.coords.latitude, lng: position.coords.longitude };
-    btn.disabled = false;
-    btn.textContent = "Position enregistree";
-    msg.textContent = "Votre position a ete capturee avec succes.";
-    msg.className = "msg-position ok";
-    mettreAJourPrixCourseMoto();
-  }, function() {
-    btn.disabled = false;
-    btn.textContent = "Utiliser ma position actuelle (obligatoire)";
-    msg.textContent = "Impossible d'obtenir votre position. Verifiez que la localisation est activee.";
+  fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": CLE_GOOGLE,
+      "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline"
+    },
+    body: JSON.stringify({
+      origin: { location: { latLng: { latitude: depart.lat, longitude: depart.lng } } },
+      destination: { location: { latLng: { latitude: arrivee.lat, longitude: arrivee.lng } } },
+      travelMode: "DRIVE",
+      languageCode: "fr"
+    })
+  }).then(function(r) { return r.json(); }).then(function(resultat) {
+    if (numero !== numeroCalcul) return;
+    var route = resultat && resultat.routes && resultat.routes[0];
+    if (!route || !route.distanceMeters) {
+      trajetEstime(ligneDroite);
+      return;
+    }
+    var chemin = route.polyline && route.polyline.encodedPolyline ? google.maps.geometry.encoding.decodePath(route.polyline.encodedPolyline) : null;
+    dessinerTrajet(chemin);
+    var secondes = parseInt(String(route.duration || "0").replace("s", ""), 10) || 0;
+    var distance = distanceFacturable(route.distanceMeters / 1000, ligneDroite);
+    trajetCalcule = { distanceKm: distance, dureeMin: Math.max(1, Math.round(secondes / 60)), estime: false };
+    afficherTrajet();
+  }).catch(function() {
+    if (numero !== numeroCalcul) return;
+    trajetEstime(ligneDroite);
   });
-});
+}
 
-document.getElementById("ongletMoto").addEventListener("click", function() {
-  document.getElementById("ongletMoto").classList.add("actif");
-  document.getElementById("ongletVoiture").classList.remove("actif");
-  document.getElementById("panneauMoto").classList.add("visible");
-  document.getElementById("panneauVoiture").classList.remove("visible");
-});
+function trajetEstime(ligneDroite) {
+  dessinerTrajet(null);
+  var distance = distanceFacturable(ligneDroite, ligneDroite);
+  trajetCalcule = { distanceKm: distance, dureeMin: Math.max(1, Math.round((distance / 25) * 60)), estime: true };
+  afficherTrajet();
+}
 
-document.getElementById("ongletVoiture").addEventListener("click", function() {
-  document.getElementById("ongletVoiture").classList.add("actif");
-  document.getElementById("ongletMoto").classList.remove("actif");
-  document.getElementById("panneauVoiture").classList.add("visible");
-  document.getElementById("panneauMoto").classList.remove("visible");
-});
+function dessinerTrajet(chemin) {
+  if (traceTrajet) {
+    traceTrajet.setMap(null);
+    traceTrajet = null;
+  }
+  var bornes = new google.maps.LatLngBounds();
+  bornes.extend(positionMoto);
+  bornes.extend(destinationChoisie);
+  if (chemin && chemin.length) {
+    traceTrajet = new google.maps.Polyline({
+      path: chemin,
+      map: carteMoto,
+      strokeColor: "#F2A93B",
+      strokeOpacity: 0.95,
+      strokeWeight: 5
+    });
+    for (var i = 0; i < chemin.length; i++) bornes.extend(chemin[i]);
+  }
+  carteMoto.fitBounds(bornes, 50);
+}
+
+function afficherTrajet() {
+  var prix = calculerPrixCourse(trajetCalcule.distanceKm);
+  document.getElementById("texteDistanceMoto").textContent = trajetCalcule.distanceKm.toLocaleString("fr-FR") + " km";
+  document.getElementById("texteDureeMoto").textContent = "~" + trajetCalcule.dureeMin + " min";
+  document.getElementById("texteTotalMoto").textContent = prix.toLocaleString("fr-FR") + " FCFA";
+  document.getElementById("noteTrajet").textContent = trajetCalcule.estime
+    ? "Trajet par la route indisponible : distance estimee a vol d'oiseau."
+    : "Prix calcule sur le trajet par la route. 350 F jusqu'a 2 km, puis 250 F/km.";
+  document.getElementById("formMoto").style.display = "block";
+}
+
+/* ---------- Demande de course ---------- */
 
 document.getElementById("formMoto").addEventListener("submit", function(event) {
   event.preventDefault();
@@ -496,30 +662,26 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
   var msg = document.getElementById("msgMoto");
 
   if (!positionMoto) {
-    msg.innerHTML = "<div class=\"msg erreur\">Merci d'utiliser le bouton de position avant d'envoyer.</div>";
+    msg.innerHTML = "<div class=\"msg erreur\">Votre position est necessaire. Activez la localisation.</div>";
     return;
   }
-
-  if (!destinationChoisie) {
-    msg.innerHTML = "<div class=\"msg erreur\">Choisissez la destination sur la carte pour calculer le tarif.</div>";
+  if (!destinationChoisie || !trajetCalcule) {
+    msg.innerHTML = "<div class=\"msg erreur\">Choisissez d'abord votre destination et attendez le calcul du prix.</div>";
     return;
   }
 
   btn.disabled = true;
-  btn.textContent = "Recherche d'un chauffeur...";
+  btn.textContent = "Envoi de la demande...";
   msg.innerHTML = "";
 
   var repere = document.getElementById("m_repere").value;
-  var arrivee = document.getElementById("m_arrivee").value;
   var nom = document.getElementById("m_nom").value;
   var telephone = document.getElementById("m_telephone").value;
   var paiement = document.getElementById("m_paiement").value;
   localStorage.setItem("aw_client_nom", nom);
   localStorage.setItem("aw_client_telephone", telephone);
 
-  var distanceCalculee = distanceEntrePointsMoto(positionMoto.lat, positionMoto.lng, destinationChoisie.lat, destinationChoisie.lng);
-  var prixCalcule = calculerPrixCourse(distanceCalculee);
-
+  var prixCalcule = calculerPrixCourse(trajetCalcule.distanceKm);
   var idNouvelleCourse = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
 
   var donneesCourse = {
@@ -527,21 +689,18 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
     client_nom: nom,
     client_telephone: telephone,
     lieu_depart: repere || "Position GPS",
-    lieu_arrivee: arrivee || ("Point sur la carte (" + destinationChoisie.lat.toFixed(5) + ", " + destinationChoisie.lng.toFixed(5) + ")"),
+    lieu_arrivee: libelleDestination === "Point choisi sur la carte"
+      ? "Point sur la carte (" + destinationChoisie.lat.toFixed(5) + ", " + destinationChoisie.lng.toFixed(5) + ")"
+      : libelleDestination,
     latitude: positionMoto.lat,
     longitude: positionMoto.lng,
     destination_latitude: destinationChoisie.lat,
     destination_longitude: destinationChoisie.lng,
     prix_total: prixCalcule,
-    distance_km: Math.round(distanceCalculee * 10) / 10,
+    distance_km: trajetCalcule.distanceKm,
     mode_paiement: paiement,
     statut: "nouvelle"
   };
-  if (clientConnecte) {
-    donneesCourse.client_id = clientConnecte.id;
-  }
-
-  var positionClientPourSuivi = { lat: positionMoto.lat, lng: positionMoto.lng };
 
   sb.rpc("livreurs_disponibles", { p_lat: positionMoto.lat, p_lng: positionMoto.lng, p_zone: null }).then(function(reponseDispo) {
     if (reponseDispo.error || !reponseDispo.data || Number(reponseDispo.data) === 0) {
@@ -560,41 +719,188 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
         return;
       }
 
-      idCourseActuelle = idNouvelleCourse;
-
-      document.getElementById("formMoto").style.display = "none";
-      document.getElementById("carteSuivi").style.display = "block";
-      document.getElementById("texteConvenuMoto").textContent = "Prix convenu : " + prixCalcule.toLocaleString("fr-FR") + " FCFA (" + donneesCourse.distance_km + " km)";
-      demanderWakeLockClient();
-      demarrerSuivi(idNouvelleCourse, positionClientPourSuivi);
+      var infosCourse = {
+        id: idNouvelleCourse,
+        depart: positionMoto,
+        destination: destinationChoisie,
+        libelle: libelleDestination,
+        prix: prixCalcule,
+        distance: trajetCalcule.distanceKm,
+        date: Date.now()
+      };
+      localStorage.setItem(CLE_COURSE_LOCALE, JSON.stringify(infosCourse));
+      passerEnSuivi(infosCourse);
     });
   });
 });
 
-function reinitialiserFormulaireMoto() {
-  clearInterval(minuteurSuivi);
-  relacherWakeLockClient();
-  marqueurLivreurSuivi = null;
-  marqueurClientSuivi = null;
-  carteGoogleSuivi = null;
-  idCourseActuelle = null;
-  document.getElementById("carteSuivi").style.display = "none";
-  document.getElementById("btnNouvelleCourse").style.display = "none";
+/* ---------- Suivi de la course ---------- */
+
+var minuteurSuivi = null;
+var dernierStatut = null;
+
+function passerEnSuivi(infos) {
+  idCourseActuelle = infos.id;
+  positionMoto = infos.depart;
+  destinationChoisie = infos.destination;
+  libelleDestination = infos.libelle || "";
+  dernierStatut = null;
+
+  document.getElementById("zoneRechercheDestination").style.display = "none";
+  document.getElementById("aideCarte").style.display = "none";
+  document.getElementById("msgPositionMoto").style.display = "none";
+  document.getElementById("btnPositionMoto").style.display = "none";
+  document.getElementById("zoneCommandeMoto").style.display = "none";
+  document.getElementById("carteSuivi").style.display = "block";
+  document.getElementById("etatRecherche").style.display = "block";
+  document.getElementById("blocChauffeur").style.display = "none";
   document.getElementById("btnAnnulerCourse").style.display = "block";
-  document.getElementById("recapSuivi").style.display = "none";
-  document.getElementById("formMoto").style.display = "block";
-  document.getElementById("formMoto").reset();
-  document.getElementById("recapPrixMoto").style.display = "none";
-  positionMoto = null;
-  destinationChoisie = null;
-  document.getElementById("btnPositionMoto").textContent = "Utiliser ma position actuelle (obligatoire)";
-  document.getElementById("msgPositionMoto").textContent = "Le livreur en a besoin pour venir vous chercher.";
-  document.getElementById("msgPositionMoto").className = "msg-position";
-  document.getElementById("msgDestinationChoisie").className = "msg-position";
-  document.getElementById("msgDestinationChoisie").textContent = "Obligatoire : le tarif est calcule a partir de la distance.";
+  document.getElementById("btnNouvelleCourse").style.display = "none";
+  document.getElementById("texteConvenuMoto").textContent = "Prix convenu : " + Number(infos.prix).toLocaleString("fr-FR") + " FCFA (" + infos.distance + " km)";
+  document.getElementById("texteDistanceLivreur").textContent = "";
+  document.getElementById("texteEtaLivreur").textContent = "";
+
+  if (!marqueurDepart) {
+    marqueurDepart = new google.maps.Marker({
+      position: positionMoto,
+      map: carteMoto,
+      title: "Vous",
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: "#4285F4", fillOpacity: 1, strokeColor: "#FFFFFF", strokeWeight: 3 }
+    });
+  }
+  if (!marqueurDestination) {
+    marqueurDestination = new google.maps.Marker({ position: destinationChoisie, map: carteMoto, title: "Destination" });
+  }
+  marqueurDestination.setDraggable(false);
+  if (!traceTrajet) {
+    var bornes = new google.maps.LatLngBounds();
+    bornes.extend(positionMoto);
+    bornes.extend(destinationChoisie);
+    carteMoto.fitBounds(bornes, 50);
+  }
+
+  demanderWakeLockClient();
+  clearInterval(minuteurSuivi);
+  actualiserSuivi();
+  minuteurSuivi = setInterval(actualiserSuivi, 8000);
 }
 
-document.getElementById("btnNouvelleCourse").addEventListener("click", reinitialiserFormulaireMoto);
+var TEXTES_STATUT = {
+  acceptee: "Votre chauffeur arrive",
+  arrivee: "Votre chauffeur est arrive !",
+  en_cours: "En route vers votre destination"
+};
+
+function afficherFicheChauffeur(c) {
+  var photo = (c.livreur_photo && /^https:\/\//.test(c.livreur_photo))
+    ? "<img src=\"" + escapeHtml(c.livreur_photo) + "\" alt=\"Chauffeur\">"
+    : "<div class=\"avatar-vide\">&#128100;</div>";
+  document.getElementById("ficheChauffeur").innerHTML =
+    photo +
+    "<div>" +
+      "<div class=\"nom\">" + escapeHtml(c.livreur_nom || "Votre chauffeur") + "</div>" +
+      (c.livreur_vehicule ? "<div class=\"moto\">" + escapeHtml(c.livreur_vehicule) + "</div>" : "") +
+      (c.livreur_plaque ? "<span class=\"plaque\">" + escapeHtml(c.livreur_plaque) + "</span>" : "") +
+    "</div>";
+
+  var tel = String(c.livreur_telephone || "").replace(/[^0-9+]/g, "");
+  var btnAppeler = document.getElementById("btnAppeler");
+  if (tel) {
+    btnAppeler.href = "tel:" + tel;
+    btnAppeler.style.display = "block";
+  } else {
+    btnAppeler.style.display = "none";
+  }
+}
+
+function terminerSuivi(texte) {
+  clearInterval(minuteurSuivi);
+  relacherWakeLockClient();
+  localStorage.removeItem(CLE_COURSE_LOCALE);
+  document.getElementById("etatRecherche").style.display = "none";
+  document.getElementById("blocChauffeur").style.display = "block";
+  document.getElementById("texteSuiviStatut").className = "bandeau-statut";
+  document.getElementById("texteSuiviStatut").textContent = texte;
+  document.getElementById("btnAppeler").style.display = "none";
+  document.getElementById("btnAnnulerCourse").style.display = "none";
+  document.getElementById("btnNouvelleCourse").style.display = "block";
+  document.getElementById("texteDistanceLivreur").textContent = "";
+  document.getElementById("texteEtaLivreur").textContent = "";
+  if (marqueurMoto) {
+    marqueurMoto.setMap(null);
+    marqueurMoto = null;
+  }
+}
+
+function actualiserSuivi() {
+  var idCourse = idCourseActuelle;
+  if (!idCourse) return;
+  sb.rpc("suivi_course", { p_course_id: idCourse }).then(function(reponse) {
+    if (idCourse !== idCourseActuelle) return;
+    var c = reponse.data && reponse.data[0];
+    if (!c) return;
+
+    if (c.statut === "annulee") {
+      terminerSuivi("Course annulee.");
+      return;
+    }
+    if (c.statut === "terminee") {
+      terminerSuivi("Course terminee. Merci d'avoir utilise AW SERVICES !");
+      return;
+    }
+
+    if (c.statut === "nouvelle") {
+      document.getElementById("etatRecherche").style.display = "block";
+      document.getElementById("blocChauffeur").style.display = "none";
+    } else {
+      document.getElementById("etatRecherche").style.display = "none";
+      document.getElementById("blocChauffeur").style.display = "block";
+      var bandeau = document.getElementById("texteSuiviStatut");
+      bandeau.textContent = TEXTES_STATUT[c.statut] || c.statut;
+      bandeau.className = "bandeau-statut" + (c.statut === "arrivee" ? " arrive" : "");
+      afficherFicheChauffeur(c);
+      if (c.statut === "arrivee" && dernierStatut !== null && dernierStatut !== "arrivee" && navigator.vibrate) {
+        navigator.vibrate([300, 150, 300, 150, 300]);
+      }
+      if (c.statut === "en_cours") {
+        document.getElementById("btnAnnulerCourse").style.display = "none";
+      }
+    }
+    dernierStatut = c.statut;
+
+    if (c.livreur_latitude && c.livreur_longitude && carteMoto) {
+      var pos = { lat: c.livreur_latitude, lng: c.livreur_longitude };
+      if (!marqueurMoto) {
+        marqueurMoto = new google.maps.Marker({
+          position: pos,
+          map: carteMoto,
+          title: "Votre chauffeur",
+          zIndex: 999,
+          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 17, fillColor: "#F2A93B", fillOpacity: 1, strokeColor: "#1C1200", strokeWeight: 2 },
+          label: { text: "\uD83C\uDFCD", fontSize: "18px" }
+        });
+      } else {
+        marqueurMoto.setPosition(pos);
+      }
+
+      var cible = c.statut === "en_cours" ? destinationChoisie : positionMoto;
+      var bornes = new google.maps.LatLngBounds();
+      bornes.extend(pos);
+      bornes.extend(cible);
+      carteMoto.fitBounds(bornes, 60);
+
+      var distanceKmVal = distanceLigneDroite(pos.lat, pos.lng, cible.lat, cible.lng);
+      var etaMinutes = Math.max(1, Math.round((distanceKmVal / 25) * 60));
+      if (c.statut === "arrivee") {
+        document.getElementById("texteDistanceLivreur").textContent = "Le chauffeur vous attend au point de depart.";
+        document.getElementById("texteEtaLivreur").textContent = "";
+      } else {
+        document.getElementById("texteDistanceLivreur").textContent = (c.statut === "en_cours" ? "Distance restante : " : "Distance du chauffeur : ") + distanceKmVal.toFixed(1) + " km";
+        document.getElementById("texteEtaLivreur").textContent = (c.statut === "en_cours" ? "Arrivee a destination : ~" : "Arrivee du chauffeur : ~") + etaMinutes + " min";
+      }
+    }
+  });
+}
 
 document.getElementById("btnAnnulerCourse").addEventListener("click", function() {
   if (!idCourseActuelle) return;
@@ -611,108 +917,71 @@ document.getElementById("btnAnnulerCourse").addEventListener("click", function()
     if (reponse.error) {
       var message = reponse.error.message || "";
       if (message.indexOf("ne peut plus etre annulee") !== -1) {
-        alert("Cette course ne peut plus etre annulee : le livreur vous a deja pris en charge.");
-        document.getElementById("btnAnnulerCourse").style.display = "none";
+        alert("Cette course ne peut plus etre annulee : le chauffeur vous a deja pris en charge.");
+        btnAnnuler.style.display = "none";
       } else {
         alert("Erreur : l'annulation n'a pas pu etre effectuee. Reessayez.");
       }
       return;
     }
-
-    document.getElementById("texteSuiviStatut").textContent = "Course annulee.";
-    document.getElementById("btnAnnulerCourse").style.display = "none";
-    document.getElementById("btnNouvelleCourse").style.display = "block";
-    clearInterval(minuteurSuivi);
-    relacherWakeLockClient();
+    terminerSuivi("Course annulee.");
   });
 });
 
-var carteGoogleSuivi = null;
-var marqueurClientSuivi = null;
-var marqueurLivreurSuivi = null;
-var minuteurSuivi = null;
+function reinitialiserCourseMoto() {
+  clearInterval(minuteurSuivi);
+  relacherWakeLockClient();
+  localStorage.removeItem(CLE_COURSE_LOCALE);
+  idCourseActuelle = null;
+  dernierStatut = null;
+  destinationChoisie = null;
+  libelleDestination = "";
+  trajetCalcule = null;
+  numeroCalcul++;
 
-function demarrerSuivi(idCourse, positionClient) {
-  setTimeout(function() {
-    carteGoogleSuivi = new google.maps.Map(document.getElementById("carteGoogleSuivi"), {
-      center: positionClient,
-      zoom: 14
-    });
-    marqueurClientSuivi = new google.maps.Marker({
-      position: positionClient,
-      map: carteGoogleSuivi,
-      label: "V",
-      title: "Vous"
-    });
-  }, 150);
+  if (marqueurMoto) { marqueurMoto.setMap(null); marqueurMoto = null; }
+  if (marqueurDestination) { marqueurDestination.setMap(null); marqueurDestination = null; }
+  if (traceTrajet) { traceTrajet.setMap(null); traceTrajet = null; }
 
-  function actualiser() {
-    sb.rpc("suivi_course", { p_course_id: idCourse }).then(function(reponse) {
-      var c = reponse.data && reponse.data[0];
-      if (!c) return;
-
-      if (c.statut === "nouvelle") {
-        document.getElementById("texteSuiviStatut").textContent = "En attente qu'un livreur accepte votre course...";
-      } else if (c.statut === "acceptee") {
-        document.getElementById("texteSuiviStatut").textContent = "Un livreur a accepte votre course et arrive.";
-      } else if (c.statut === "en_cours") {
-        document.getElementById("texteSuiviStatut").textContent = "Vous etes en route vers votre destination.";
-        document.getElementById("btnAnnulerCourse").style.display = "none";
-      } else if (c.statut === "annulee") {
-        document.getElementById("texteSuiviStatut").textContent = "Course annulee.";
-        document.getElementById("btnAnnulerCourse").style.display = "none";
-        document.getElementById("btnNouvelleCourse").style.display = "block";
-        relacherWakeLockClient();
-        clearInterval(minuteurSuivi);
-        return;
-      } else if (c.statut === "terminee") {
-        document.getElementById("texteSuiviStatut").textContent = "Course terminee. Merci d'avoir utilise AW SERVICES !";
-        document.getElementById("btnAnnulerCourse").style.display = "none";
-        document.getElementById("btnNouvelleCourse").style.display = "block";
-        relacherWakeLockClient();
-        clearInterval(minuteurSuivi);
-        return;
-      }
-
-      if (c.livreur_latitude && c.livreur_longitude && carteGoogleSuivi) {
-        var pos = { lat: c.livreur_latitude, lng: c.livreur_longitude };
-        if (!marqueurLivreurSuivi) {
-          marqueurLivreurSuivi = new google.maps.Marker({
-            position: pos,
-            map: carteGoogleSuivi,
-            label: "L",
-            title: "Votre livreur"
-          });
-        } else {
-          marqueurLivreurSuivi.setPosition(pos);
-        }
-        var bounds = new google.maps.LatLngBounds();
-        bounds.extend(marqueurClientSuivi.getPosition());
-        bounds.extend(marqueurLivreurSuivi.getPosition());
-        carteGoogleSuivi.fitBounds(bounds, 60);
-
-        var distanceKmVal = distanceEntrePoints(positionClient.lat, positionClient.lng, c.livreur_latitude, c.livreur_longitude);
-        var etaMinutes = Math.max(1, Math.round((distanceKmVal / 25) * 60));
-        document.getElementById("recapSuivi").style.display = "block";
-        document.getElementById("texteDistanceLivreur").textContent = "Distance du livreur : " + distanceKmVal.toFixed(1) + " km";
-        document.getElementById("texteEtaLivreur").textContent = "Arrivee estimee : ~" + etaMinutes + " min";
-      }
-    });
-  }
-
-  actualiser();
-  minuteurSuivi = setInterval(actualiser, 8000);
+  document.getElementById("carteSuivi").style.display = "none";
+  document.getElementById("zoneCommandeMoto").style.display = "block";
+  document.getElementById("carteTrajet").style.display = "none";
+  document.getElementById("formMoto").style.display = "none";
+  document.getElementById("msgMoto").innerHTML = "";
+  document.getElementById("m_repere").value = "";
+  document.getElementById("m_paiement").value = "";
+  document.getElementById("zoneRechercheDestination").style.display = "block";
+  document.getElementById("rechercheDestination").value = "";
+  document.getElementById("aideCarte").style.display = "block";
+  document.getElementById("aideCarte").textContent = "Recherchez un lieu ou touchez la carte pour choisir votre destination.";
+  document.getElementById("msgPositionMoto").style.display = "block";
+  demanderPositionMoto();
 }
 
-function distanceEntrePoints(lat1, lon1, lat2, lon2) {
-  var R = 6371;
-  var dLat = (lat2 - lat1) * Math.PI / 180;
-  var dLon = (lon2 - lon1) * Math.PI / 180;
-  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-          Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+document.getElementById("btnNouvelleCourse").addEventListener("click", reinitialiserCourseMoto);
+
+/* ---------- Reprise d'une course en cours (page rechargee) ---------- */
+
+function reprendreCourseEnCours() {
+  var brut = localStorage.getItem(CLE_COURSE_LOCALE);
+  if (!brut) return false;
+  var infos = null;
+  try { infos = JSON.parse(brut); } catch (e) { infos = null; }
+  if (!infos || !infos.id || !infos.depart || !infos.destination || (Date.now() - (infos.date || 0)) > 6 * 3600 * 1000) {
+    localStorage.removeItem(CLE_COURSE_LOCALE);
+    return false;
+  }
+  sb.rpc("suivi_course", { p_course_id: infos.id }).then(function(reponse) {
+    var c = reponse.data && reponse.data[0];
+    if (!c || c.statut === "annulee" || c.statut === "terminee") {
+      localStorage.removeItem(CLE_COURSE_LOCALE);
+      return;
+    }
+    idCourseActuelle = infos.id;
+    ouvrirService("moto");
+    passerEnSuivi(infos);
+  });
+  return true;
 }
 
 var NB_SIEGES = 14;
@@ -1020,6 +1289,15 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
 
 mettreAJourPrix();
 afficherZoneDirection();
+
+/* ---------- Au chargement ---------- */
+if (!reprendreCourseEnCours()) {
+  if (window.location.hash === "#moto") {
+    ouvrirService("moto");
+  } else if (window.location.hash === "#voiture") {
+    ouvrirService("voiture");
+  }
+}
 </script>
 
 </body>
