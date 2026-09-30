@@ -57,6 +57,12 @@ if ('serviceWorker' in navigator) {
   .pastille-etape { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--bordure); flex-shrink: 0; }
   .etape.faite .pastille-etape { background-color: var(--succes); border-color: var(--succes); }
   .etape.active .pastille-etape { background-color: var(--accent); border-color: var(--accent); }
+
+  .profil-incomplet { background-color: rgba(242,169,59,0.12); border: 1px solid var(--accent); border-radius: var(--rayon-petit); padding: 10px; font-size: 13px; color: var(--accent); margin-top: 10px; }
+  .btn-modifier-profil { background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; padding: 0; margin-top: 10px; font-family: var(--police-texte); cursor: pointer; }
+  .msg-profil { font-size: 12.5px; margin-top: 8px; }
+  .msg-profil.ok { color: var(--succes); }
+  .msg-profil.err { color: var(--alerte); }
 </style>
 </head>
 <body>
@@ -131,10 +137,7 @@ function chargerEspace() {
       clientCourant = client;
 
       zone.innerHTML =
-        "<div class=\"aw-carte\">" +
-          "<p class=\"aw-section-titre\">Bonjour, " + escapeHtml(client.nom) + "</p>" +
-          "<p style=\"color:var(--texte-doux);font-size:13px;\">Telephone : " + escapeHtml(client.telephone || "-") + "</p>" +
-        "</div>" +
+        "<div class=\"aw-carte\" id=\"carteProfil\"></div>" +
         "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
           "<p class=\"aw-section-titre\">Notifications</p>" +
           "<p style=\"color:var(--texte-doux);font-size:13px;\">Soyez alerte a chaque etape de votre commande.</p>" +
@@ -169,6 +172,7 @@ function chargerEspace() {
       document.getElementById("ongletCourses").addEventListener("click", function() { basculerOnglet("Courses"); });
       document.getElementById("ongletVoyage").addEventListener("click", function() { basculerOnglet("Voyage"); });
 
+      afficherProfil(false);
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
       verifierEtatNotifications();
       chargerCommandes();
@@ -180,6 +184,79 @@ function chargerEspace() {
       setInterval(chargerReservationsClient, 20000);
       setInterval(chargerCoursesClient, 20000);
     });
+  });
+}
+
+function profilIncomplet(client) {
+  var nom = String(client.nom || "").trim();
+  return nom.length < 2 || nom.indexOf("@") !== -1 || !String(client.telephone || "").trim();
+}
+
+function afficherProfil(modeEdition) {
+  var carte = document.getElementById("carteProfil");
+  var client = clientCourant;
+  var nom = String(client.nom || "").trim();
+  var nomAffiche = (nom && nom.indexOf("@") === -1) ? nom : "";
+  var incomplet = profilIncomplet(client);
+
+  if (!modeEdition && !incomplet) {
+    carte.innerHTML =
+      "<p class=\"aw-section-titre\">Bonjour, " + escapeHtml(nomAffiche) + "</p>" +
+      "<p style=\"color:var(--texte-doux);font-size:13px;\">Telephone : " + escapeHtml(client.telephone || "-") + "</p>" +
+      "<button type=\"button\" class=\"btn-modifier-profil\" id=\"btnModifierProfil\">&#9998; Modifier mon profil</button>";
+    document.getElementById("btnModifierProfil").addEventListener("click", function() { afficherProfil(true); });
+    return;
+  }
+
+  carte.innerHTML =
+    "<p class=\"aw-section-titre\">" + (nomAffiche ? "Bonjour, " + escapeHtml(nomAffiche) : "Bonjour") + "</p>" +
+    (incomplet ? "<p class=\"profil-incomplet\">Completez votre profil pour que nos livreurs et chauffeurs puissent vous joindre.</p>" : "") +
+    "<label class=\"aw-label\">Nom complet</label>" +
+    "<input class=\"aw-input\" type=\"text\" id=\"p_nom\" maxlength=\"80\" value=\"" + escapeHtml(nomAffiche) + "\">" +
+    "<label class=\"aw-label\">Numero de telephone</label>" +
+    "<input class=\"aw-input\" type=\"tel\" id=\"p_telephone\" maxlength=\"20\" placeholder=\"Ex : 77 123 45 67\" value=\"" + escapeHtml(client.telephone || "") + "\">" +
+    "<button type=\"button\" class=\"aw-btn aw-btn-primaire\" id=\"btnEnregistrerProfil\" style=\"width:100%;margin-top:14px;\">Enregistrer</button>" +
+    (!incomplet ? "<button type=\"button\" class=\"aw-btn aw-btn-secondaire\" id=\"btnAnnulerProfil\" style=\"width:100%;margin-top:8px;\">Annuler</button>" : "") +
+    "<p class=\"msg-profil\" id=\"msgProfil\"></p>";
+
+  document.getElementById("btnEnregistrerProfil").addEventListener("click", enregistrerProfil);
+  if (!incomplet) {
+    document.getElementById("btnAnnulerProfil").addEventListener("click", function() { afficherProfil(false); });
+  }
+}
+
+function enregistrerProfil() {
+  var btn = document.getElementById("btnEnregistrerProfil");
+  var msg = document.getElementById("msgProfil");
+  var nom = document.getElementById("p_nom").value.trim();
+  var telephone = document.getElementById("p_telephone").value.trim();
+
+  if (nom.length < 2 || nom.indexOf("@") !== -1) {
+    msg.className = "msg-profil err";
+    msg.textContent = "Indiquez votre nom complet (pas votre e-mail).";
+    return;
+  }
+  if (!/^[0-9+ ]{6,20}$/.test(telephone)) {
+    msg.className = "msg-profil err";
+    msg.textContent = "Numero de telephone invalide (chiffres, espaces ou + uniquement).";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Enregistrement...";
+
+  sb.from("clients").update({ nom: nom, telephone: telephone }).eq("id", clientCourant.id).select().single().then(function(reponse) {
+    btn.disabled = false;
+    btn.textContent = "Enregistrer";
+    if (reponse.error || !reponse.data) {
+      msg.className = "msg-profil err";
+      msg.textContent = "Erreur : le profil n'a pas pu etre enregistre. Reessayez.";
+      return;
+    }
+    clientCourant = reponse.data;
+    localStorage.setItem("aw_client_nom", clientCourant.nom);
+    localStorage.setItem("aw_client_telephone", clientCourant.telephone);
+    afficherProfil(false);
   });
 }
 
@@ -361,6 +438,7 @@ function chargerReservationsClient() {
 var LIBELLES_COURSE_CLIENT = {
   nouvelle: "En attente d'un livreur",
   acceptee: "Livreur en route",
+  arrivee: "Chauffeur arrive",
   en_cours: "En route vers la destination",
   terminee: "Terminee",
   annulee: "Annulee"
@@ -368,6 +446,7 @@ var LIBELLES_COURSE_CLIENT = {
 var CLASSES_COURSE_CLIENT = {
   nouvelle: "badge-nonpaye",
   acceptee: "badge-neutre",
+  arrivee: "badge-neutre",
   en_cours: "badge-neutre",
   terminee: "badge-paye",
   annulee: "badge-annulee"
