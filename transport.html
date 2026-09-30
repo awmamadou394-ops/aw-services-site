@@ -22,12 +22,13 @@ if ('serviceWorker' in navigator) {
   .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
   .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
 
-  /* Accueil : deux boutons ronds */
+  /* Accueil : trois boutons ronds */
   .accueil-services { text-align: center; padding-top: 10px; }
   .accueil-services .intro { color: var(--texte-doux); font-size: 14px; margin-bottom: 26px; }
-  .choix-services { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; }
-  .btn-rond { background: none; border: none; padding: 0; width: 140px; display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--texte); font-family: var(--police-titre); font-size: 15px; font-weight: 700; cursor: pointer; }
-  .btn-rond .cercle { width: 120px; height: 120px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--accent); box-shadow: var(--ombre-accent); display: flex; align-items: center; justify-content: center; font-size: 50px; transition: transform 0.12s ease; }
+  .choix-services { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .btn-rond { background: none; border: none; padding: 0; width: 106px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--texte); font-family: var(--police-titre); font-size: 14px; font-weight: 700; line-height: 1.25; cursor: pointer; }
+  .btn-rond .cercle { width: 96px; height: 96px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--accent); box-shadow: var(--ombre-accent); display: flex; align-items: center; justify-content: center; font-size: 40px; transition: transform 0.12s ease; }
+  .limite-depassee { color: var(--alerte); font-size: 18px; font-weight: 700; margin-top: 6px; }
   .btn-rond:active .cercle { transform: scale(0.93); }
   .btn-rond .sous { color: var(--texte-doux); font-family: var(--police-texte); font-size: 12px; font-weight: 400; }
 
@@ -64,18 +65,6 @@ if ('serviceWorker' in navigator) {
   .bandeau-statut.arrive { background-color: var(--succes); color: #fff; font-size: 16px; }
 
   /* Transport Dakar - Bokidiawe */
-  .direction-choix { display: flex; gap: 8px; margin-top: 10px; }
-  .btn-direction {
-    flex: 1;
-    background-color: var(--fond);
-    border: 1px solid var(--bordure);
-    color: var(--texte-doux);
-    padding: 11px;
-    border-radius: var(--rayon-petit);
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .btn-direction.actif { background-color: var(--accent-fonce); border-color: var(--accent); color: var(--texte); }
 
   .plan-voiture { margin-top: var(--espace-lg); }
   .chauffeur-label {
@@ -142,12 +131,17 @@ if ('serviceWorker' in navigator) {
       <button type="button" class="btn-rond" id="btnOuvrirMoto">
         <span class="cercle">&#127949;&#65039;</span>
         <span>Course moto</span>
-        <span class="sous">Un moto-taxi pres de vous</span>
+        <span class="sous">10 km maximum</span>
       </button>
-      <button type="button" class="btn-rond" id="btnOuvrirVoiture">
+      <button type="button" class="btn-rond" id="btnOuvrirAller">
         <span class="cercle">&#128656;</span>
-        <span>Transport</span>
-        <span class="sous">Dakar &#8596; Bokidiawe</span>
+        <span>Dakar &#8594; Bokidiawe</span>
+        <span class="sous">Aller</span>
+      </button>
+      <button type="button" class="btn-rond" id="btnOuvrirRetour">
+        <span class="cercle">&#128656;</span>
+        <span>Bokidiawe &#8594; Dakar</span>
+        <span class="sous">Retour</span>
       </button>
     </div>
   </div>
@@ -226,14 +220,8 @@ if ('serviceWorker' in navigator) {
   <div class="panneau" id="panneauVoiture">
     <button type="button" class="btn-autres-services" id="btnRetourServicesVoiture">&#8592; Autres services</button>
     <div class="aw-carte">
-      <p class="aw-section-titre">Reservation Dakar &#8596; Bokidiawe</p>
-      <p class="desc">Voiture 14 places, region de Matam. Choisissez votre trajet, votre date et votre chaise.</p>
-
-      <label class="aw-label">Trajet</label>
-      <div class="direction-choix">
-        <button type="button" class="btn-direction actif" id="btnAller" data-direction="aller">Dakar &#8594; Bokidiawe</button>
-        <button type="button" class="btn-direction" id="btnRetour" data-direction="retour">Bokidiawe &#8594; Dakar</button>
-      </div>
+      <p class="aw-section-titre" id="titreTrajetVoiture">Voyage Dakar &#8594; Bokidiawe</p>
+      <p class="desc">Voiture 14 places, region de Matam. Choisissez votre date et votre chaise.</p>
 
       <div id="zoneDateAller">
         <label class="aw-label">Date et heure de depart</label>
@@ -321,6 +309,7 @@ var sb = supabase.createClient(
 var CLE_GOOGLE = "AIzaSyDpAban2vaVHcHUO9GJnW6MNbA6vWJst6M";
 var CENTRE_PAR_DEFAUT = { lat: 15.6556, lng: -13.2554 };
 var CLE_COURSE_LOCALE = "aw_course_en_cours";
+var DISTANCE_MAX_KM = 10;
 
 function escapeHtml(texte) {
   if (texte === null || texte === undefined) return "";
@@ -345,6 +334,7 @@ function ouvrirService(nom) {
       demanderPositionMoto();
     }
   } else {
+    choisirDirection(nom === "retour" ? "retour" : "aller");
     document.getElementById("panneauVoiture").classList.add("visible");
   }
   window.scrollTo(0, 0);
@@ -358,7 +348,8 @@ function revenirAuxServices() {
 }
 
 document.getElementById("btnOuvrirMoto").addEventListener("click", function() { ouvrirService("moto"); });
-document.getElementById("btnOuvrirVoiture").addEventListener("click", function() { ouvrirService("voiture"); });
+document.getElementById("btnOuvrirAller").addEventListener("click", function() { ouvrirService("aller"); });
+document.getElementById("btnOuvrirRetour").addEventListener("click", function() { ouvrirService("retour"); });
 document.getElementById("btnRetourServicesMoto").addEventListener("click", revenirAuxServices);
 document.getElementById("btnRetourServicesVoiture").addEventListener("click", revenirAuxServices);
 
@@ -647,6 +638,12 @@ function afficherTrajet() {
   var prix = calculerPrixCourse(trajetCalcule.distanceKm);
   document.getElementById("texteDistanceMoto").textContent = trajetCalcule.distanceKm.toLocaleString("fr-FR") + " km";
   document.getElementById("texteDureeMoto").textContent = "~" + trajetCalcule.dureeMin + " min";
+  if (trajetCalcule.distanceKm > DISTANCE_MAX_KM) {
+    document.getElementById("texteTotalMoto").innerHTML = "<div class=\"limite-depassee\">Trop loin pour une course moto</div>";
+    document.getElementById("noteTrajet").textContent = "Les courses moto sont limitees a " + DISTANCE_MAX_KM + " km. Choisissez une destination plus proche.";
+    document.getElementById("formMoto").style.display = "none";
+    return;
+  }
   document.getElementById("texteTotalMoto").textContent = prix.toLocaleString("fr-FR") + " FCFA";
   document.getElementById("noteTrajet").textContent = trajetCalcule.estime
     ? "Trajet par la route indisponible : distance estimee a vol d'oiseau."
@@ -667,6 +664,10 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
   }
   if (!destinationChoisie || !trajetCalcule) {
     msg.innerHTML = "<div class=\"msg erreur\">Choisissez d'abord votre destination et attendez le calcul du prix.</div>";
+    return;
+  }
+  if (trajetCalcule.distanceKm > DISTANCE_MAX_KM) {
+    msg.innerHTML = "<div class=\"msg erreur\">Les courses moto sont limitees a " + DISTANCE_MAX_KM + " km.</div>";
     return;
   }
 
@@ -715,7 +716,11 @@ document.getElementById("formMoto").addEventListener("submit", function(event) {
       btn.textContent = "Demander une course";
 
       if (reponse.error) {
-        msg.innerHTML = "<div class=\"msg erreur\">Erreur : la course n'a pas pu etre enregistree. Reessayez.</div>";
+        if ((reponse.error.message || "").indexOf("Distance maximale") !== -1) {
+          msg.innerHTML = "<div class=\"msg erreur\">Les courses moto sont limitees a " + DISTANCE_MAX_KM + " km. Choisissez une destination plus proche.</div>";
+        } else {
+          msg.innerHTML = "<div class=\"msg erreur\">Erreur : la course n'a pas pu etre enregistree. Reessayez.</div>";
+        }
         return;
       }
 
@@ -1077,23 +1082,15 @@ function chargerDepartsProgrammes(dir, idSelect) {
   });
 }
 
-document.getElementById("btnAller").addEventListener("click", function() {
-  direction = "aller";
-  document.getElementById("btnAller").classList.add("actif");
-  document.getElementById("btnRetour").classList.remove("actif");
+function choisirDirection(nouvelleDirection) {
+  direction = nouvelleDirection;
+  document.getElementById("titreTrajetVoiture").innerHTML = direction === "aller"
+    ? "Voyage Dakar &#8594; Bokidiawe"
+    : "Voyage Bokidiawe &#8594; Dakar";
   siegeSelectionne = null;
   afficherZoneDirection();
   chargerSieges();
-});
-
-document.getElementById("btnRetour").addEventListener("click", function() {
-  direction = "retour";
-  document.getElementById("btnRetour").classList.add("actif");
-  document.getElementById("btnAller").classList.remove("actif");
-  siegeSelectionne = null;
-  afficherZoneDirection();
-  chargerSieges();
-});
+}
 
 document.getElementById("v_retour_select").addEventListener("change", function() {
   siegeSelectionne = null;
@@ -1264,7 +1261,7 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
       body: JSON.stringify({
         table: "reservations_voiture",
         id: idReservation,
-        item_name: "Reservation Dakar-Bokidiawe - Chaise " + siegeSelectionne,
+        item_name: (direction === "aller" ? "Voyage Dakar-Bokidiawe" : "Voyage Bokidiawe-Dakar") + " - Chaise " + siegeSelectionne,
         item_price: prixTotal,
         telephone: telephone,
         nom: nomComplet
@@ -1288,14 +1285,15 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
 });
 
 mettreAJourPrix();
-afficherZoneDirection();
 
 /* ---------- Au chargement ---------- */
 if (!reprendreCourseEnCours()) {
   if (window.location.hash === "#moto") {
     ouvrirService("moto");
-  } else if (window.location.hash === "#voiture") {
-    ouvrirService("voiture");
+  } else if (window.location.hash === "#aller") {
+    ouvrirService("aller");
+  } else if (window.location.hash === "#retour") {
+    ouvrirService("retour");
   }
 }
 </script>
