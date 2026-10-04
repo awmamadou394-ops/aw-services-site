@@ -18,6 +18,19 @@ if ('serviceWorker' in navigator) {
   .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
   .aw-recherche { max-width: 100%; margin: 0 0 var(--espace-md); }
 
+  /* Accueil : deux boutons ronds */
+  .accueil-services { text-align: center; padding-top: 10px; }
+  .accueil-services .intro { color: var(--texte-doux); font-size: 14px; margin-bottom: 26px; }
+  .choix-services { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; }
+  .btn-rond { background: none; border: none; padding: 0; width: 140px; display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--texte); font-family: var(--police-titre); font-size: 15px; font-weight: 700; cursor: pointer; }
+  .btn-rond .cercle { width: 120px; height: 120px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--accent); box-shadow: var(--ombre-accent); display: flex; align-items: center; justify-content: center; font-size: 50px; transition: transform 0.12s ease; }
+  .btn-rond:active .cercle { transform: scale(0.93); }
+  .btn-rond .sous { color: var(--texte-doux); font-family: var(--police-texte); font-size: 12px; font-weight: 400; }
+
+  .panneau { display: none; }
+  .panneau.visible { display: block; }
+  .btn-autres-services { background: none; border: none; color: var(--accent); font-size: 14px; font-weight: 600; padding: 0 0 14px 0; font-family: var(--police-texte); cursor: pointer; }
+
   .categories { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: var(--espace-lg); scrollbar-width: none; }
   .categories::-webkit-scrollbar { display: none; }
   .puce-categorie {
@@ -40,37 +53,135 @@ if ('serviceWorker' in navigator) {
   .bien-carte .type-tag { font-size: 10px; color: var(--texte-discret); text-transform: uppercase; letter-spacing: 0.03em; }
   .bien-carte h3 { font-size: 13px; margin-bottom: 4px; font-family: var(--police-titre); margin-top: 2px; }
   .bien-carte .prix { color: var(--accent); font-weight: 700; font-size: 14px; font-family: var(--police-chiffres); }
+  .bien-carte .prix small { font-size: 10.5px; color: var(--texte-doux); font-family: var(--police-texte); font-weight: 400; }
   .bien-carte .loc { color: var(--texte-doux); font-size: 11px; margin-top: 3px; }
   .badge-vendu { position: absolute; top: 8px; right: 8px; background-color: var(--alerte); color: var(--texte); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
-  .bien-carte a.btn-detail { display: block; text-align: center; background-color: var(--accent); color: #1C1200; text-decoration: none; padding: 8px; font-size: 12px; font-weight: 700; margin-top: 8px; border-radius: var(--rayon-petit); }
+  .bien-carte a.btn-detail, .bien-carte button.btn-detail { display: block; width: 100%; text-align: center; background-color: var(--accent); color: #1C1200; text-decoration: none; padding: 8px; font-size: 12px; font-weight: 700; margin-top: 8px; border-radius: var(--rayon-petit); border: none; font-family: var(--police-texte); }
+  .bien-carte button.btn-detail:disabled { background-color: var(--fond); color: var(--texte-discret); }
   .vide { text-align: center; color: var(--texte-doux); padding: 30px; grid-column: 1 / -1; }
+
+  /* Reservation d'un logement */
+  .fiche-photo { width: 100%; height: 210px; object-fit: cover; border-radius: var(--rayon); background-color: var(--surface); display: block; }
+  .fiche-titre { font-family: var(--police-titre); font-size: 19px; font-weight: 700; margin-top: 12px; }
+  .fiche-ligne { color: var(--texte-doux); font-size: 13px; margin-top: 4px; line-height: 1.5; }
+  .fiche-prix { color: var(--accent); font-family: var(--police-chiffres); font-size: 18px; font-weight: 700; margin-top: 8px; }
+  .dates { display: flex; gap: 10px; }
+  .dates > div { flex: 1; }
+  select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
+  .etat-dispo { font-size: 13px; margin-top: 10px; padding: 10px; border-radius: var(--rayon-petit); display: none; }
+  .etat-dispo.ok { display: block; background-color: rgba(63,163,77,0.12); color: var(--succes); }
+  .etat-dispo.ko { display: block; background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .etat-dispo.attente { display: block; background-color: var(--fond); color: var(--texte-doux); }
+  .recap-prix { margin-top: var(--espace-md); background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: var(--espace-md); }
+  .recap-prix p { color: var(--texte-doux); font-size: 13px; }
+  .recap-prix .total { font-family: var(--police-chiffres); color: var(--accent); font-size: 20px; font-weight: 700; margin-top: 4px; }
+  .msg { font-size: 13px; padding: 10px; border-radius: var(--rayon-petit); margin-top: 12px; }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
 </style>
 </head>
 <body>
 
 <header class="aw-header">
   <h1>Immobilier</h1>
-  <p>Terrains, maisons, appartements</p>
+  <p>Acheter &amp; louer a la nuit</p>
 </header>
 
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
 
 <div class="aw-conteneur">
-  <div class="aw-recherche">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-    <input type="text" id="champRecherche" placeholder="Rechercher un bien, une localisation...">
+
+  <div class="accueil-services" id="accueilServices">
+    <p class="intro">Que souhaitez-vous faire ?</p>
+    <div class="choix-services">
+      <button type="button" class="btn-rond" id="btnOuvrirAchat">
+        <span class="cercle">&#127969;</span>
+        <span>Acheter</span>
+        <span class="sous">Terrains, maisons, appartements</span>
+      </button>
+      <button type="button" class="btn-rond" id="btnOuvrirLocation">
+        <span class="cercle">&#128719;&#65039;</span>
+        <span>Louer a la nuit</span>
+        <span class="sous">Appartements meubles, hotels</span>
+      </button>
+    </div>
   </div>
 
-  <div class="categories" id="zoneCategories"></div>
-
-  <p class="aw-section-titre">Biens disponibles</p>
-  <div class="grille" id="grilleBiens">
-    <p class="vide">Chargement...</p>
+  <!-- ===== Acheter ===== -->
+  <div class="panneau" id="panneauAchat">
+    <button type="button" class="btn-autres-services" id="btnRetourAchat">&#8592; Autres services</button>
+    <div class="aw-recherche">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" id="champRecherche" placeholder="Rechercher un bien, une localisation...">
+    </div>
+    <div class="categories" id="zoneCategories"></div>
+    <p class="aw-section-titre">Biens a vendre</p>
+    <div class="grille" id="grilleBiens">
+      <p class="vide">Chargement...</p>
+    </div>
   </div>
+
+  <!-- ===== Louer a la nuit : liste ===== -->
+  <div class="panneau" id="panneauLocation">
+    <button type="button" class="btn-autres-services" id="btnRetourLocation">&#8592; Autres services</button>
+    <div class="aw-recherche">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" id="champRechercheLocation" placeholder="Rechercher un logement, une ville...">
+    </div>
+    <div class="categories" id="zoneCategoriesLocation">
+      <button type="button" class="puce-categorie actif" data-type="tous">Tous</button>
+      <button type="button" class="puce-categorie" data-type="appartement_meuble">Appartements meubles</button>
+      <button type="button" class="puce-categorie" data-type="hotel">Hotels</button>
+    </div>
+    <p class="aw-section-titre">Logements a louer</p>
+    <div class="grille" id="grilleLogements">
+      <p class="vide">Chargement...</p>
+    </div>
+  </div>
+
+  <!-- ===== Louer a la nuit : reservation ===== -->
+  <div class="panneau" id="panneauReservation">
+    <button type="button" class="btn-autres-services" id="btnRetourListe">&#8592; Tous les logements</button>
+    <div id="ficheLogement"></div>
+
+    <div class="aw-carte" style="margin-top:14px;">
+      <p class="aw-section-titre">Votre sejour</p>
+      <div class="dates">
+        <div>
+          <label class="aw-label">Arrivee</label>
+          <input class="aw-input" type="date" id="r_arrivee">
+        </div>
+        <div>
+          <label class="aw-label">Depart</label>
+          <input class="aw-input" type="date" id="r_depart">
+        </div>
+      </div>
+      <div id="zoneChoixChambres" style="display:none;">
+        <label class="aw-label">Nombre de chambres</label>
+        <select id="r_chambres"></select>
+      </div>
+      <div class="etat-dispo" id="etatDispo"></div>
+
+      <div class="recap-prix" id="recapPrix" style="display:none;">
+        <p id="detailPrix"></p>
+        <div class="total" id="totalPrix"></div>
+      </div>
+
+      <form id="formReservation" style="display:none;">
+        <label class="aw-label">Nom complet</label>
+        <input class="aw-input" type="text" id="r_nom" maxlength="80" required>
+        <label class="aw-label">Numero de telephone</label>
+        <input class="aw-input" type="tel" id="r_telephone" maxlength="20" required>
+        <p style="color:var(--texte-doux);font-size:12.5px;margin-top:10px;">Paiement en ligne securise (Wave, Orange Money, carte bancaire) a l'etape suivante. Votre reservation est gardee 30 minutes le temps du paiement.</p>
+        <button type="submit" class="aw-btn aw-btn-primaire" id="btnReserver" style="width:100%;margin-top:14px;">Reserver et payer</button>
+        <div id="msgReservation"></div>
+      </form>
+    </div>
+  </div>
+
 </div>
 
 <footer style="text-align:center;padding:var(--espace-lg);color:var(--texte-discret);font-size:12px;">
-  &copy; 2026 AW SERVICES — Tous droits reserves
+  &copy; 2026 AW SERVICES &mdash; Tous droits reserves
 </footer>
 
 <script>
@@ -89,11 +200,41 @@ function escapeHtml(texte) {
     .replace(/'/g, "&#39;");
 }
 
+var TYPES_LOGEMENT = { appartement_meuble: "Appartement meuble", hotel: "Hotel" };
+
+/* ---------- Navigation entre les espaces ---------- */
+
+var PANNEAUX = ["panneauAchat", "panneauLocation", "panneauReservation"];
+
+function afficherPanneau(id) {
+  document.getElementById("accueilServices").style.display = id ? "none" : "block";
+  for (var i = 0; i < PANNEAUX.length; i++) {
+    document.getElementById(PANNEAUX[i]).classList.toggle("visible", PANNEAUX[i] === id);
+  }
+  window.scrollTo(0, 0);
+}
+
+document.getElementById("btnOuvrirAchat").addEventListener("click", function() {
+  afficherPanneau("panneauAchat");
+  if (!biensCharges) chargerBiens();
+});
+document.getElementById("btnOuvrirLocation").addEventListener("click", function() {
+  afficherPanneau("panneauLocation");
+  if (!logementsCharges) chargerLogements();
+});
+document.getElementById("btnRetourAchat").addEventListener("click", function() { afficherPanneau(null); });
+document.getElementById("btnRetourLocation").addEventListener("click", function() { afficherPanneau(null); });
+document.getElementById("btnRetourListe").addEventListener("click", function() { afficherPanneau("panneauLocation"); });
+
+/* ================= ACHETER ================= */
+
+var biensCharges = false;
 var tousLesBiens = [];
 var typeActif = "Tous";
 var termeRecherche = "";
 
 function chargerBiens() {
+  biensCharges = true;
   sb.from("biens_immobiliers").select("*").order("date_ajout", { ascending: false }).then(function(reponse) {
     tousLesBiens = reponse.data || [];
     construireCategories();
@@ -171,7 +312,391 @@ function afficherBiens(data) {
   grille.innerHTML = html;
 }
 
-chargerBiens();
+/* ================= LOUER A LA NUIT ================= */
+
+var logementsCharges = false;
+var tousLesLogements = [];
+var typeLocationActif = "tous";
+var rechercheLocation = "";
+var logementChoisi = null;
+
+function chargerLogements() {
+  logementsCharges = true;
+  sb.from("logements_location").select("*").eq("actif", true).order("date_ajout", { ascending: false }).then(function(reponse) {
+    tousLesLogements = reponse.data || [];
+    afficherLogementsFiltres();
+    ouvrirLogementDepuisLien();
+  });
+}
+
+var pucesLocation = document.getElementById("zoneCategoriesLocation").getElementsByClassName("puce-categorie");
+for (var pl = 0; pl < pucesLocation.length; pl++) {
+  pucesLocation[pl].addEventListener("click", function() {
+    typeLocationActif = this.getAttribute("data-type");
+    for (var t = 0; t < pucesLocation.length; t++) pucesLocation[t].classList.remove("actif");
+    this.classList.add("actif");
+    afficherLogementsFiltres();
+  });
+}
+
+document.getElementById("champRechercheLocation").addEventListener("input", function() {
+  rechercheLocation = this.value.trim().toLowerCase();
+  afficherLogementsFiltres();
+});
+
+function prixAffiche(l) {
+  return Number(l.prix_nuit).toLocaleString("fr-FR") + " FCFA <small>/ " + (l.mode_location === "chambre" ? "chambre / nuit" : "nuit") + "</small>";
+}
+
+function afficherLogementsFiltres() {
+  var grille = document.getElementById("grilleLogements");
+  var filtres = tousLesLogements.filter(function(l) {
+    var matchType = typeLocationActif === "tous" || l.type === typeLocationActif;
+    var matchRecherche = !rechercheLocation ||
+      (l.titre && l.titre.toLowerCase().indexOf(rechercheLocation) !== -1) ||
+      (l.localisation && l.localisation.toLowerCase().indexOf(rechercheLocation) !== -1);
+    return matchType && matchRecherche;
+  });
+
+  if (filtres.length === 0) {
+    grille.innerHTML = "<p class=\"vide\">" + (tousLesLogements.length === 0 ? "Aucun logement disponible pour le moment." : "Aucun logement ne correspond a votre recherche.") + "</p>";
+    return;
+  }
+
+  var html = "";
+  for (var i = 0; i < filtres.length; i++) {
+    var l = filtres[i];
+    html += "<div class=\"bien-carte\">" +
+              (l.suspendu ? "<span class=\"badge-vendu\">Indisponible</span>" : "") +
+              "<img src=\"" + escapeHtml(l.photo_url || "") + "\" alt=\"" + escapeHtml(l.titre) + "\">" +
+              "<div class=\"infos\">" +
+                "<div class=\"type-tag\">" + escapeHtml(TYPES_LOGEMENT[l.type] || l.type) + "</div>" +
+                "<h3>" + escapeHtml(l.titre) + "</h3>" +
+                "<div class=\"prix\">" + prixAffiche(l) + "</div>" +
+                "<div class=\"loc\">" + escapeHtml(l.localisation) + "</div>" +
+                "<button type=\"button\" class=\"btn-detail btn-reserver-logement\" data-id=\"" + l.id + "\"" + (l.suspendu ? " disabled" : "") + ">" + (l.suspendu ? "Indisponible" : "Reserver") + "</button>" +
+              "</div>" +
+            "</div>";
+  }
+  grille.innerHTML = html;
+
+  var boutons = grille.getElementsByClassName("btn-reserver-logement");
+  for (var b = 0; b < boutons.length; b++) {
+    boutons[b].addEventListener("click", function() {
+      ouvrirReservation(this.getAttribute("data-id"));
+    });
+  }
+}
+
+/* ---------- Dates ---------- */
+
+function dateLocale(decalageJours) {
+  var d = new Date();
+  d.setDate(d.getDate() + (decalageJours || 0));
+  var mois = String(d.getMonth() + 1).padStart(2, "0");
+  var jour = String(d.getDate()).padStart(2, "0");
+  return d.getFullYear() + "-" + mois + "-" + jour;
+}
+
+function ajouterJours(dateStr, jours) {
+  var p = dateStr.split("-");
+  var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+  d.setDate(d.getDate() + jours);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function nombreNuits(arrivee, depart) {
+  if (!arrivee || !depart) return 0;
+  var a = arrivee.split("-"), b = depart.split("-");
+  var da = Date.UTC(parseInt(a[0], 10), parseInt(a[1], 10) - 1, parseInt(a[2], 10));
+  var db = Date.UTC(parseInt(b[0], 10), parseInt(b[1], 10) - 1, parseInt(b[2], 10));
+  return Math.round((db - da) / 86400000);
+}
+
+var MOIS_FR = ["janvier","fevrier","mars","avril","mai","juin","juillet","aout","septembre","octobre","novembre","decembre"];
+function dateLisible(dateStr) {
+  var p = dateStr.split("-");
+  return parseInt(p[2], 10) + " " + MOIS_FR[parseInt(p[1], 10) - 1] + " " + p[0];
+}
+
+/* ---------- Fiche et reservation ---------- */
+
+var chambresLibres = 0;
+var numeroVerification = 0;
+
+function ouvrirReservation(id) {
+  logementChoisi = null;
+  for (var i = 0; i < tousLesLogements.length; i++) {
+    if (tousLesLogements[i].id === id) logementChoisi = tousLesLogements[i];
+  }
+  if (!logementChoisi || logementChoisi.suspendu) return;
+  var l = logementChoisi;
+
+  document.getElementById("ficheLogement").innerHTML =
+    "<img class=\"fiche-photo\" src=\"" + escapeHtml(l.photo_url || "") + "\" alt=\"" + escapeHtml(l.titre) + "\">" +
+    "<div class=\"fiche-titre\">" + escapeHtml(l.titre) + "</div>" +
+    "<div class=\"fiche-ligne\">" + escapeHtml(TYPES_LOGEMENT[l.type] || l.type) + " &mdash; &#128205; " + escapeHtml(l.localisation) + "</div>" +
+    (l.mode_location === "chambre"
+      ? "<div class=\"fiche-ligne\">Location par chambre (" + l.nb_chambres + " chambre" + (l.nb_chambres > 1 ? "s" : "") + ")</div>"
+      : "<div class=\"fiche-ligne\">Logement entier, rien que pour vous</div>") +
+    (l.capacite_personnes ? "<div class=\"fiche-ligne\">&#128101; Jusqu'a " + l.capacite_personnes + " personne" + (l.capacite_personnes > 1 ? "s" : "") + "</div>" : "") +
+    (l.equipements ? "<div class=\"fiche-ligne\">&#10004;&#65039; " + escapeHtml(l.equipements) + "</div>" : "") +
+    (l.description ? "<div class=\"fiche-ligne\" style=\"margin-top:8px;\">" + escapeHtml(l.description) + "</div>" : "") +
+    "<div class=\"fiche-prix\">" + prixAffiche(l) + "</div>";
+
+  var arrivee = document.getElementById("r_arrivee");
+  var depart = document.getElementById("r_depart");
+  arrivee.min = dateLocale(0);
+  arrivee.max = dateLocale(365);
+  arrivee.value = "";
+  depart.value = "";
+  depart.min = dateLocale(1);
+
+  document.getElementById("zoneChoixChambres").style.display = l.mode_location === "chambre" ? "block" : "none";
+  document.getElementById("r_chambres").innerHTML = "<option value=\"1\">1</option>";
+  document.getElementById("etatDispo").className = "etat-dispo";
+  document.getElementById("recapPrix").style.display = "none";
+  document.getElementById("formReservation").style.display = "none";
+  document.getElementById("msgReservation").innerHTML = "";
+  chambresLibres = 0;
+
+  afficherPanneau("panneauReservation");
+}
+
+document.getElementById("r_arrivee").addEventListener("change", function() {
+  var depart = document.getElementById("r_depart");
+  if (this.value) {
+    depart.min = ajouterJours(this.value, 1);
+    depart.max = ajouterJours(this.value, 60);
+    if (!depart.value || depart.value <= this.value) depart.value = ajouterJours(this.value, 1);
+  }
+  verifierDisponibilite();
+});
+document.getElementById("r_depart").addEventListener("change", verifierDisponibilite);
+document.getElementById("r_chambres").addEventListener("change", mettreAJourPrix);
+
+function verifierDisponibilite() {
+  var l = logementChoisi;
+  var arrivee = document.getElementById("r_arrivee").value;
+  var depart = document.getElementById("r_depart").value;
+  var etat = document.getElementById("etatDispo");
+  document.getElementById("recapPrix").style.display = "none";
+  document.getElementById("formReservation").style.display = "none";
+
+  if (!l || !arrivee || !depart) return;
+  var nuits = nombreNuits(arrivee, depart);
+  if (arrivee < dateLocale(0)) {
+    etat.className = "etat-dispo ko";
+    etat.textContent = "La date d'arrivee ne peut pas etre dans le passe.";
+    return;
+  }
+  if (nuits < 1) {
+    etat.className = "etat-dispo ko";
+    etat.textContent = "La date de depart doit etre apres la date d'arrivee.";
+    return;
+  }
+  if (nuits > 60) {
+    etat.className = "etat-dispo ko";
+    etat.textContent = "Le sejour est limite a 60 nuits.";
+    return;
+  }
+
+  etat.className = "etat-dispo attente";
+  etat.textContent = "Verification des disponibilites...";
+  var numero = ++numeroVerification;
+
+  sb.rpc("disponibilite_logement", { p_logement_id: l.id, p_arrivee: arrivee, p_depart: depart }).then(function(reponse) {
+    if (numero !== numeroVerification) return;
+    if (reponse.error) {
+      etat.className = "etat-dispo ko";
+      etat.textContent = "Impossible de verifier les disponibilites. Reessayez.";
+      return;
+    }
+    chambresLibres = Number(reponse.data) || 0;
+    if (chambresLibres <= 0) {
+      etat.className = "etat-dispo ko";
+      etat.textContent = "Complet sur ces dates. Essayez d'autres dates.";
+      return;
+    }
+
+    if (l.mode_location === "chambre") {
+      var select = document.getElementById("r_chambres");
+      var choixActuel = parseInt(select.value, 10) || 1;
+      var options = "";
+      for (var n = 1; n <= chambresLibres; n++) {
+        options += "<option value=\"" + n + "\"" + (n === Math.min(choixActuel, chambresLibres) ? " selected" : "") + ">" + n + "</option>";
+      }
+      select.innerHTML = options;
+      etat.className = "etat-dispo ok";
+      etat.textContent = "Disponible : " + chambresLibres + " chambre" + (chambresLibres > 1 ? "s" : "") + " libre" + (chambresLibres > 1 ? "s" : "") + " sur toute la periode.";
+    } else {
+      etat.className = "etat-dispo ok";
+      etat.textContent = "Disponible sur toute la periode.";
+    }
+    mettreAJourPrix();
+  });
+}
+
+function mettreAJourPrix() {
+  var l = logementChoisi;
+  if (!l || chambresLibres <= 0) return;
+  var arrivee = document.getElementById("r_arrivee").value;
+  var depart = document.getElementById("r_depart").value;
+  var nuits = nombreNuits(arrivee, depart);
+  var chambres = l.mode_location === "chambre" ? (parseInt(document.getElementById("r_chambres").value, 10) || 1) : 1;
+  var total = l.prix_nuit * nuits * chambres;
+
+  document.getElementById("detailPrix").textContent =
+    "Du " + dateLisible(arrivee) + " au " + dateLisible(depart) + " : " + nuits + " nuit" + (nuits > 1 ? "s" : "") +
+    (l.mode_location === "chambre" ? " x " + chambres + " chambre" + (chambres > 1 ? "s" : "") : "") +
+    " x " + Number(l.prix_nuit).toLocaleString("fr-FR") + " FCFA";
+  document.getElementById("totalPrix").textContent = "Total : " + total.toLocaleString("fr-FR") + " FCFA";
+  document.getElementById("recapPrix").style.display = "block";
+  document.getElementById("formReservation").style.display = "block";
+}
+
+/* ---------- Profil (pre-remplissage) ---------- */
+
+(function remplirProfil() {
+  var nom = localStorage.getItem("aw_client_nom");
+  var tel = localStorage.getItem("aw_client_telephone");
+  if (nom) document.getElementById("r_nom").value = nom;
+  if (tel) document.getElementById("r_telephone").value = tel;
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) return;
+    sb.from("clients").select("nom, telephone").eq("user_id", user.id).maybeSingle().then(function(reponse) {
+      var c = reponse.data;
+      if (!c) return;
+      if (c.nom && c.nom.indexOf("@") === -1) document.getElementById("r_nom").value = c.nom;
+      if (c.telephone) document.getElementById("r_telephone").value = c.telephone;
+    });
+  });
+})();
+
+/* ---------- Envoi de la reservation et paiement ---------- */
+
+function messageErreurReservation(message) {
+  message = message || "";
+  if (message.indexOf("Plus assez de disponibilite") !== -1) return "Desole, ces dates viennent d'etre reservees par quelqu'un d'autre. Choisissez d'autres dates.";
+  if (message.indexOf("pas disponible a la location") !== -1) return "Ce logement n'est plus disponible a la location pour le moment.";
+  if (message.indexOf("Telephone invalide") !== -1) return "Numero de telephone invalide (chiffres, espaces ou + uniquement).";
+  if (message.indexOf("Nom invalide") !== -1) return "Indiquez votre nom complet.";
+  if (message.indexOf("Date") !== -1 || message.indexOf("Duree") !== -1) return "Les dates choisies ne sont pas valides.";
+  return "Erreur : la reservation n'a pas pu etre enregistree. Reessayez.";
+}
+
+document.getElementById("formReservation").addEventListener("submit", function(event) {
+  event.preventDefault();
+  var l = logementChoisi;
+  var btn = document.getElementById("btnReserver");
+  var msg = document.getElementById("msgReservation");
+  msg.innerHTML = "";
+
+  var arrivee = document.getElementById("r_arrivee").value;
+  var depart = document.getElementById("r_depart").value;
+  var nuits = nombreNuits(arrivee, depart);
+  var chambres = l.mode_location === "chambre" ? (parseInt(document.getElementById("r_chambres").value, 10) || 1) : 1;
+  var nom = document.getElementById("r_nom").value.trim();
+  var telephone = document.getElementById("r_telephone").value.trim();
+
+  if (!l || chambresLibres <= 0 || nuits < 1) {
+    msg.innerHTML = "<div class=\"msg erreur\">Choisissez d'abord des dates disponibles.</div>";
+    return;
+  }
+  if (nom.length < 2 || nom.indexOf("@") !== -1) {
+    msg.innerHTML = "<div class=\"msg erreur\">Indiquez votre nom complet.</div>";
+    return;
+  }
+  if (!/^[0-9+ ]{6,20}$/.test(telephone)) {
+    msg.innerHTML = "<div class=\"msg erreur\">Numero de telephone invalide (chiffres, espaces ou + uniquement).</div>";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Reservation en cours...";
+  localStorage.setItem("aw_client_nom", nom);
+  localStorage.setItem("aw_client_telephone", telephone);
+
+  var idReservation = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
+  var total = l.prix_nuit * nuits * chambres;
+
+  sb.from("reservations_logement").insert([{
+    id: idReservation,
+    logement_id: l.id,
+    client_nom: nom,
+    client_telephone: telephone,
+    date_arrivee: arrivee,
+    date_depart: depart,
+    nb_chambres: chambres
+  }]).then(function(reponse) {
+    if (reponse.error) {
+      btn.disabled = false;
+      btn.textContent = "Reserver et payer";
+      msg.innerHTML = "<div class=\"msg erreur\">" + messageErreurReservation(reponse.error.message) + "</div>";
+      if ((reponse.error.message || "").indexOf("Plus assez de disponibilite") !== -1) verifierDisponibilite();
+      return;
+    }
+
+    var ticket = {
+      type: "reservation_logement",
+      id: idReservation,
+      titre: l.titre,
+      localisation: l.localisation,
+      date_arrivee: arrivee,
+      date_depart: depart,
+      nb_nuits: nuits,
+      nb_chambres: chambres,
+      mode_location: l.mode_location,
+      prix_total: total,
+      nom: nom,
+      telephone: telephone
+    };
+
+    fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table: "reservations_logement",
+        id: idReservation,
+        item_name: ("Sejour - " + l.titre).slice(0, 80),
+        telephone: telephone,
+        nom: nom
+      })
+    }).then(function(r) { return r.json(); }).then(function(resultat) {
+      if (resultat.success === 1 && resultat.redirect_url) {
+        ticket.paytech_token = resultat.token || null;
+        localStorage.setItem("aw_dernier_ticket", JSON.stringify(ticket));
+        window.location.href = resultat.redirect_url;
+      } else {
+        btn.disabled = false;
+        btn.textContent = "Reserver et payer";
+        msg.innerHTML = "<div class=\"msg erreur\">Erreur lors de la creation du paiement. Reessayez.</div>";
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = "Reserver et payer";
+      msg.innerHTML = "<div class=\"msg erreur\">Erreur de connexion au service de paiement. Reessayez.</div>";
+    });
+  });
+});
+
+/* ---------- Liens directs (#acheter, #louer, #logement-...) ---------- */
+
+function ouvrirLogementDepuisLien() {
+  var hash = window.location.hash;
+  if (hash.indexOf("#logement-") === 0) {
+    ouvrirReservation(hash.replace("#logement-", ""));
+  }
+}
+
+if (window.location.hash === "#acheter") {
+  afficherPanneau("panneauAchat");
+  chargerBiens();
+} else if (window.location.hash === "#louer" || window.location.hash.indexOf("#logement-") === 0) {
+  afficherPanneau("panneauLocation");
+  chargerLogements();
+}
 </script>
 
 </body>
