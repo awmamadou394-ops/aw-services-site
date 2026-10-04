@@ -18,16 +18,34 @@
   .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
 
   .bien-carte { display: flex; gap: 10px; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; margin-bottom: 10px; }
-  .bien-carte img { width: 60px; height: 60px; border-radius: var(--rayon-petit); object-fit: cover; background-color: var(--surface); }
-  .bien-info { flex: 1; }
+  .bien-carte img { width: 60px; height: 60px; border-radius: var(--rayon-petit); object-fit: cover; background-color: var(--surface); flex-shrink: 0; }
+  .bien-info { flex: 1; min-width: 0; }
   .bien-info h3 { font-size: 14px; font-family: var(--police-titre); }
   .bien-info p { font-size: 12px; color: var(--texte-doux); margin-top: 2px; }
   .boutons-bien { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
   .btn-action { background-color: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 6px 10px; border-radius: var(--rayon-petit); font-size: 12px; margin: 0; font-family: var(--police-texte); }
   .btn-suppr { border-color: var(--alerte); color: var(--alerte); }
+  .btn-ok { border-color: var(--succes); color: var(--succes); }
   .badge-vendu { background-color: rgba(232,72,58,0.12); color: var(--alerte); font-size: 11px; padding: 2px 8px; border-radius: 999px; display: inline-block; margin-top: 4px; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; display: inline-block; margin-top: 4px; margin-right: 4px; font-weight: 700; }
+  .badge-vert { background-color: rgba(63,163,77,0.15); color: var(--succes); }
+  .badge-rouge { background-color: rgba(232,72,58,0.15); color: var(--alerte); }
+  .badge-orange { background-color: rgba(242,169,59,0.15); color: var(--accent); }
+  .badge-gris { background-color: var(--surface); color: var(--texte-discret); }
   .chargement { text-align: center; padding: 30px; color: var(--texte-doux); }
   select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
+  .champ-fichier { width: 100%; box-sizing: border-box; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; color: var(--texte-doux); font-size: 12px; }
+  .aide { color: var(--texte-discret); font-size: 11.5px; margin-top: 4px; }
+
+  .onglets { display: flex; gap: 8px; margin-bottom: var(--espace-lg); }
+  .onglet { flex: 1; background-color: var(--surface); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 12px 6px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; text-align: center; font-family: var(--police-titre); cursor: pointer; }
+  .onglet.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
+  .panneau { display: none; }
+  .panneau.visible { display: block; }
+
+  .resa-carte { background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; margin-bottom: 10px; font-size: 12.5px; color: var(--texte-doux); }
+  .resa-carte h3 { font-size: 14px; color: var(--texte); font-family: var(--police-titre); margin-bottom: 4px; }
+  .resa-carte a { color: var(--accent); text-decoration: none; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -58,6 +76,21 @@ function escapeHtml(texte) {
     .replace(/'/g, "&#39;");
 }
 
+function nomFichierSur(prefixe, fichier, index) {
+  var extension = (fichier.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return prefixe + "_" + Date.now() + "_" + index + "_" + Math.random().toString(36).slice(2, 8) + "." + (extension || "jpg");
+}
+
+var MOIS_FR = ["janv.","fevr.","mars","avr.","mai","juin","juil.","aout","sept.","oct.","nov.","dec."];
+function dateCourte(dateStr) {
+  if (!dateStr) return "";
+  var p = dateStr.split("-");
+  if (p.length !== 3) return dateStr;
+  return parseInt(p[2], 10) + " " + MOIS_FR[parseInt(p[1], 10) - 1] + " " + p[0];
+}
+
+var TYPES_LOGEMENT = { appartement_meuble: "Appartement meuble", hotel: "Hotel" };
+
 function verifierEtCharger() {
   sb.auth.getUser().then(function(reponseUser) {
     var user = reponseUser.data.user;
@@ -72,47 +105,121 @@ function verifierEtCharger() {
         zone.innerHTML = "<div class=\"aw-carte\"><p>Acces refuse.</p></div>";
         return;
       }
+      zone.className = "";
       zone.innerHTML =
-        "<div class=\"stat-carte\">" +
-          "<div class=\"chiffre\" id=\"compteurVendus\">...</div>" +
-          "<div class=\"label\">biens vendus sur la plateforme</div>" +
+        "<div class=\"onglets\">" +
+          "<div class=\"onglet actif\" id=\"ongletVente\">&#127969; Biens a vendre</div>" +
+          "<div class=\"onglet\" id=\"ongletLocation\">&#128719; Locations</div>" +
         "</div>" +
-        "<div class=\"aw-carte\">" +
-          "<p class=\"aw-section-titre\">Ajouter un bien</p>" +
-          "<div id=\"zoneMessage\"></div>" +
-          "<form id=\"formBien\">" +
-            "<label class=\"aw-label\">Titre</label>" +
-            "<input class=\"aw-input\" type=\"text\" id=\"b_titre\" placeholder=\"Ex : Terrain 300m2 Doumga\" required>" +
-            "<label class=\"aw-label\">Description</label>" +
-            "<textarea class=\"aw-textarea\" id=\"b_description\" rows=\"3\" placeholder=\"Decrivez le bien\"></textarea>" +
-            "<label class=\"aw-label\">Prix (FCFA)</label>" +
-            "<input class=\"aw-input\" type=\"number\" id=\"b_prix\" placeholder=\"Ex : 5000000\" required>" +
-            "<label class=\"aw-label\">Type de bien</label>" +
-            "<select id=\"b_type\" required>" +
-              "<option value=\"\">Choisir...</option>" +
-              "<option value=\"Terrain\">Terrain</option>" +
-              "<option value=\"Maison\">Maison</option>" +
-              "<option value=\"Appartement\">Appartement</option>" +
-              "<option value=\"Local commercial\">Local commercial</option>" +
-            "</select>" +
-            "<label class=\"aw-label\">Localisation</label>" +
-            "<input class=\"aw-input\" type=\"text\" id=\"b_localisation\" placeholder=\"Ville / quartier\" required>" +
-            "<label class=\"aw-label\">Photos (plusieurs possibles)</label>" +
-            "<input type=\"file\" id=\"b_images\" accept=\"image/*\" multiple required style=\"background-color:var(--fond);border:1px solid var(--bordure);border-radius:var(--rayon-petit);padding:10px;color:var(--texte-doux);font-size:12px;\">" +
-            "<button type=\"submit\" class=\"aw-btn aw-btn-primaire\" id=\"btn_bien\" style=\"width:100%;margin-top:10px;\">Publier le bien</button>" +
-          "</form>" +
+
+        /* ---------- Biens a vendre ---------- */
+        "<div class=\"panneau visible\" id=\"panneauVente\">" +
+          "<div class=\"stat-carte\">" +
+            "<div class=\"chiffre\" id=\"compteurVendus\">...</div>" +
+            "<div class=\"label\">biens vendus sur la plateforme</div>" +
+          "</div>" +
+          "<div class=\"aw-carte\">" +
+            "<p class=\"aw-section-titre\">Ajouter un bien a vendre</p>" +
+            "<div id=\"zoneMessage\"></div>" +
+            "<form id=\"formBien\">" +
+              "<label class=\"aw-label\">Titre</label>" +
+              "<input class=\"aw-input\" type=\"text\" id=\"b_titre\" placeholder=\"Ex : Terrain 300m2 Doumga\" required>" +
+              "<label class=\"aw-label\">Description</label>" +
+              "<textarea class=\"aw-textarea\" id=\"b_description\" rows=\"3\" placeholder=\"Decrivez le bien\"></textarea>" +
+              "<label class=\"aw-label\">Prix (FCFA)</label>" +
+              "<input class=\"aw-input\" type=\"number\" id=\"b_prix\" placeholder=\"Ex : 5000000\" required>" +
+              "<label class=\"aw-label\">Type de bien</label>" +
+              "<select id=\"b_type\" required>" +
+                "<option value=\"\">Choisir...</option>" +
+                "<option value=\"Terrain\">Terrain</option>" +
+                "<option value=\"Maison\">Maison</option>" +
+                "<option value=\"Appartement\">Appartement</option>" +
+                "<option value=\"Local commercial\">Local commercial</option>" +
+              "</select>" +
+              "<label class=\"aw-label\">Localisation</label>" +
+              "<input class=\"aw-input\" type=\"text\" id=\"b_localisation\" placeholder=\"Ville / quartier\" required>" +
+              "<label class=\"aw-label\">Photos (plusieurs possibles)</label>" +
+              "<input type=\"file\" id=\"b_images\" accept=\"image/*\" multiple required class=\"champ-fichier\">" +
+              "<button type=\"submit\" class=\"aw-btn aw-btn-primaire\" id=\"btn_bien\" style=\"width:100%;margin-top:10px;\">Publier le bien</button>" +
+            "</form>" +
+          "</div>" +
+          "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+            "<p class=\"aw-section-titre\">Biens publies</p>" +
+            "<div id=\"listeBiens\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
+          "</div>" +
         "</div>" +
-        "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
-          "<p class=\"aw-section-titre\">Biens publies</p>" +
-          "<div id=\"listeBiens\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
+
+        /* ---------- Locations ---------- */
+        "<div class=\"panneau\" id=\"panneauLocation\">" +
+          "<div class=\"aw-carte\">" +
+            "<p class=\"aw-section-titre\">Ajouter un logement a louer</p>" +
+            "<div id=\"zoneMessageLogement\"></div>" +
+            "<form id=\"formLogement\">" +
+              "<label class=\"aw-label\">Titre</label>" +
+              "<input class=\"aw-input\" type=\"text\" id=\"l_titre\" placeholder=\"Ex : Appartement 2 pieces climatise\" required>" +
+              "<label class=\"aw-label\">Type</label>" +
+              "<select id=\"l_type\" required>" +
+                "<option value=\"appartement_meuble\">Appartement meuble</option>" +
+                "<option value=\"hotel\">Hotel</option>" +
+              "</select>" +
+              "<label class=\"aw-label\">Comment se loue-t-il ?</label>" +
+              "<select id=\"l_mode\" required>" +
+                "<option value=\"entier\">Le logement entier (un seul client a la fois)</option>" +
+                "<option value=\"chambre\">Par chambre (plusieurs clients en meme temps)</option>" +
+              "</select>" +
+              "<div id=\"zoneNbChambres\" style=\"display:none;\">" +
+                "<label class=\"aw-label\">Nombre de chambres a louer</label>" +
+                "<input class=\"aw-input\" type=\"number\" id=\"l_nb_chambres\" min=\"1\" max=\"200\" value=\"1\">" +
+              "</div>" +
+              "<label class=\"aw-label\" id=\"labelPrixNuit\">Prix par nuit (FCFA)</label>" +
+              "<input class=\"aw-input\" type=\"number\" id=\"l_prix\" min=\"1\" placeholder=\"Ex : 25000\" required>" +
+              "<label class=\"aw-label\">Personnes maximum (optionnel)</label>" +
+              "<input class=\"aw-input\" type=\"number\" id=\"l_capacite\" min=\"1\" max=\"50\" placeholder=\"Ex : 4\">" +
+              "<label class=\"aw-label\">Localisation</label>" +
+              "<input class=\"aw-input\" type=\"text\" id=\"l_localisation\" placeholder=\"Ville / quartier\" required>" +
+              "<label class=\"aw-label\">Equipements (optionnel)</label>" +
+              "<input class=\"aw-input\" type=\"text\" id=\"l_equipements\" placeholder=\"Ex : Wifi, climatisation, cuisine, parking\">" +
+              "<label class=\"aw-label\">Description</label>" +
+              "<textarea class=\"aw-textarea\" id=\"l_description\" rows=\"3\" placeholder=\"Decrivez le logement\"></textarea>" +
+              "<label class=\"aw-label\">Photo principale</label>" +
+              "<input type=\"file\" id=\"l_photo\" accept=\"image/*\" required class=\"champ-fichier\">" +
+              "<button type=\"submit\" class=\"aw-btn aw-btn-primaire\" id=\"btn_logement\" style=\"width:100%;margin-top:10px;\">Publier le logement</button>" +
+            "</form>" +
+          "</div>" +
+          "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+            "<p class=\"aw-section-titre\">Logements publies</p>" +
+            "<div id=\"listeLogements\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
+          "</div>" +
+          "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+            "<p class=\"aw-section-titre\">Reservations</p>" +
+            "<div id=\"listeReservationsLogement\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
+          "</div>" +
         "</div>";
 
+      document.getElementById("ongletVente").addEventListener("click", function() { basculerOnglet("Vente"); });
+      document.getElementById("ongletLocation").addEventListener("click", function() { basculerOnglet("Location"); });
       document.getElementById("formBien").addEventListener("submit", ajouterBien);
+      document.getElementById("formLogement").addEventListener("submit", ajouterLogement);
+      document.getElementById("l_mode").addEventListener("change", afficherChampChambres);
+      afficherChampChambres();
+
       chargerCompteur();
       chargerBiens();
+      chargerLogements();
+      chargerReservationsLogement();
+      if (window.location.hash === "#locations") basculerOnglet("Location");
     });
   });
 }
+
+function basculerOnglet(nom) {
+  document.getElementById("ongletVente").classList.toggle("actif", nom === "Vente");
+  document.getElementById("ongletLocation").classList.toggle("actif", nom === "Location");
+  document.getElementById("panneauVente").classList.toggle("visible", nom === "Vente");
+  document.getElementById("panneauLocation").classList.toggle("visible", nom === "Location");
+}
+
+/* ================= BIENS A VENDRE ================= */
 
 function chargerCompteur() {
   sb.from("biens_immobiliers").select("*", { count: "exact", head: true }).eq("statut", "vendu").then(function(reponse) {
@@ -204,7 +311,7 @@ function ajouterBien(event) {
 
   for (var i = 0; i < total; i++) {
     (function(fichier, index) {
-      var nomFichier = "bien_" + Date.now() + "_" + index + "_" + fichier.name;
+      var nomFichier = nomFichierSur("bien", fichier, index);
       sb.storage.from("immobilier").upload(nomFichier, fichier).then(function(reponseUpload) {
         if (!reponseUpload.error) {
           var urlData = sb.storage.from("immobilier").getPublicUrl(nomFichier);
@@ -228,7 +335,7 @@ function ajouterBien(event) {
       btn.disabled = false;
       btn.textContent = "Publier le bien";
       if (reponse.error) {
-        zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + reponse.error.message + "</div>";
+        zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + escapeHtml(reponse.error.message) + "</div>";
         return;
       }
       zoneMsg.innerHTML = "<div class=\"msg succes\">Bien publie avec succes !</div>";
@@ -236,6 +343,203 @@ function ajouterBien(event) {
       chargerBiens();
     });
   }
+}
+
+/* ================= LOCATIONS ================= */
+
+function afficherChampChambres() {
+  var parChambre = document.getElementById("l_mode").value === "chambre";
+  document.getElementById("zoneNbChambres").style.display = parChambre ? "block" : "none";
+  document.getElementById("labelPrixNuit").textContent = parChambre ? "Prix par chambre et par nuit (FCFA)" : "Prix par nuit (FCFA)";
+}
+
+function ajouterLogement(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btn_logement");
+  var zoneMsg = document.getElementById("zoneMessageLogement");
+  zoneMsg.innerHTML = "";
+
+  var mode = document.getElementById("l_mode").value;
+  var prix = parseInt(document.getElementById("l_prix").value, 10);
+  var nbChambres = mode === "chambre" ? parseInt(document.getElementById("l_nb_chambres").value, 10) : 1;
+  var capaciteBrute = document.getElementById("l_capacite").value;
+  var fichier = document.getElementById("l_photo").files[0];
+
+  if (!prix || prix < 1) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Indiquez un prix par nuit valide.</div>";
+    return;
+  }
+  if (!nbChambres || nbChambres < 1 || nbChambres > 200) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Nombre de chambres invalide (1 a 200).</div>";
+    return;
+  }
+  if (!fichier) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Ajoutez une photo du logement.</div>";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Publication en cours...";
+
+  var nomFichier = nomFichierSur("logement", fichier, 0);
+  sb.storage.from("immobilier").upload(nomFichier, fichier).then(function(reponseUpload) {
+    if (reponseUpload.error) {
+      btn.disabled = false;
+      btn.textContent = "Publier le logement";
+      zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur lors de l'envoi de la photo : " + escapeHtml(reponseUpload.error.message) + "</div>";
+      return;
+    }
+    var urlPhoto = sb.storage.from("immobilier").getPublicUrl(nomFichier).data.publicUrl;
+
+    sb.from("logements_location").insert([{
+      titre: document.getElementById("l_titre").value.trim(),
+      type: document.getElementById("l_type").value,
+      mode_location: mode,
+      nb_chambres: nbChambres,
+      prix_nuit: prix,
+      capacite_personnes: capaciteBrute ? parseInt(capaciteBrute, 10) : null,
+      localisation: document.getElementById("l_localisation").value.trim(),
+      equipements: document.getElementById("l_equipements").value.trim() || null,
+      description: document.getElementById("l_description").value.trim() || null,
+      photo_url: urlPhoto
+    }]).then(function(reponse) {
+      btn.disabled = false;
+      btn.textContent = "Publier le logement";
+      if (reponse.error) {
+        zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + escapeHtml(reponse.error.message) + "</div>";
+        return;
+      }
+      zoneMsg.innerHTML = "<div class=\"msg succes\">Logement publie avec succes !</div>";
+      document.getElementById("formLogement").reset();
+      afficherChampChambres();
+      chargerLogements();
+    });
+  });
+}
+
+function chargerLogements() {
+  sb.from("logements_location").select("*").eq("actif", true).order("date_ajout", { ascending: false }).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeLogements");
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucun logement pour le moment.</p>";
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var l = data[i];
+      var detailMode = l.mode_location === "chambre"
+        ? l.nb_chambres + " chambre" + (l.nb_chambres > 1 ? "s" : "") + " - " + Number(l.prix_nuit).toLocaleString("fr-FR") + " FCFA / chambre / nuit"
+        : "Logement entier - " + Number(l.prix_nuit).toLocaleString("fr-FR") + " FCFA / nuit";
+      var badgeEtat = l.suspendu
+        ? "<span class=\"badge badge-rouge\">Location suspendue</span>"
+        : "<span class=\"badge badge-vert\">Ouvert a la location</span>";
+      var boutonSuspension = l.suspendu
+        ? "<button class=\"btn-action btn-ok btn-reactiver-logement\" data-id=\"" + l.id + "\">Reactiver la location</button>"
+        : "<button class=\"btn-action btn-suspendre-logement\" data-id=\"" + l.id + "\">Suspendre la location</button>";
+
+      html += "<div class=\"bien-carte\">" +
+                "<img src=\"" + escapeHtml(l.photo_url || "") + "\" alt=\"\">" +
+                "<div class=\"bien-info\">" +
+                  "<h3>" + escapeHtml(l.titre) + "</h3>" +
+                  "<p>" + escapeHtml(TYPES_LOGEMENT[l.type] || l.type) + " - " + escapeHtml(l.localisation) + "</p>" +
+                  "<p>" + detailMode + "</p>" +
+                  badgeEtat +
+                  "<div class=\"boutons-bien\">" +
+                    boutonSuspension +
+                    "<button class=\"btn-action btn-suppr btn-retirer-logement\" data-id=\"" + l.id + "\">Retirer du site</button>" +
+                  "</div>" +
+                "</div>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+
+    lierBoutons("btn-suspendre-logement", function(id) { changerSuspension(id, true); });
+    lierBoutons("btn-reactiver-logement", function(id) { changerSuspension(id, false); });
+    lierBoutons("btn-retirer-logement", retirerLogement);
+  });
+}
+
+function lierBoutons(classe, action) {
+  var boutons = document.getElementsByClassName(classe);
+  for (var i = 0; i < boutons.length; i++) {
+    boutons[i].addEventListener("click", function(e) {
+      action(e.target.getAttribute("data-id"));
+    });
+  }
+}
+
+function changerSuspension(id, suspendre) {
+  var question = suspendre
+    ? "Suspendre la location de ce logement ? Les clients ne pourront plus le reserver (les reservations deja faites sont conservees)."
+    : "Reactiver la location de ce logement ?";
+  if (!confirm(question)) return;
+  sb.from("logements_location").update({ suspendu: suspendre }).eq("id", id).then(function(reponse) {
+    if (reponse.error) alert("Erreur : " + reponse.error.message);
+    chargerLogements();
+  });
+}
+
+function retirerLogement(id) {
+  if (!confirm("Retirer ce logement du site ? Il ne sera plus visible ni reservable. L'historique des reservations est conserve.")) return;
+  sb.from("logements_location").update({ actif: false }).eq("id", id).then(function(reponse) {
+    if (reponse.error) alert("Erreur : " + reponse.error.message);
+    chargerLogements();
+  });
+}
+
+function chargerReservationsLogement() {
+  sb.from("reservations_logement")
+    .select("*, logements_location(titre, mode_location)")
+    .order("date_arrivee", { ascending: false })
+    .limit(60)
+    .then(function(reponse) {
+      var data = reponse.data;
+      var zone = document.getElementById("listeReservationsLogement");
+      if (reponse.error) {
+        zone.innerHTML = "<p style=\"color:var(--alerte);\">Erreur de chargement : " + escapeHtml(reponse.error.message) + "</p>";
+        return;
+      }
+      if (!data || data.length === 0) {
+        zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucune reservation pour le moment.</p>";
+        return;
+      }
+      var maintenant = Date.now();
+      var html = "";
+      for (var i = 0; i < data.length; i++) {
+        var r = data[i];
+        var logement = r.logements_location || {};
+        var expiree = r.statut === "en_attente" && r.statut_paiement !== "paye" && (maintenant - new Date(r.date_creation).getTime()) > 30 * 60000;
+        var badge;
+        if (r.statut === "annulee") badge = "<span class=\"badge badge-gris\">Annulee</span>";
+        else if (r.statut === "confirmee") badge = "<span class=\"badge badge-vert\">Confirmee - payee</span>";
+        else if (expiree) badge = "<span class=\"badge badge-gris\">Non payee - expiree</span>";
+        else badge = "<span class=\"badge badge-orange\">En attente de paiement</span>";
+
+        var tel = String(r.client_telephone || "").replace(/[^0-9+]/g, "");
+        html += "<div class=\"resa-carte\">" +
+                  "<h3>" + escapeHtml(logement.titre || "Logement") + "</h3>" +
+                  "<div>Du " + dateCourte(r.date_arrivee) + " au " + dateCourte(r.date_depart) + " (" + r.nb_nuits + " nuit" + (r.nb_nuits > 1 ? "s" : "") + ")" +
+                    (logement.mode_location === "chambre" ? " - " + r.nb_chambres + " chambre" + (r.nb_chambres > 1 ? "s" : "") : "") + "</div>" +
+                  "<div>Client : " + escapeHtml(r.client_nom) + (tel ? " - <a href=\"tel:" + tel + "\">" + escapeHtml(r.client_telephone) + "</a>" : "") + "</div>" +
+                  "<div style=\"color:var(--accent);font-weight:700;margin-top:4px;\">" + Number(r.prix_total || 0).toLocaleString("fr-FR") + " FCFA</div>" +
+                  badge +
+                  (r.statut !== "annulee"
+                    ? "<div class=\"boutons-bien\"><button class=\"btn-action btn-suppr btn-annuler-resa-logement\" data-id=\"" + r.id + "\">Annuler cette reservation</button></div>"
+                    : "") +
+                "</div>";
+      }
+      zone.innerHTML = html;
+      lierBoutons("btn-annuler-resa-logement", annulerReservationLogement);
+    });
+}
+
+function annulerReservationLogement(id) {
+  if (!confirm("Annuler cette reservation ? Les dates seront liberees. Si le client a deja paye, pensez a le rembourser vous-meme.")) return;
+  sb.from("reservations_logement").update({ statut: "annulee" }).eq("id", id).then(function(reponse) {
+    if (reponse.error) alert("Erreur : " + reponse.error.message);
+    chargerReservationsLogement();
+  });
 }
 
 verifierEtCharger();
