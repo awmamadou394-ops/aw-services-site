@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Location de vehicules</title>
+<link rel="stylesheet" href="style-global.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+  .msg { font-size: 14px; padding: 10px; border-radius: var(--rayon-petit); margin-bottom: 12px; }
+  .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
+
+  .bien-carte { display: flex; gap: 10px; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; margin-bottom: 10px; }
+  .bien-carte img { width: 70px; height: 60px; border-radius: var(--rayon-petit); object-fit: cover; background-color: var(--surface); flex-shrink: 0; }
+  .bien-info { flex: 1; min-width: 0; }
+  .bien-info h3 { font-size: 14px; font-family: var(--police-titre); }
+  .bien-info p { font-size: 12px; color: var(--texte-doux); margin-top: 2px; }
+  .boutons-bien { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .btn-action { background-color: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 6px 10px; border-radius: var(--rayon-petit); font-size: 12px; margin: 0; font-family: var(--police-texte); }
+  .btn-suppr { border-color: var(--alerte); color: var(--alerte); }
+  .btn-ok { border-color: var(--succes); color: var(--succes); }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; display: inline-block; margin-top: 4px; margin-right: 4px; font-weight: 700; }
+  .badge-vert { background-color: rgba(63,163,77,0.15); color: var(--succes); }
+  .badge-rouge { background-color: rgba(232,72,58,0.15); color: var(--alerte); }
+  .badge-orange { background-color: rgba(242,169,59,0.15); color: var(--accent); }
+  .badge-gris { background-color: var(--surface); color: var(--texte-discret); }
+  .chargement { text-align: center; padding: 30px; color: var(--texte-doux); }
+  select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
+  .champ-fichier { width: 100%; box-sizing: border-box; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; color: var(--texte-doux); font-size: 12px; }
+  .case { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--texte); font-size: 14px; }
+  .case input { width: 20px; height: 20px; }
+  .deux-colonnes { display: flex; gap: 10px; }
+  .deux-colonnes > div { flex: 1; }
+
+  .onglets { display: flex; gap: 8px; margin-bottom: var(--espace-lg); }
+  .onglet { flex: 1; background-color: var(--surface); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 12px 6px; border-radius: var(--rayon-petit); font-size: 13px; font-weight: 700; text-align: center; font-family: var(--police-titre); cursor: pointer; }
+  .onglet.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
+  .panneau { display: none; }
+  .panneau.visible { display: block; }
+
+  .resa-carte { background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 10px; margin-bottom: 10px; font-size: 12.5px; color: var(--texte-doux); }
+  .resa-carte h3 { font-size: 14px; color: var(--texte); font-family: var(--police-titre); margin-bottom: 4px; }
+  .resa-carte a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .resa-carte .montant { color: var(--accent); font-weight: 700; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<header class="aw-header">
+  <h1>Location de vehicules</h1>
+</header>
+
+<a href="admin-espace.html" class="back">&#8592; Retour a l'administration</a>
+
+<div class="aw-conteneur">
+  <div id="zoneContenu" class="chargement">Verification des droits...</div>
+</div>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function nomFichierSur(prefixe, fichier) {
+  var extension = (fichier.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return prefixe + "_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + (extension || "jpg");
+}
+
+function fcfa(n) {
+  return Number(n || 0).toLocaleString("fr-FR") + " FCFA";
+}
+
+var MOIS_FR = ["janv.","fevr.","mars","avr.","mai","juin","juil.","aout","sept.","oct.","nov.","dec."];
+function dateCourte(dateStr) {
+  if (!dateStr) return "";
+  var p = dateStr.split("-");
+  if (p.length !== 3) return dateStr;
+  return parseInt(p[2], 10) + " " + MOIS_FR[parseInt(p[1], 10) - 1] + " " + p[0];
+}
+
+function lierBoutons(classe, action) {
+  var boutons = document.getElementsByClassName(classe);
+  for (var i = 0; i < boutons.length; i++) {
+    boutons[i].addEventListener("click", function(e) {
+      action(e.target.getAttribute("data-id"));
+    });
+  }
+}
+
+function verifierEtCharger() {
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) {
+      window.location.href = "admin-connexion.html";
+      return;
+    }
+    sb.from("admins").select("*").eq("user_id", user.id).single().then(function(reponseAdmin) {
+      var zone = document.getElementById("zoneContenu");
+      if (!reponseAdmin.data) {
+        zone.innerHTML = "<div class=\"aw-carte\"><p>Acces refuse.</p></div>";
+        return;
+      }
+      zone.className = "";
+      zone.innerHTML =
+        "<div class=\"onglets\">" +
+          "<div class=\"onglet actif\" id=\"ongletVehicules\">&#128663; Mes vehicules</div>" +
+          "<div class=\"onglet\" id=\"ongletReservations\">&#128203; Reservations</div>" +
+        "</div>" +
+
+        "<div class=\"panneau visible\" id=\"panneauVehicules\">" +
+          "<div class=\"aw-carte\">" +
+            "<p class=\"aw-section-titre\">Ajouter un vehicule</p>" +
+            "<div id=\"zoneMessage\"></div>" +
+            "<form id=\"formVehicule\">" +
+              "<label class=\"aw-label\">Nom du vehicule</label>" +
+              "<input class=\"aw-input\" type=\"text\" id=\"v_titre\" placeholder=\"Ex : Toyota Corolla 2018 grise\" required>" +
+              "<label class=\"aw-label\">Categorie</label>" +
+              "<select id=\"v_categorie\">" +
+                "<option value=\"Berline\">Berline</option>" +
+                "<option value=\"4x4 / SUV\">4x4 / SUV</option>" +
+                "<option value=\"Minibus\">Minibus</option>" +
+                "<option value=\"Pick-up\">Pick-up</option>" +
+                "<option value=\"Utilitaire\">Utilitaire</option>" +
+              "</select>" +
+              "<div class=\"deux-colonnes\">" +
+                "<div>" +
+                  "<label class=\"aw-label\">Places</label>" +
+                  "<input class=\"aw-input\" type=\"number\" id=\"v_places\" min=\"1\" max=\"80\" placeholder=\"Ex : 5\">" +
+                "</div>" +
+                "<div>" +
+                  "<label class=\"aw-label\">Boite</label>" +
+                  "<select id=\"v_boite\">" +
+                    "<option value=\"manuelle\">Manuelle</option>" +
+                    "<option value=\"automatique\">Automatique</option>" +
+                  "</select>" +
+                "</div>" +
+              "</div>" +
+              "<label class=\"aw-label\">Carburant (optionnel)</label>" +
+              "<input class=\"aw-input\" type=\"text\" id=\"v_carburant\" placeholder=\"Ex : Essence, Diesel\">" +
+              "<label class=\"aw-label\">Prix par jour (FCFA)</label>" +
+              "<input class=\"aw-input\" type=\"number\" id=\"v_prix\" min=\"1\" placeholder=\"Ex : 35000\" required>" +
+              "<label class=\"case\"><input type=\"checkbox\" id=\"v_avec_chauffeur\"> Proposer l'option avec chauffeur</label>" +
+              "<div id=\"zoneSupplement\" style=\"display:none;\">" +
+                "<label class=\"aw-label\">Supplement chauffeur par jour (FCFA)</label>" +
+                "<input class=\"aw-input\" type=\"number\" id=\"v_supplement\" min=\"0\" placeholder=\"Ex : 10000\">" +
+              "</div>" +
+              "<label class=\"aw-label\">Caution (FCFA, payee en ligne, a rembourser au retour)</label>" +
+              "<input class=\"aw-input\" type=\"number\" id=\"v_caution\" min=\"0\" value=\"0\" required>" +
+              "<label class=\"aw-label\">Lieu de retrait</label>" +
+              "<input class=\"aw-input\" type=\"text\" id=\"v_localisation\" placeholder=\"Ex : Dakar, Liberte 6\" required>" +
+              "<label class=\"aw-label\">Description (optionnel)</label>" +
+              "<textarea class=\"aw-textarea\" id=\"v_description\" rows=\"3\" placeholder=\"Climatisation, etat, conditions...\"></textarea>" +
+              "<label class=\"aw-label\">Photo du vehicule</label>" +
+              "<input type=\"file\" id=\"v_photo\" accept=\"image/*\" required class=\"champ-fichier\">" +
+              "<button type=\"submit\" class=\"aw-btn aw-btn-primaire\" id=\"btnVehicule\" style=\"width:100%;margin-top:12px;\">Publier le vehicule</button>" +
+            "</form>" +
+          "</div>" +
+          "<div class=\"aw-carte\" style=\"margin-top:15px;\">" +
+            "<p class=\"aw-section-titre\">Vehicules publies</p>" +
+            "<div id=\"listeVehicules\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
+          "</div>" +
+        "</div>" +
+
+        "<div class=\"panneau\" id=\"panneauReservations\">" +
+          "<div class=\"aw-carte\">" +
+            "<p class=\"aw-section-titre\">Reservations de vehicules</p>" +
+            "<div id=\"listeReservations\"><p style=\"color:var(--texte-doux);\">Chargement...</p></div>" +
+          "</div>" +
+        "</div>";
+
+      document.getElementById("ongletVehicules").addEventListener("click", function() { basculerOnglet("Vehicules"); });
+      document.getElementById("ongletReservations").addEventListener("click", function() { basculerOnglet("Reservations"); });
+      document.getElementById("formVehicule").addEventListener("submit", ajouterVehicule);
+      document.getElementById("v_avec_chauffeur").addEventListener("change", function() {
+        document.getElementById("zoneSupplement").style.display = this.checked ? "block" : "none";
+      });
+
+      chargerVehicules();
+      chargerReservations();
+      if (window.location.hash === "#reservations") basculerOnglet("Reservations");
+    });
+  });
+}
+
+function basculerOnglet(nom) {
+  document.getElementById("ongletVehicules").classList.toggle("actif", nom === "Vehicules");
+  document.getElementById("ongletReservations").classList.toggle("actif", nom === "Reservations");
+  document.getElementById("panneauVehicules").classList.toggle("visible", nom === "Vehicules");
+  document.getElementById("panneauReservations").classList.toggle("visible", nom === "Reservations");
+}
+
+/* ================= VEHICULES ================= */
+
+function ajouterVehicule(event) {
+  event.preventDefault();
+  var btn = document.getElementById("btnVehicule");
+  var zoneMsg = document.getElementById("zoneMessage");
+  zoneMsg.innerHTML = "";
+
+  var prix = parseInt(document.getElementById("v_prix").value, 10);
+  var caution = parseInt(document.getElementById("v_caution").value, 10);
+  var avecChauffeur = document.getElementById("v_avec_chauffeur").checked;
+  var supplement = avecChauffeur ? parseInt(document.getElementById("v_supplement").value, 10) : null;
+  var placesBrut = document.getElementById("v_places").value;
+  var fichier = document.getElementById("v_photo").files[0];
+
+  if (!prix || prix < 1) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Indiquez un prix par jour valide.</div>";
+    return;
+  }
+  if (isNaN(caution) || caution < 0) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Indiquez une caution valide (0 si aucune).</div>";
+    return;
+  }
+  if (avecChauffeur && (isNaN(supplement) || supplement < 0)) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Indiquez le supplement chauffeur par jour (0 si inclus).</div>";
+    return;
+  }
+  if (!fichier) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">Ajoutez une photo du vehicule.</div>";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Publication en cours...";
+
+  var nomFichier = nomFichierSur("vehicule", fichier);
+  sb.storage.from("immobilier").upload(nomFichier, fichier).then(function(reponseUpload) {
+    if (reponseUpload.error) {
+      btn.disabled = false;
+      btn.textContent = "Publier le vehicule";
+      zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur lors de l'envoi de la photo : " + escapeHtml(reponseUpload.error.message) + "</div>";
+      return;
+    }
+    var urlPhoto = sb.storage.from("immobilier").getPublicUrl(nomFichier).data.publicUrl;
+
+    sb.from("vehicules_location").insert([{
+      titre: document.getElementById("v_titre").value.trim(),
+      categorie: document.getElementById("v_categorie").value,
+      places: placesBrut ? parseInt(placesBrut, 10) : null,
+      boite: document.getElementById("v_boite").value,
+      carburant: document.getElementById("v_carburant").value.trim() || null,
+      prix_jour: prix,
+      supplement_chauffeur_jour: avecChauffeur ? supplement : null,
+      caution: caution,
+      localisation: document.getElementById("v_localisation").value.trim(),
+      description: document.getElementById("v_description").value.trim() || null,
+      photo_url: urlPhoto
+    }]).then(function(reponse) {
+      btn.disabled = false;
+      btn.textContent = "Publier le vehicule";
+      if (reponse.error) {
+        zoneMsg.innerHTML = "<div class=\"msg erreur\">Erreur : " + escapeHtml(reponse.error.message) + "</div>";
+        return;
+      }
+      zoneMsg.innerHTML = "<div class=\"msg succes\">Vehicule publie avec succes !</div>";
+      document.getElementById("formVehicule").reset();
+      document.getElementById("zoneSupplement").style.display = "none";
+      chargerVehicules();
+    });
+  });
+}
+
+function chargerVehicules() {
+  sb.from("vehicules_location").select("*").eq("actif", true).order("date_ajout", { ascending: false }).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeVehicules");
+    if (reponse.error) {
+      zone.innerHTML = "<p style=\"color:var(--alerte);\">Erreur de chargement : " + escapeHtml(reponse.error.message) + "</p>";
+      return;
+    }
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucun vehicule pour le moment.</p>";
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var v = data[i];
+      var details = [];
+      if (v.categorie) details.push(escapeHtml(v.categorie));
+      if (v.places) details.push(v.places + " places");
+      if (v.boite) details.push(v.boite === "automatique" ? "Automatique" : "Manuelle");
+      var chauffeur = v.supplement_chauffeur_jour === null || v.supplement_chauffeur_jour === undefined
+        ? "Sans chauffeur uniquement"
+        : "Chauffeur en option : +" + fcfa(v.supplement_chauffeur_jour) + " / jour";
+
+      html += "<div class=\"bien-carte\">" +
+                "<img src=\"" + escapeHtml(v.photo_url || "") + "\" alt=\"\">" +
+                "<div class=\"bien-info\">" +
+                  "<h3>" + escapeHtml(v.titre) + "</h3>" +
+                  "<p>" + details.join(" - ") + "</p>" +
+                  "<p>" + fcfa(v.prix_jour) + " / jour - Caution : " + fcfa(v.caution) + "</p>" +
+                  "<p>" + chauffeur + "</p>" +
+                  "<p>&#128205; " + escapeHtml(v.localisation) + "</p>" +
+                  (v.suspendu
+                    ? "<span class=\"badge badge-rouge\">Location suspendue</span>"
+                    : "<span class=\"badge badge-vert\">Ouvert a la location</span>") +
+                  "<div class=\"boutons-bien\">" +
+                    (v.suspendu
+                      ? "<button class=\"btn-action btn-ok btn-reactiver\" data-id=\"" + v.id + "\">Reactiver la location</button>"
+                      : "<button class=\"btn-action btn-suspendre\" data-id=\"" + v.id + "\">Suspendre la location</button>") +
+                    "<button class=\"btn-action btn-suppr btn-retirer\" data-id=\"" + v.id + "\">Retirer du site</button>" +
+                  "</div>" +
+                "</div>" +
+              "</div>";
+    }
+    zone.innerHTML = html;
+
+    lierBoutons("btn-suspendre", function(id) { changerSuspension(id, true); });
+    lierBoutons("btn-reactiver", function(id) { changerSuspension(id, false); });
+    lierBoutons("btn-retirer", retirerVehicule);
+  });
+}
+
+function changerSuspension(id, suspendre) {
+  var question = suspendre
+    ? "Suspendre la location de ce vehicule ? Les clients ne pourront plus le reserver (les reservations deja faites sont conservees)."
+    : "Reactiver la location de ce vehicule ?";
+  if (!confirm(question)) return;
+  sb.from("vehicules_location").update({ suspendu: suspendre }).eq("id", id).then(function(reponse) {
+    if (reponse.error) alert("Erreur : " + reponse.error.message);
+    chargerVehicules();
+  });
+}
+
+function retirerVehicule(id) {
+  if (!confirm("Retirer ce vehicule du site ? Il ne sera plus visible ni reservable. L'historique des reservations est conserve.")) return;
+  sb.from("vehicules_location").update({ actif: false }).eq("id", id).then(function(reponse) {
+    if (reponse.error) alert("Erreur : " + reponse.error.message);
+    chargerVehicules();
+  });
+}
+
+/* ================= RESERVATIONS ================= */
+
+var LIBELLES_CAUTION = {
+  retenue: "<span class=\"badge badge-orange\">Caution a rembourser</span>",
+  remboursee: "<span class=\"badge badge-vert\">Caution remboursee</span>",
+  conservee: "<span class=\"badge badge-rouge\">Caution conservee</span>"
+};
+
+function chargerReservations() {
+  sb.from("reservations_vehicule")
+    .select("*, vehicules_location(titre)")
+    .order("date_retrait", { ascending: false })
+    .limit(60)
+    .then(function(reponse) {
+      var data = reponse.data;
+      var zone = document.getElementById("listeReservations");
+      if (reponse.error) {
+        zone.innerHTML = "<p style=\"color:var(--alerte);\">Erreur de chargement : " + escapeHtml(reponse.error.message) + "</p>";
+        return;
+      }
+      if (!data || data.length === 0) {
+        zone.innerHTML = "<p style=\"color:var(--texte-doux);\">Aucune reservation pour le moment.</p>";
+        return;
+      }
+      var maintenant = Date.now();
+      var html = "";
+      for (var i = 0; i < data.length; i++) {
+        var r = data[i];
+        var vehicule = r.vehicules_location || {};
+        var payee = r.statut === "confirmee" || r.statut_paiement === "paye";
+        var expiree = r.statut === "en_attente" && !payee && (maintenant - new Date(r.date_creation).getTime()) > 30 * 60000;
+        var badge;
+        if (r.statut === "annulee") badge = "<span class=\"badge badge-gris\">Annulee</span>";
+        else if (payee) badge = "<span class=\"badge badge-vert\">Confirmee - payee</span>";
+        else if (expiree) badge = "<span class=\"badge badge-gris\">Non payee - expiree</span>";
+        else badge = "<span class=\"badge badge-orange\">En attente de paiement</span>";
+
+        var tel = String(r.client_telephone || "").replace(/[^0-9+]/g, "");
+        var boutons = "";
+        if (payee && r.montant_caution > 0 && r.statut_caution === "retenue") {
+          boutons += "<button class=\"btn-action btn-ok btn-caution-remboursee\" data-id=\"" + r.id + "\">Caution remboursee</button>" +
+                     "<button class=\"btn-action btn-suppr btn-caution-conservee\" data-id=\"" + r.id + "\">Caution conservee</button>";
+        }
+        if (r.statut !== "annulee") {
+          boutons += "<button class=\"btn-action btn-suppr btn-annuler-resa\" data-id=\"" + r.id + "\">Annuler</button>";
+        }
+
+        html += "<div class=\"resa-carte\">" +
+                  "<h3>" + escapeHtml(vehicule.titre || "Vehicule") + "</h3>" +
+                  "<div>Du " + dateCourte(r.date_retrait) + " au " + dateCourte(r.date_retour) + " (" + r.nb_jours + " jour" + (r.nb_jours > 1 ? "s" : "") + ")</div>" +
+                  "<div>" + (r.avec_chauffeur ? "&#128104;&#8205;&#9992;&#65039; Avec chauffeur" : "Sans chauffeur - Permis : " + escapeHtml(r.numero_permis || "-")) + "</div>" +
+                  "<div>Client : " + escapeHtml(r.client_nom) + (tel ? " - <a href=\"tel:" + tel + "\">" + escapeHtml(r.client_telephone) + "</a>" : "") + "</div>" +
+                  "<div class=\"montant\">" + fcfa(r.prix_total) + (r.montant_caution ? " (dont caution " + fcfa(r.montant_caution) + ")" : "") + "</div>" +
+                  badge +
+                  (payee && r.montant_caution > 0 ? (LIBELLES_CAUTION[r.statut_caution] || "") : "") +
+                  (boutons ? "<div class=\"boutons-bien\">" + boutons + "</div>" : "") +
+                "</div>";
+      }
+      zone.innerHTML = html;
+
+      lierBoutons("btn-caution-remboursee", function(id) { changerCaution(id, "remboursee"); });
+      lierBoutons("btn-caution-conservee", function(id) { changerCaution(id, "conservee"); });
+      lierBoutons("btn-annuler-resa", annulerReservation);
+    });
+}
+
+function changerCaution(id, statut) {
+  var question = statut === "remboursee"
+    ? "Confirmez-vous avoir rembourse la caution a ce client ?"
+    : "Conserver la caution (vehicule endommage, retard...) ? Pensez a prevenir le client.";
+  if (!confirm(question)) return;
+  sb.from("reservations_vehicule").update({ statut_caution: statut }).eq("id", id).then(function(reponse) {
+    if (reponse.error) alert("Erreur : " + reponse.error.message);
+    chargerReservations();
+  });
+}
+
+function annulerReservation(id) {
+  if (!confirm("Annuler cette reservation ? Les dates seront liberees. Si le client a deja paye, pensez a le rembourser vous-meme (location + caution).")) return;
+  sb.from("reservations_vehicule").update({ statut: "annulee" }).eq("id", id).then(function(reponse) {
+    if (reponse.error) alert("Erreur : " + reponse.error.message);
+    chargerReservations();
+  });
+}
+
+verifierEtCharger();
+</script>
+
+</body>
+</html>
