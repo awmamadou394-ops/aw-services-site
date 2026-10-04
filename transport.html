@@ -25,8 +25,8 @@ if ('serviceWorker' in navigator) {
   /* Accueil : trois boutons ronds */
   .accueil-services { text-align: center; padding-top: 10px; }
   .accueil-services .intro { color: var(--texte-doux); font-size: 14px; margin-bottom: 26px; }
-  .choix-services { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-  .btn-rond { background: none; border: none; padding: 0; width: 106px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--texte); font-family: var(--police-titre); font-size: 14px; font-weight: 700; line-height: 1.25; cursor: pointer; }
+  .choix-services { display: grid; grid-template-columns: repeat(2, 140px); justify-content: center; gap: 22px 14px; }
+  .btn-rond { background: none; border: none; padding: 0; width: 140px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--texte); font-family: var(--police-titre); font-size: 14px; font-weight: 700; line-height: 1.25; cursor: pointer; }
   .btn-rond .cercle { width: 96px; height: 96px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--accent); box-shadow: var(--ombre-accent); display: flex; align-items: center; justify-content: center; font-size: 40px; transition: transform 0.12s ease; }
   .limite-depassee { color: var(--alerte); font-size: 18px; font-weight: 700; margin-top: 6px; }
   .btn-rond:active .cercle { transform: scale(0.93); }
@@ -112,13 +112,40 @@ if ('serviceWorker' in navigator) {
   select { width: 100%; background-color: var(--fond); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px; color: var(--texte); font-family: var(--police-texte); font-size: 14px; }
   .msg-position { font-size: 12px; color: var(--texte-doux); margin-top: 6px; }
   .msg-position.ok { color: var(--succes); }
+
+  /* Location de vehicules */
+  .grille-vehicules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .vehicule-carte { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon); overflow: hidden; position: relative; }
+  .vehicule-carte img { width: 100%; height: 110px; object-fit: cover; background-color: var(--fond); display: block; }
+  .vehicule-carte .infos { padding: 10px; }
+  .vehicule-carte .tag { font-size: 10px; color: var(--texte-discret); text-transform: uppercase; letter-spacing: 0.03em; }
+  .vehicule-carte h3 { font-size: 13px; margin: 2px 0 4px; font-family: var(--police-titre); }
+  .vehicule-carte .prix { color: var(--accent); font-weight: 700; font-size: 14px; font-family: var(--police-chiffres); }
+  .vehicule-carte .prix small { font-size: 10.5px; color: var(--texte-doux); font-family: var(--police-texte); font-weight: 400; }
+  .vehicule-carte .detail { color: var(--texte-doux); font-size: 11px; margin-top: 3px; }
+  .vehicule-carte .badge-indispo { position: absolute; top: 8px; right: 8px; background-color: var(--alerte); color: var(--texte); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+  .vehicule-carte button { display: block; width: 100%; background-color: var(--accent); color: #1C1200; border: none; padding: 8px; font-size: 12px; font-weight: 700; margin-top: 8px; border-radius: var(--rayon-petit); font-family: var(--police-texte); }
+  .vehicule-carte button:disabled { background-color: var(--fond); color: var(--texte-discret); }
+  .vide-vehicules { text-align: center; color: var(--texte-doux); padding: 30px; grid-column: 1 / -1; }
+  .fiche-photo { width: 100%; height: 200px; object-fit: cover; border-radius: var(--rayon); background-color: var(--surface); display: block; }
+  .fiche-titre { font-family: var(--police-titre); font-size: 19px; font-weight: 700; margin-top: 12px; }
+  .fiche-ligne { color: var(--texte-doux); font-size: 13px; margin-top: 4px; line-height: 1.5; }
+  .fiche-prix { color: var(--accent); font-family: var(--police-chiffres); font-size: 18px; font-weight: 700; margin-top: 8px; }
+  .deux-dates { display: flex; gap: 10px; }
+  .deux-dates > div { flex: 1; }
+  .case-chauffeur { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--texte); font-size: 14px; }
+  .case-chauffeur input { width: 20px; height: 20px; }
+  .etat-dispo { font-size: 13px; margin-top: 10px; padding: 10px; border-radius: var(--rayon-petit); display: none; }
+  .etat-dispo.ok { display: block; background-color: rgba(63,163,77,0.12); color: var(--succes); }
+  .etat-dispo.ko { display: block; background-color: rgba(232,72,58,0.12); color: var(--alerte); }
+  .etat-dispo.attente { display: block; background-color: var(--fond); color: var(--texte-doux); }
 </style>
 </head>
 <body>
 
 <header class="aw-header">
   <h1>Transport</h1>
-  <p>Course moto &amp; Dakar &#8596; Bokidiawe</p>
+  <p>Course moto, voyages &amp; location de vehicules</p>
 </header>
 
 <a href="index.html" class="back">&#8592; Retour a l'accueil</a>
@@ -142,6 +169,11 @@ if ('serviceWorker' in navigator) {
         <span class="cercle">&#128656;</span>
         <span>Bokidiawe &#8594; Dakar</span>
         <span class="sous">Retour</span>
+      </button>
+      <button type="button" class="btn-rond" id="btnOuvrirVehicules">
+        <span class="cercle">&#128665;</span>
+        <span>Location de vehicule</span>
+        <span class="sous">A la journee</span>
       </button>
     </div>
   </div>
@@ -214,6 +246,59 @@ if ('serviceWorker' in navigator) {
 
       <button type="button" class="aw-btn aw-btn-secondaire" id="btnAnnulerCourse" style="width:100%;margin-top:12px;border-color:var(--alerte);color:var(--alerte);">Annuler ma course</button>
       <button type="button" class="aw-btn aw-btn-primaire" id="btnNouvelleCourse" style="width:100%;margin-top:8px;display:none;">Demander une autre course</button>
+    </div>
+  </div>
+
+  <div class="panneau" id="panneauVehicules">
+    <button type="button" class="btn-autres-services" id="btnRetourServicesVehicules">&#8592; Autres services</button>
+    <p class="aw-section-titre">Vehicules a louer</p>
+    <p style="color:var(--texte-doux);font-size:13px;margin-bottom:12px;">Location a la journee, avec ou sans chauffeur selon le vehicule.</p>
+    <div class="grille-vehicules" id="grilleVehicules">
+      <p class="vide-vehicules">Chargement...</p>
+    </div>
+  </div>
+
+  <div class="panneau" id="panneauReservationVehicule">
+    <button type="button" class="btn-autres-services" id="btnRetourListeVehicules">&#8592; Tous les vehicules</button>
+    <div id="ficheVehicule"></div>
+
+    <div class="aw-carte" style="margin-top:14px;">
+      <p class="aw-section-titre">Votre location</p>
+      <div class="deux-dates">
+        <div>
+          <label class="aw-label">Retrait</label>
+          <input class="aw-input" type="date" id="lv_retrait">
+        </div>
+        <div>
+          <label class="aw-label">Retour</label>
+          <input class="aw-input" type="date" id="lv_retour">
+        </div>
+      </div>
+      <p style="color:var(--texte-discret);font-size:11.5px;margin-top:6px;">1 jour = du jour de retrait au lendemain. 30 jours maximum.</p>
+      <div id="zoneOptionChauffeur" style="display:none;">
+        <label class="case-chauffeur"><input type="checkbox" id="lv_chauffeur"> <span id="texteOptionChauffeur">Avec chauffeur</span></label>
+      </div>
+      <div class="etat-dispo" id="etatDispoVehicule"></div>
+
+      <div class="recap-prix" id="recapPrixVehicule" style="display:none;">
+        <p id="detailPrixVehicule"></p>
+        <p id="detailCautionVehicule" style="margin-top:4px;"></p>
+        <div class="total" id="totalPrixVehicule"></div>
+      </div>
+
+      <form id="formVehicule" style="display:none;">
+        <label class="aw-label">Nom complet</label>
+        <input class="aw-input" type="text" id="lv_nom" maxlength="80" required>
+        <label class="aw-label">Numero de telephone</label>
+        <input class="aw-input" type="tel" id="lv_telephone" maxlength="20" required>
+        <div id="zonePermis">
+          <label class="aw-label">Numero de permis de conduire</label>
+          <input class="aw-input" type="text" id="lv_permis" maxlength="30" placeholder="A presenter au retrait du vehicule">
+        </div>
+        <p style="color:var(--texte-doux);font-size:12.5px;margin-top:10px;">Paiement en ligne securise (Wave, Orange Money, carte bancaire). La caution vous est remboursee au retour du vehicule en bon etat. Votre reservation est gardee 30 minutes le temps du paiement.</p>
+        <button type="submit" class="aw-btn aw-btn-primaire" id="btnReserverVehicule" style="width:100%;margin-top:14px;">Reserver et payer</button>
+        <div id="msgVehicule"></div>
+      </form>
     </div>
   </div>
 
@@ -323,11 +408,21 @@ function escapeHtml(texte) {
 
 /* ---------- Ouverture des services (boutons ronds) ---------- */
 
+var TOUS_LES_PANNEAUX = ["panneauMoto", "panneauVoiture", "panneauVehicules", "panneauReservationVehicule"];
+
+function masquerPanneaux() {
+  for (var i = 0; i < TOUS_LES_PANNEAUX.length; i++) {
+    document.getElementById(TOUS_LES_PANNEAUX[i]).classList.remove("visible");
+  }
+}
+
 function ouvrirService(nom) {
   document.getElementById("accueilServices").style.display = "none";
-  document.getElementById("panneauMoto").classList.remove("visible");
-  document.getElementById("panneauVoiture").classList.remove("visible");
-  if (nom === "moto") {
+  masquerPanneaux();
+  if (nom === "vehicule") {
+    document.getElementById("panneauVehicules").classList.add("visible");
+    chargerVehicules();
+  } else if (nom === "moto") {
     document.getElementById("panneauMoto").classList.add("visible");
     initialiserCarteMoto();
     if (!positionMoto && !idCourseActuelle) {
@@ -341,8 +436,7 @@ function ouvrirService(nom) {
 }
 
 function revenirAuxServices() {
-  document.getElementById("panneauMoto").classList.remove("visible");
-  document.getElementById("panneauVoiture").classList.remove("visible");
+  masquerPanneaux();
   document.getElementById("accueilServices").style.display = "block";
   window.scrollTo(0, 0);
 }
@@ -352,6 +446,13 @@ document.getElementById("btnOuvrirAller").addEventListener("click", function() {
 document.getElementById("btnOuvrirRetour").addEventListener("click", function() { ouvrirService("retour"); });
 document.getElementById("btnRetourServicesMoto").addEventListener("click", revenirAuxServices);
 document.getElementById("btnRetourServicesVoiture").addEventListener("click", revenirAuxServices);
+document.getElementById("btnOuvrirVehicules").addEventListener("click", function() { ouvrirService("vehicule"); });
+document.getElementById("btnRetourServicesVehicules").addEventListener("click", revenirAuxServices);
+document.getElementById("btnRetourListeVehicules").addEventListener("click", function() {
+  masquerPanneaux();
+  document.getElementById("panneauVehicules").classList.add("visible");
+  window.scrollTo(0, 0);
+});
 
 /* ---------- Ecran allume pendant la course ---------- */
 
@@ -1284,6 +1385,354 @@ document.getElementById("formVoiture").addEventListener("submit", function(event
   });
 });
 
+
+/* ================= LOCATION DE VEHICULES ================= */
+
+var tousLesVehicules = [];
+var vehiculeChoisi = null;
+var vehiculeLibre = false;
+var numeroVerifVehicule = 0;
+
+function fcfaVeh(n) {
+  return Number(n || 0).toLocaleString("fr-FR") + " FCFA";
+}
+
+function dateDuJour(decalage) {
+  var d = new Date();
+  d.setDate(d.getDate() + (decalage || 0));
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function decalerDate(dateStr, jours) {
+  var p = dateStr.split("-");
+  var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+  d.setDate(d.getDate() + jours);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function ecartJours(debut, fin) {
+  if (!debut || !fin) return 0;
+  var a = debut.split("-"), b = fin.split("-");
+  return Math.round((Date.UTC(+b[0], +b[1] - 1, +b[2]) - Date.UTC(+a[0], +a[1] - 1, +a[2])) / 86400000);
+}
+
+var MOIS_LONGS = ["janvier","fevrier","mars","avril","mai","juin","juillet","aout","septembre","octobre","novembre","decembre"];
+function dateEnLettres(dateStr) {
+  var p = dateStr.split("-");
+  return parseInt(p[2], 10) + " " + MOIS_LONGS[parseInt(p[1], 10) - 1] + " " + p[0];
+}
+
+function chauffeurPropose(v) {
+  return v.supplement_chauffeur_jour !== null && v.supplement_chauffeur_jour !== undefined;
+}
+
+function chargerVehicules() {
+  var grille = document.getElementById("grilleVehicules");
+  sb.from("vehicules_location").select("*").eq("actif", true).order("date_ajout", { ascending: false }).then(function(reponse) {
+    tousLesVehicules = reponse.data || [];
+    if (reponse.error) {
+      grille.innerHTML = "<p class=\"vide-vehicules\">Impossible de charger les vehicules. Reessayez.</p>";
+      return;
+    }
+    if (tousLesVehicules.length === 0) {
+      grille.innerHTML = "<p class=\"vide-vehicules\">Aucun vehicule disponible a la location pour le moment.</p>";
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < tousLesVehicules.length; i++) {
+      var v = tousLesVehicules[i];
+      var details = [];
+      if (v.places) details.push(v.places + " places");
+      if (v.boite) details.push(v.boite === "automatique" ? "Automatique" : "Manuelle");
+      html += "<div class=\"vehicule-carte\">" +
+                (v.suspendu ? "<span class=\"badge-indispo\">Indisponible</span>" : "") +
+                "<img src=\"" + escapeHtml(v.photo_url || "") + "\" alt=\"" + escapeHtml(v.titre) + "\">" +
+                "<div class=\"infos\">" +
+                  (v.categorie ? "<div class=\"tag\">" + escapeHtml(v.categorie) + "</div>" : "") +
+                  "<h3>" + escapeHtml(v.titre) + "</h3>" +
+                  "<div class=\"prix\">" + fcfaVeh(v.prix_jour) + " <small>/ jour</small></div>" +
+                  (details.length ? "<div class=\"detail\">" + details.join(" - ") + "</div>" : "") +
+                  "<div class=\"detail\">" + (chauffeurPropose(v) ? "Avec ou sans chauffeur" : "Sans chauffeur") + "</div>" +
+                  "<button type=\"button\" class=\"btn-louer-vehicule\" data-id=\"" + v.id + "\"" + (v.suspendu ? " disabled" : "") + ">" + (v.suspendu ? "Indisponible" : "Louer") + "</button>" +
+                "</div>" +
+              "</div>";
+    }
+    grille.innerHTML = html;
+    var boutons = grille.getElementsByClassName("btn-louer-vehicule");
+    for (var b = 0; b < boutons.length; b++) {
+      boutons[b].addEventListener("click", function() {
+        ouvrirReservationVehicule(this.getAttribute("data-id"));
+      });
+    }
+  });
+}
+
+function ouvrirReservationVehicule(id) {
+  vehiculeChoisi = null;
+  for (var i = 0; i < tousLesVehicules.length; i++) {
+    if (tousLesVehicules[i].id === id) vehiculeChoisi = tousLesVehicules[i];
+  }
+  if (!vehiculeChoisi || vehiculeChoisi.suspendu) return;
+  var v = vehiculeChoisi;
+
+  var details = [];
+  if (v.categorie) details.push(escapeHtml(v.categorie));
+  if (v.places) details.push(v.places + " places");
+  if (v.boite) details.push(v.boite === "automatique" ? "Boite automatique" : "Boite manuelle");
+  if (v.carburant) details.push(escapeHtml(v.carburant));
+
+  document.getElementById("ficheVehicule").innerHTML =
+    "<img class=\"fiche-photo\" src=\"" + escapeHtml(v.photo_url || "") + "\" alt=\"" + escapeHtml(v.titre) + "\">" +
+    "<div class=\"fiche-titre\">" + escapeHtml(v.titre) + "</div>" +
+    (details.length ? "<div class=\"fiche-ligne\">" + details.join(" &mdash; ") + "</div>" : "") +
+    "<div class=\"fiche-ligne\">&#128205; Retrait : " + escapeHtml(v.localisation) + "</div>" +
+    (chauffeurPropose(v) ? "<div class=\"fiche-ligne\">&#128104;&#8205;&#9992;&#65039; Chauffeur en option : +" + fcfaVeh(v.supplement_chauffeur_jour) + " / jour</div>" : "") +
+    (v.caution > 0 ? "<div class=\"fiche-ligne\">&#128274; Caution remboursable : " + fcfaVeh(v.caution) + "</div>" : "") +
+    (v.description ? "<div class=\"fiche-ligne\" style=\"margin-top:8px;\">" + escapeHtml(v.description) + "</div>" : "") +
+    "<div class=\"fiche-prix\">" + fcfaVeh(v.prix_jour) + " / jour</div>";
+
+  var retrait = document.getElementById("lv_retrait");
+  var retour = document.getElementById("lv_retour");
+  retrait.min = dateDuJour(0);
+  retrait.max = dateDuJour(365);
+  retrait.value = "";
+  retour.value = "";
+  retour.min = dateDuJour(1);
+
+  document.getElementById("zoneOptionChauffeur").style.display = chauffeurPropose(v) ? "block" : "none";
+  document.getElementById("lv_chauffeur").checked = false;
+  document.getElementById("texteOptionChauffeur").textContent = chauffeurPropose(v)
+    ? "Avec chauffeur (+" + fcfaVeh(v.supplement_chauffeur_jour) + " / jour)"
+    : "Avec chauffeur";
+  document.getElementById("zonePermis").style.display = "block";
+  document.getElementById("etatDispoVehicule").className = "etat-dispo";
+  document.getElementById("recapPrixVehicule").style.display = "none";
+  document.getElementById("formVehicule").style.display = "none";
+  document.getElementById("msgVehicule").innerHTML = "";
+  vehiculeLibre = false;
+
+  masquerPanneaux();
+  document.getElementById("panneauReservationVehicule").classList.add("visible");
+  window.scrollTo(0, 0);
+}
+
+document.getElementById("lv_retrait").addEventListener("change", function() {
+  var retour = document.getElementById("lv_retour");
+  if (this.value) {
+    retour.min = decalerDate(this.value, 1);
+    retour.max = decalerDate(this.value, 30);
+    if (!retour.value || retour.value <= this.value) retour.value = decalerDate(this.value, 1);
+  }
+  verifierDispoVehicule();
+});
+document.getElementById("lv_retour").addEventListener("change", verifierDispoVehicule);
+document.getElementById("lv_chauffeur").addEventListener("change", function() {
+  document.getElementById("zonePermis").style.display = this.checked ? "none" : "block";
+  calculerPrixVehicule();
+});
+
+function verifierDispoVehicule() {
+  var v = vehiculeChoisi;
+  var retrait = document.getElementById("lv_retrait").value;
+  var retour = document.getElementById("lv_retour").value;
+  var etat = document.getElementById("etatDispoVehicule");
+  document.getElementById("recapPrixVehicule").style.display = "none";
+  document.getElementById("formVehicule").style.display = "none";
+  vehiculeLibre = false;
+
+  if (!v || !retrait || !retour) return;
+  var jours = ecartJours(retrait, retour);
+  if (retrait < dateDuJour(0)) {
+    etat.className = "etat-dispo ko";
+    etat.textContent = "La date de retrait ne peut pas etre dans le passe.";
+    return;
+  }
+  if (jours < 1) {
+    etat.className = "etat-dispo ko";
+    etat.textContent = "La date de retour doit etre apres la date de retrait.";
+    return;
+  }
+  if (jours > 30) {
+    etat.className = "etat-dispo ko";
+    etat.textContent = "La location est limitee a 30 jours.";
+    return;
+  }
+
+  etat.className = "etat-dispo attente";
+  etat.textContent = "Verification des disponibilites...";
+  var numero = ++numeroVerifVehicule;
+
+  sb.rpc("vehicule_disponible", { p_vehicule_id: v.id, p_retrait: retrait, p_retour: retour }).then(function(reponse) {
+    if (numero !== numeroVerifVehicule) return;
+    if (reponse.error) {
+      etat.className = "etat-dispo ko";
+      etat.textContent = "Impossible de verifier les disponibilites. Reessayez.";
+      return;
+    }
+    if (reponse.data !== true) {
+      etat.className = "etat-dispo ko";
+      etat.textContent = "Ce vehicule est deja reserve sur ces dates. Essayez d'autres dates.";
+      return;
+    }
+    vehiculeLibre = true;
+    etat.className = "etat-dispo ok";
+    etat.textContent = "Disponible sur toute la periode.";
+    calculerPrixVehicule();
+  });
+}
+
+function calculerPrixVehicule() {
+  var v = vehiculeChoisi;
+  if (!v || !vehiculeLibre) return null;
+  var retrait = document.getElementById("lv_retrait").value;
+  var retour = document.getElementById("lv_retour").value;
+  var jours = ecartJours(retrait, retour);
+  var avecChauffeur = chauffeurPropose(v) && document.getElementById("lv_chauffeur").checked;
+  var prixJour = v.prix_jour + (avecChauffeur ? v.supplement_chauffeur_jour : 0);
+  var location = prixJour * jours;
+  var caution = v.caution || 0;
+  var total = location + caution;
+
+  document.getElementById("detailPrixVehicule").textContent =
+    "Du " + dateEnLettres(retrait) + " au " + dateEnLettres(retour) + " : " + jours + " jour" + (jours > 1 ? "s" : "") +
+    " x " + fcfaVeh(prixJour) + (avecChauffeur ? " (chauffeur inclus)" : "") + " = " + fcfaVeh(location);
+  document.getElementById("detailCautionVehicule").textContent = caution > 0 ? "Caution remboursable : " + fcfaVeh(caution) : "";
+  document.getElementById("totalPrixVehicule").textContent = "Total a payer : " + fcfaVeh(total);
+  document.getElementById("recapPrixVehicule").style.display = "block";
+  document.getElementById("formVehicule").style.display = "block";
+
+  return { jours: jours, avecChauffeur: avecChauffeur, location: location, caution: caution, total: total };
+}
+
+(function remplirProfilVehicule() {
+  var nom = localStorage.getItem("aw_client_nom");
+  var tel = localStorage.getItem("aw_client_telephone");
+  if (nom) document.getElementById("lv_nom").value = nom;
+  if (tel) document.getElementById("lv_telephone").value = tel;
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) return;
+    sb.from("clients").select("nom, telephone").eq("user_id", user.id).maybeSingle().then(function(reponse) {
+      var c = reponse.data;
+      if (!c) return;
+      if (c.nom && c.nom.indexOf("@") === -1) document.getElementById("lv_nom").value = c.nom;
+      if (c.telephone) document.getElementById("lv_telephone").value = c.telephone;
+    });
+  });
+})();
+
+function messageErreurVehicule(message) {
+  message = message || "";
+  if (message.indexOf("deja reserve") !== -1) return "Desole, ce vehicule vient d'etre reserve sur ces dates. Choisissez d'autres dates.";
+  if (message.indexOf("pas disponible a la location") !== -1) return "Ce vehicule n'est plus disponible a la location pour le moment.";
+  if (message.indexOf("permis") !== -1) return "Indiquez un numero de permis valide (ou choisissez l'option avec chauffeur).";
+  if (message.indexOf("chauffeur") !== -1) return "Ce vehicule ne se loue pas avec chauffeur.";
+  if (message.indexOf("Telephone invalide") !== -1) return "Numero de telephone invalide (chiffres, espaces ou + uniquement).";
+  if (message.indexOf("Nom invalide") !== -1) return "Indiquez votre nom complet.";
+  if (message.indexOf("Date") !== -1 || message.indexOf("Duree") !== -1) return "Les dates choisies ne sont pas valides.";
+  return "Erreur : la reservation n'a pas pu etre enregistree. Reessayez.";
+}
+
+document.getElementById("formVehicule").addEventListener("submit", function(event) {
+  event.preventDefault();
+  var v = vehiculeChoisi;
+  var btn = document.getElementById("btnReserverVehicule");
+  var msg = document.getElementById("msgVehicule");
+  msg.innerHTML = "";
+
+  var calcul = calculerPrixVehicule();
+  if (!v || !calcul) {
+    msg.innerHTML = "<div class=\"msg erreur\">Choisissez d'abord des dates disponibles.</div>";
+    return;
+  }
+  var nom = document.getElementById("lv_nom").value.trim();
+  var telephone = document.getElementById("lv_telephone").value.trim();
+  var permis = document.getElementById("lv_permis").value.trim();
+
+  if (nom.length < 2 || nom.indexOf("@") !== -1) {
+    msg.innerHTML = "<div class=\"msg erreur\">Indiquez votre nom complet.</div>";
+    return;
+  }
+  if (!/^[0-9+ ]{6,20}$/.test(telephone)) {
+    msg.innerHTML = "<div class=\"msg erreur\">Numero de telephone invalide (chiffres, espaces ou + uniquement).</div>";
+    return;
+  }
+  if (!calcul.avecChauffeur && (permis.length < 5 || permis.length > 30)) {
+    msg.innerHTML = "<div class=\"msg erreur\">Indiquez votre numero de permis de conduire (obligatoire sans chauffeur).</div>";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Reservation en cours...";
+  localStorage.setItem("aw_client_nom", nom);
+  localStorage.setItem("aw_client_telephone", telephone);
+
+  var retrait = document.getElementById("lv_retrait").value;
+  var retour = document.getElementById("lv_retour").value;
+  var idReservation = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2));
+
+  sb.from("reservations_vehicule").insert([{
+    id: idReservation,
+    vehicule_id: v.id,
+    client_nom: nom,
+    client_telephone: telephone,
+    numero_permis: calcul.avecChauffeur ? null : permis,
+    avec_chauffeur: calcul.avecChauffeur,
+    date_retrait: retrait,
+    date_retour: retour
+  }]).then(function(reponse) {
+    if (reponse.error) {
+      btn.disabled = false;
+      btn.textContent = "Reserver et payer";
+      msg.innerHTML = "<div class=\"msg erreur\">" + messageErreurVehicule(reponse.error.message) + "</div>";
+      if ((reponse.error.message || "").indexOf("deja reserve") !== -1) verifierDispoVehicule();
+      return;
+    }
+
+    var ticket = {
+      type: "reservation_vehicule",
+      id: idReservation,
+      titre: v.titre,
+      localisation: v.localisation,
+      date_retrait: retrait,
+      date_retour: retour,
+      nb_jours: calcul.jours,
+      avec_chauffeur: calcul.avecChauffeur,
+      prix_location: calcul.location,
+      montant_caution: calcul.caution,
+      prix_total: calcul.total,
+      nom: nom,
+      telephone: telephone
+    };
+
+    fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        table: "reservations_vehicule",
+        id: idReservation,
+        item_name: ("Location - " + v.titre).slice(0, 80),
+        telephone: telephone,
+        nom: nom
+      })
+    }).then(function(r) { return r.json(); }).then(function(resultat) {
+      if (resultat.success === 1 && resultat.redirect_url) {
+        ticket.paytech_token = resultat.token || null;
+        localStorage.setItem("aw_dernier_ticket", JSON.stringify(ticket));
+        window.location.href = resultat.redirect_url;
+      } else {
+        btn.disabled = false;
+        btn.textContent = "Reserver et payer";
+        msg.innerHTML = "<div class=\"msg erreur\">Erreur lors de la creation du paiement. Reessayez.</div>";
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = "Reserver et payer";
+      msg.innerHTML = "<div class=\"msg erreur\">Erreur de connexion au service de paiement. Reessayez.</div>";
+    });
+  });
+});
+
 mettreAJourPrix();
 
 /* ---------- Au chargement ---------- */
@@ -1294,6 +1743,8 @@ if (!reprendreCourseEnCours()) {
     ouvrirService("aller");
   } else if (window.location.hash === "#retour") {
     ouvrirService("retour");
+  } else if (window.location.hash === "#vehicule") {
+    ouvrirService("vehicule");
   }
 }
 </script>
