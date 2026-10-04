@@ -109,6 +109,102 @@ function afficherBillet(t) {
   document.getElementById("zoneBillet").innerHTML = html;
 }
 
+function ligneBillet(label, valeur) {
+  return "<div class=\"billet-ligne\"><span class=\"label\">" + label + "</span><span class=\"valeur\">" + valeur + "</span></div>";
+}
+
+function afficherConfirmationLogement(t) {
+  var reference = (t.id || "").replace(/-/g, "").slice(0, 8).toUpperCase();
+  var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=" + encodeURIComponent(t.id || "");
+  var nuits = Number(t.nb_nuits) || 0;
+  var chambres = Number(t.nb_chambres) || 1;
+
+  var html = "<div class=\"billet\">" +
+    "<div class=\"billet-entete\">" +
+      "<div class=\"marque\">AW SERVICES &mdash; Confirmation de sejour</div>" +
+      "<div class=\"trajet\">" + escapeHtml(t.titre) + "</div>" +
+    "</div>" +
+    ligneBillet("Client", escapeHtml(t.nom)) +
+    ligneBillet("Telephone", escapeHtml(t.telephone)) +
+    (t.localisation ? ligneBillet("Adresse", escapeHtml(t.localisation)) : "") +
+    ligneBillet("Arrivee", formatDateFr(t.date_arrivee)) +
+    ligneBillet("Depart", formatDateFr(t.date_depart)) +
+    ligneBillet("Duree", nuits + " nuit" + (nuits > 1 ? "s" : "")) +
+    (t.mode_location === "chambre" ? ligneBillet("Chambres", String(chambres)) : "") +
+    ligneBillet("Total paye", Number(t.prix_total).toLocaleString("fr-FR") + " FCFA") +
+    "<div class=\"billet-qr\"><img src=\"" + qrUrl + "\" alt=\"QR code de la reservation\"></div>" +
+    "<div class=\"billet-ref\">Reference : " + reference + "</div>" +
+  "</div>" +
+  "<p class=\"billet-note\">Presentez cette confirmation (capture d'ecran) a votre arrivee.</p>";
+
+  document.getElementById("zoneBillet").innerHTML = html;
+}
+
+function afficherConfirmationVehicule(t) {
+  var reference = (t.id || "").replace(/-/g, "").slice(0, 8).toUpperCase();
+  var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=" + encodeURIComponent(t.id || "");
+  var jours = Number(t.nb_jours) || 0;
+
+  var html = "<div class=\"billet\">" +
+    "<div class=\"billet-entete\">" +
+      "<div class=\"marque\">AW SERVICES &mdash; Location de vehicule</div>" +
+      "<div class=\"trajet\">" + escapeHtml(t.titre) + "</div>" +
+    "</div>" +
+    ligneBillet("Client", escapeHtml(t.nom)) +
+    ligneBillet("Telephone", escapeHtml(t.telephone)) +
+    (t.localisation ? ligneBillet("Lieu de retrait", escapeHtml(t.localisation)) : "") +
+    ligneBillet("Retrait", formatDateFr(t.date_retrait)) +
+    ligneBillet("Retour", formatDateFr(t.date_retour)) +
+    ligneBillet("Duree", jours + " jour" + (jours > 1 ? "s" : "")) +
+    ligneBillet("Chauffeur", t.avec_chauffeur ? "Oui" : "Non") +
+    (t.montant_caution ? ligneBillet("Location", Number(t.prix_location).toLocaleString("fr-FR") + " FCFA") : "") +
+    (t.montant_caution ? ligneBillet("Caution (remboursable)", Number(t.montant_caution).toLocaleString("fr-FR") + " FCFA") : "") +
+    ligneBillet("Total paye", Number(t.prix_total).toLocaleString("fr-FR") + " FCFA") +
+    "<div class=\"billet-qr\"><img src=\"" + qrUrl + "\" alt=\"QR code de la reservation\"></div>" +
+    "<div class=\"billet-ref\">Reference : " + reference + "</div>" +
+  "</div>" +
+  "<p class=\"billet-note\">Presentez cette confirmation (capture d'ecran) au retrait du vehicule" +
+    (t.avec_chauffeur ? "" : ", avec votre permis de conduire") + ".</p>";
+
+  document.getElementById("zoneBillet").innerHTML = html;
+}
+
+/* Verification generique d'une reservation payee (logement, vehicule) */
+function verifierReservationPayee(t, table, afficher, messageAttente) {
+  adapterBoutonRetour(t.type);
+  var essais = 0;
+
+  function verifier() {
+    fetch("https://vnceunqygoiwglnwpgcr.supabase.co/functions/v1/paytech-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: t.paytech_token, table: table, id: t.id })
+    }).then(function(r) { return r.json(); }).then(function(resultat) {
+      if (resultat.confirme === true) {
+        etatFinal(true, "Paiement reussi !", "Votre reservation est confirmee. Voici votre confirmation :");
+        afficher(t);
+        localStorage.removeItem("aw_dernier_ticket");
+      } else if (essais < 4) {
+        essais++;
+        setTimeout(verifier, 3000);
+      } else if (resultat.state === "running") {
+        etatFinal(false, "Paiement en cours de traitement", messageAttente);
+      } else {
+        etatFinal(false, "Paiement non confirme", "Nous n'avons pas pu confirmer ce paiement pour le moment. Si le montant a ete debite, contactez-nous sur WhatsApp en indiquant la reference " + (t.id || "").replace(/-/g, "").slice(0, 8).toUpperCase() + ".");
+      }
+    }).catch(function() {
+      if (essais < 4) {
+        essais++;
+        setTimeout(verifier, 3000);
+      } else {
+        etatFinal(false, "Verification impossible", "Nous n'avons pas pu verifier votre paiement pour le moment. Contactez-nous sur WhatsApp si le montant a ete debite.");
+      }
+    });
+  }
+
+  verifier();
+}
+
 function etatFinal(succes, titre, message) {
   document.getElementById("zoneIcone").innerHTML = succes ? "&#9989;" : "&#9888;&#65039;";
   document.getElementById("titreMessage").textContent = titre;
@@ -123,7 +219,9 @@ function adapterBoutonRetour(type) {
     recharge_livreur: { href: "livreur-espace.html", texte: "Retour a mon espace livreur" },
     commande: { href: "client-espace.html", texte: "Voir mes commandes" },
     preinscription_voyage: { href: "voyage.html", texte: "Retour a la page Voyage" },
-    reservation_voiture: { href: "transport.html", texte: "Retour a Transport" }
+    reservation_voiture: { href: "transport.html", texte: "Retour a Transport" },
+    reservation_logement: { href: "immobilier.html#louer", texte: "Retour aux logements" },
+    reservation_vehicule: { href: "transport.html#vehicule", texte: "Retour a Transport" }
   };
   var cible = DESTINATIONS[type];
   if (cible) {
@@ -240,6 +338,12 @@ if (!ticketBrut) {
     }
 
     verifierRecharge();
+  } else if (t && t.type === "reservation_logement" && t.paytech_token) {
+    verifierReservationPayee(t, "reservations_logement", afficherConfirmationLogement,
+      "Votre paiement n'est pas encore confirme. Patientez une minute : votre reservation sera automatiquement confirmee des reception du paiement.");
+  } else if (t && t.type === "reservation_vehicule" && t.paytech_token) {
+    verifierReservationPayee(t, "reservations_vehicule", afficherConfirmationVehicule,
+      "Votre paiement n'est pas encore confirme. Patientez une minute : votre location sera automatiquement confirmee des reception du paiement.");
   } else if (!t || t.type !== "reservation_voiture") {
     etatFinal(true, "Paiement reussi !", "Votre paiement a bien ete confirme. Votre commande est en cours de traitement, vous recevrez bientot une notification avec les details de la livraison.");
     localStorage.removeItem("aw_dernier_ticket");
