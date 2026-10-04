@@ -28,8 +28,8 @@ if ('serviceWorker' in navigator) {
   .msg-notif.ok { color: var(--succes); }
   .msg-notif.err { color: var(--alerte); }
 
-  .onglets { display: flex; gap: 8px; margin-bottom: var(--espace-lg); }
-  .onglet { flex: 1; background-color: var(--surface); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 12px 6px; border-radius: var(--rayon-petit); font-size: 12.5px; font-weight: 600; text-align: center; font-family: var(--police-titre); }
+  .onglets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: var(--espace-lg); }
+  .onglet { background-color: var(--surface); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 12px 6px; border-radius: var(--rayon-petit); font-size: 12.5px; font-weight: 600; text-align: center; font-family: var(--police-titre); }
   .onglet.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
   .panneau { display: none; }
   .panneau.visible { display: block; }
@@ -152,6 +152,8 @@ function chargerEspace() {
           "<div class=\"onglet\" id=\"ongletTransport\">Reservations</div>" +
           "<div class=\"onglet\" id=\"ongletCourses\">Courses moto</div>" +
           "<div class=\"onglet\" id=\"ongletVoyage\">Voyage</div>" +
+          "<div class=\"onglet\" id=\"ongletSejours\">Sejours</div>" +
+          "<div class=\"onglet\" id=\"ongletVehicules\">Vehicules</div>" +
         "</div>" +
 
         "<div class=\"panneau visible\" id=\"panneauAchats\">" +
@@ -165,12 +167,20 @@ function chargerEspace() {
         "</div>" +
         "<div class=\"panneau\" id=\"panneauVoyage\">" +
           "<div id=\"listeDossiersVoyage\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"panneau\" id=\"panneauSejours\">" +
+          "<div id=\"listeSejours\"><p class=\"vide\">Chargement...</p></div>" +
+        "</div>" +
+        "<div class=\"panneau\" id=\"panneauVehicules\">" +
+          "<div id=\"listeLocationsVehicules\"><p class=\"vide\">Chargement...</p></div>" +
         "</div>";
 
       document.getElementById("ongletAchats").addEventListener("click", function() { basculerOnglet("Achats"); });
       document.getElementById("ongletTransport").addEventListener("click", function() { basculerOnglet("Transport"); });
       document.getElementById("ongletCourses").addEventListener("click", function() { basculerOnglet("Courses"); });
       document.getElementById("ongletVoyage").addEventListener("click", function() { basculerOnglet("Voyage"); });
+      document.getElementById("ongletSejours").addEventListener("click", function() { basculerOnglet("Sejours"); });
+      document.getElementById("ongletVehicules").addEventListener("click", function() { basculerOnglet("Vehicules"); });
 
       afficherProfil(false);
       document.getElementById("btnActiverNotif").addEventListener("click", activerNotifications);
@@ -179,7 +189,11 @@ function chargerEspace() {
       chargerReservationsClient();
       chargerCoursesClient();
       chargerDossiersVoyage();
+      chargerSejours();
+      chargerLocationsVehicules();
       if (window.location.hash === "#voyage") basculerOnglet("Voyage");
+      if (window.location.hash === "#sejours") basculerOnglet("Sejours");
+      if (window.location.hash === "#vehicules") basculerOnglet("Vehicules");
       setInterval(chargerCommandes, 20000);
       setInterval(chargerReservationsClient, 20000);
       setInterval(chargerCoursesClient, 20000);
@@ -261,8 +275,8 @@ function enregistrerProfil() {
 }
 
 function basculerOnglet(nom) {
-  var onglets = { Achats: "ongletAchats", Transport: "ongletTransport", Courses: "ongletCourses", Voyage: "ongletVoyage" };
-  var panneaux = { Achats: "panneauAchats", Transport: "panneauTransport", Courses: "panneauCourses", Voyage: "panneauVoyage" };
+  var onglets = { Achats: "ongletAchats", Transport: "ongletTransport", Courses: "ongletCourses", Voyage: "ongletVoyage", Sejours: "ongletSejours", Vehicules: "ongletVehicules" };
+  var panneaux = { Achats: "panneauAchats", Transport: "panneauTransport", Courses: "panneauCourses", Voyage: "panneauVoyage", Sejours: "panneauSejours", Vehicules: "panneauVehicules" };
   for (var cle in onglets) {
     document.getElementById(onglets[cle]).classList.toggle("actif", cle === nom);
     document.getElementById(panneaux[cle]).classList.toggle("visible", cle === nom);
@@ -540,6 +554,83 @@ function chargerDossiersVoyage() {
                 "</div>";
       }
       html += "</div>";
+    }
+    zone.innerHTML = html;
+  });
+}
+
+/* ---------- Sejours (logements loues a la nuit) ---------- */
+
+function badgeReservationLocation(r) {
+  if (r.statut === "annulee") return "<span class=\"badge-statut badge-annulee\">Annulee</span>";
+  if (r.statut === "confirmee" || r.statut_paiement === "paye") return "<span class=\"badge-statut badge-paye\">Confirmee - payee</span>";
+  var expiree = (Date.now() - new Date(r.date_creation).getTime()) > 30 * 60000;
+  if (expiree) return "<span class=\"badge-statut badge-annulee\">Non payee - expiree</span>";
+  return "<span class=\"badge-statut badge-nonpaye\">En attente de paiement</span>";
+}
+
+function referenceCourte(id) {
+  return String(id || "").replace(/-/g, "").slice(0, 8).toUpperCase();
+}
+
+function chargerSejours() {
+  sb.from("reservations_logement").select("*, logements_location(titre, localisation, mode_location)").eq("client_id", clientCourant.id).order("date_arrivee", { ascending: false }).limit(30).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeSejours");
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p class=\"vide\">Vous n'avez pas encore reserve de logement. <a href=\"immobilier.html#louer\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">Voir les logements</a></p>";
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var r = data[i];
+      var l = r.logements_location || {};
+      html += "<div class=\"commande-carte\">" +
+                "<div class=\"date\">Reference " + referenceCourte(r.id) + "</div>" +
+                "<h3>" + escapeHtml(l.titre || "Logement") + "</h3>" +
+                (l.localisation ? "<p>&#128205; " + escapeHtml(l.localisation) + "</p>" : "") +
+                "<p>Du " + formatDateFr(r.date_arrivee) + " au " + formatDateFr(r.date_depart) + " (" + r.nb_nuits + " nuit" + (r.nb_nuits > 1 ? "s" : "") + ")</p>" +
+                (l.mode_location === "chambre" ? "<p>" + r.nb_chambres + " chambre" + (r.nb_chambres > 1 ? "s" : "") + "</p>" : "") +
+                "<div class=\"total\">" + Number(r.prix_total || 0).toLocaleString("fr-FR") + " FCFA</div>" +
+                badgeReservationLocation(r) +
+              "</div>";
+    }
+    zone.innerHTML = html;
+  });
+}
+
+/* ---------- Locations de vehicules ---------- */
+
+var LIBELLES_CAUTION_CLIENT = {
+  retenue: "Caution a rembourser au retour",
+  remboursee: "Caution remboursee",
+  conservee: "Caution conservee"
+};
+
+function chargerLocationsVehicules() {
+  sb.from("reservations_vehicule").select("*, vehicules_location(titre, localisation)").eq("client_id", clientCourant.id).order("date_retrait", { ascending: false }).limit(30).then(function(reponse) {
+    var data = reponse.data;
+    var zone = document.getElementById("listeLocationsVehicules");
+    if (!data || data.length === 0) {
+      zone.innerHTML = "<p class=\"vide\">Vous n'avez pas encore loue de vehicule. <a href=\"transport.html#vehicule\" style=\"color:var(--accent);font-weight:700;text-decoration:none;\">Voir les vehicules</a></p>";
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < data.length; i++) {
+      var r = data[i];
+      var v = r.vehicules_location || {};
+      var payee = r.statut === "confirmee" || r.statut_paiement === "paye";
+      html += "<div class=\"commande-carte\">" +
+                "<div class=\"date\">Reference " + referenceCourte(r.id) + "</div>" +
+                "<h3>" + escapeHtml(v.titre || "Vehicule") + "</h3>" +
+                (v.localisation ? "<p>&#128205; Retrait : " + escapeHtml(v.localisation) + "</p>" : "") +
+                "<p>Du " + formatDateFr(r.date_retrait) + " au " + formatDateFr(r.date_retour) + " (" + r.nb_jours + " jour" + (r.nb_jours > 1 ? "s" : "") + ")</p>" +
+                "<p>" + (r.avec_chauffeur ? "Avec chauffeur" : "Sans chauffeur") + "</p>" +
+                "<div class=\"total\">" + Number(r.prix_total || 0).toLocaleString("fr-FR") + " FCFA</div>" +
+                (r.montant_caution ? "<p>Dont caution : " + Number(r.montant_caution).toLocaleString("fr-FR") + " FCFA" +
+                  (payee ? " &mdash; " + (LIBELLES_CAUTION_CLIENT[r.statut_caution] || "") : "") + "</p>" : "") +
+                badgeReservationLocation(r) +
+              "</div>";
     }
     zone.innerHTML = html;
   });
