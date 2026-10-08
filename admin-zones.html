@@ -42,6 +42,13 @@
   .msg-notif { font-size: 12px; margin-top: 8px; color: var(--texte-doux); }
   .msg-notif.ok { color: var(--succes); }
   .msg-notif.err { color: var(--alerte); }
+
+  .actions-zone { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-petit { flex: 1; background-color: transparent; border: 1px solid var(--bordure); color: var(--texte); padding: 8px; border-radius: var(--rayon-petit); font-size: 12.5px; font-weight: 600; font-family: var(--police-texte); }
+  .btn-petit.danger { border-color: var(--alerte); color: var(--alerte); }
+  .btn-petit.valider { border-color: var(--succes); color: var(--succes); }
+  .edition-zone { margin-top: 8px; }
+  .edition-zone .aw-input { margin-top: 0; }
 </style>
 </head>
 <body>
@@ -163,6 +170,18 @@ function afficherZones() {
               "</div>" +
               "<p class=\"statut-coords" + (aCoords ? " ok" : "") + "\">" + (aCoords ? "Position GPS definie" : "Position GPS non definie (verification client desactivee pour ce village)") + "</p>" +
               "<button type=\"button\" class=\"btn-capturer\" data-id=\"" + z.id + "\">&#128205; " + (aCoords ? "Redefinir ma position ici" : "Je suis ici : capturer la position") + "</button>" +
+              "<div class=\"actions-zone\" id=\"actions-" + z.id + "\">" +
+                "<button type=\"button\" class=\"btn-petit btn-modifier-zone\" data-id=\"" + z.id + "\">&#9999;&#65039; Modifier le nom</button>" +
+                "<button type=\"button\" class=\"btn-petit danger btn-supprimer-zone\" data-id=\"" + z.id + "\">&#128465;&#65039; Supprimer</button>" +
+              "</div>" +
+              "<div class=\"edition-zone\" id=\"edition-" + z.id + "\" style=\"display:none;\">" +
+                "<input class=\"aw-input\" type=\"text\" id=\"nom-" + z.id + "\" maxlength=\"60\" value=\"" + escapeHtml(z.nom) + "\">" +
+                "<div class=\"actions-zone\">" +
+                  "<button type=\"button\" class=\"btn-petit valider btn-enregistrer-zone\" data-id=\"" + z.id + "\">Enregistrer</button>" +
+                  "<button type=\"button\" class=\"btn-petit btn-annuler-zone\" data-id=\"" + z.id + "\">Annuler</button>" +
+                "</div>" +
+                "<p class=\"msg-notif\" id=\"msg-" + z.id + "\"></p>" +
+              "</div>" +
             "</div>";
   }
   zone.innerHTML = html;
@@ -182,6 +201,11 @@ function afficherZones() {
       });
     });
   }
+
+  lierBoutonsZone("btn-modifier-zone", function(id) { afficherEdition(id, true); });
+  lierBoutonsZone("btn-annuler-zone", function(id) { afficherEdition(id, false); });
+  lierBoutonsZone("btn-enregistrer-zone", renommerZone);
+  lierBoutonsZone("btn-supprimer-zone", supprimerZone);
 
   var boutonsCapturer = document.getElementsByClassName("btn-capturer");
   for (var c = 0; c < boutonsCapturer.length; c++) {
@@ -214,6 +238,90 @@ function afficherZones() {
       });
     });
   }
+}
+
+function lierBoutonsZone(classe, action) {
+  var boutons = document.getElementsByClassName(classe);
+  for (var i = 0; i < boutons.length; i++) {
+    boutons[i].addEventListener("click", function(e) {
+      action(e.currentTarget.getAttribute("data-id"));
+    });
+  }
+}
+
+function trouverZone(id) {
+  for (var i = 0; i < toutesLesZones.length; i++) {
+    if (String(toutesLesZones[i].id) === String(id)) return toutesLesZones[i];
+  }
+  return null;
+}
+
+function afficherEdition(id, ouvrir) {
+  document.getElementById("edition-" + id).style.display = ouvrir ? "block" : "none";
+  document.getElementById("actions-" + id).style.display = ouvrir ? "none" : "flex";
+  if (ouvrir) {
+    var z = trouverZone(id);
+    var champ = document.getElementById("nom-" + id);
+    champ.value = z ? z.nom : champ.value;
+    document.getElementById("msg-" + id).textContent = "";
+    champ.focus();
+  }
+}
+
+function renommerZone(id) {
+  var champ = document.getElementById("nom-" + id);
+  var msg = document.getElementById("msg-" + id);
+  var nouveauNom = champ.value.trim();
+  var z = trouverZone(id);
+
+  if (nouveauNom.length < 2 || nouveauNom.length > 60) {
+    msg.className = "msg-notif err";
+    msg.textContent = "Le nom doit contenir entre 2 et 60 caracteres.";
+    return;
+  }
+  if (z && nouveauNom === z.nom) {
+    afficherEdition(id, false);
+    return;
+  }
+  if (!confirm("Renommer \"" + (z ? z.nom : "") + "\" en \"" + nouveauNom + "\" ?\n\nLes vendeurs et livreurs rattaches a ce village seront mis a jour automatiquement.")) return;
+
+  msg.className = "msg-notif";
+  msg.textContent = "Enregistrement...";
+
+  sb.rpc("renommer_zone", { p_id: String(id), p_nouveau_nom: nouveauNom }).then(function(reponse) {
+    if (reponse.error) {
+      var m = reponse.error.message || "";
+      msg.className = "msg-notif err";
+      if (m.indexOf("existe deja") !== -1) msg.textContent = "Un village porte deja ce nom.";
+      else if (m.indexOf("Nom invalide") !== -1) msg.textContent = "Nom invalide.";
+      else msg.textContent = "Erreur : " + m;
+      return;
+    }
+    chargerZones();
+  });
+}
+
+function supprimerZone(id) {
+  var z = trouverZone(id);
+  var nom = z ? z.nom : "";
+  if (!confirm("Supprimer definitivement le village \"" + nom + "\" ?\n\nPour le cacher seulement un moment, utilisez plutot l'interrupteur.")) return;
+
+  sb.rpc("supprimer_zone", { p_id: String(id) }).then(function(reponse) {
+    if (reponse.error) {
+      alert("Erreur : " + reponse.error.message);
+      return;
+    }
+    var r = reponse.data || {};
+    var vendeurs = Number(r.vendeurs) || 0;
+    var livreurs = Number(r.livreurs) || 0;
+    var msg = document.getElementById("msgZone");
+    msg.className = "msg-notif ok";
+    msg.textContent = "Village \"" + nom + "\" supprime." +
+      (vendeurs || livreurs
+        ? " Attention : " + vendeurs + " vendeur(s) et " + livreurs + " livreur(s) y etaient rattaches, ils devront choisir une nouvelle zone."
+        : "");
+    chargerZones();
+  });
 }
 
 function ajouterZone() {
