@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AW SERVICES - Statistiques</title>
+<link rel="stylesheet" href="style-global.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .back { display: inline-block; margin: var(--espace-md); color: var(--texte-doux); text-decoration: none; font-size: 14px; }
+  .chargement { text-align: center; padding: 30px; color: var(--texte-doux); }
+
+  .periodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: var(--espace-lg); }
+  .periode { background-color: var(--surface); border: 1px solid var(--bordure); color: var(--texte-doux); padding: 11px 6px; border-radius: var(--rayon-petit); font-size: 12.5px; font-weight: 700; text-align: center; font-family: var(--police-titre); }
+  .periode.actif { background-color: var(--accent); border-color: var(--accent); color: #1C1200; }
+
+  .total-carte { background-color: var(--surface); border: 1px solid var(--accent); border-radius: var(--rayon); padding: 18px; text-align: center; margin-bottom: var(--espace-lg); box-shadow: var(--ombre-accent); }
+  .total-carte .chiffre { color: var(--accent); font-size: 28px; font-weight: 700; font-family: var(--police-chiffres); }
+  .total-carte .label { color: var(--texte-doux); font-size: 13px; margin-top: 4px; }
+
+  .ligne-service { background-color: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-petit); padding: 12px 14px; margin-bottom: 10px; }
+  .ligne-haut { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .ligne-haut .nom { font-size: 14px; font-weight: 700; color: var(--texte); font-family: var(--police-titre); }
+  .ligne-haut .montant { font-size: 14px; font-weight: 700; color: var(--accent); font-family: var(--police-chiffres); white-space: nowrap; }
+  .ligne-bas { display: flex; justify-content: space-between; font-size: 12px; color: var(--texte-doux); margin-top: 4px; }
+  .barre { height: 8px; background-color: var(--fond); border-radius: 999px; margin-top: 8px; overflow: hidden; }
+  .barre span { display: block; height: 100%; background-color: var(--accent); border-radius: 999px; }
+  .ligne-service.zero { opacity: 0.55; }
+  .ligne-service.hors-total .ligne-haut .montant { color: var(--texte-doux); }
+  .ligne-service.hors-total .barre span { background-color: var(--texte-discret); }
+
+  .note { color: var(--texte-discret); font-size: 11.5px; line-height: 1.5; margin-top: var(--espace-md); }
+</style>
+</head>
+<body>
+
+<header class="aw-header">
+  <h1>Statistiques</h1>
+  <p>Ventes payees par service</p>
+</header>
+
+<a href="admin-espace.html" class="back">&#8592; Retour a l'administration</a>
+
+<div class="aw-conteneur">
+  <div id="zoneContenu" class="chargement">Verification des droits...</div>
+</div>
+
+<script>
+var sb = supabase.createClient(
+  "https://vnceunqygoiwglnwpgcr.supabase.co",
+  "sb_publishable_WMntOm7vkufhazqMzzy1Iw_Gip2NmPK"
+);
+
+function escapeHtml(texte) {
+  if (texte === null || texte === undefined) return "";
+  return String(texte)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function fcfa(n) {
+  return Math.round(Number(n || 0)).toLocaleString("fr-FR") + " FCFA";
+}
+
+var periodeActive = "mois";
+
+function debutPeriode(periode) {
+  var d = new Date();
+  if (periode === "mois") {
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
+  }
+  if (periode === "trois_mois") {
+    return new Date(d.getFullYear(), d.getMonth() - 3, d.getDate()).toISOString();
+  }
+  return null;
+}
+
+function verifierEtCharger() {
+  sb.auth.getUser().then(function(reponseUser) {
+    var user = reponseUser.data.user;
+    if (!user) {
+      window.location.href = "admin-connexion.html";
+      return;
+    }
+    sb.from("admins").select("*").eq("user_id", user.id).single().then(function(reponseAdmin) {
+      var zone = document.getElementById("zoneContenu");
+      if (!reponseAdmin.data) {
+        zone.innerHTML = "<div class=\"aw-carte\"><p>Acces refuse.</p></div>";
+        return;
+      }
+      zone.className = "";
+      zone.innerHTML =
+        "<div class=\"periodes\">" +
+          "<div class=\"periode actif\" data-periode=\"mois\">Ce mois</div>" +
+          "<div class=\"periode\" data-periode=\"trois_mois\">3 derniers mois</div>" +
+          "<div class=\"periode\" data-periode=\"tout\">Depuis le debut</div>" +
+        "</div>" +
+        "<div class=\"total-carte\">" +
+          "<div class=\"chiffre\" id=\"totalGeneral\">...</div>" +
+          "<div class=\"label\" id=\"labelTotal\">Chiffre d'affaires encaisse</div>" +
+        "</div>" +
+        "<p class=\"aw-section-titre\">Par service (du plus rentable au moins rentable)</p>" +
+        "<div id=\"listeServices\"><p class=\"chargement\">Chargement...</p></div>" +
+        "<p class=\"note\">" +
+          "Seules les ventes payees en ligne et non annulees sont comptees. " +
+          "Location de vehicules : sans la caution. IPTV : converti en FCFA (1 DH = 61 F, 1 $ = 568 F). " +
+          "Volaille : commandes de \"Poulet de chair\". " +
+          "Courses moto : affichees pour information, l'argent va directement aux chauffeurs (votre gain moto = recharges livreurs)." +
+        "</p>";
+
+      var boutons = zone.getElementsByClassName("periode");
+      for (var i = 0; i < boutons.length; i++) {
+        boutons[i].addEventListener("click", function() {
+          periodeActive = this.getAttribute("data-periode");
+          for (var j = 0; j < boutons.length; j++) boutons[j].classList.remove("actif");
+          this.classList.add("actif");
+          chargerStatistiques();
+        });
+      }
+      chargerStatistiques();
+    });
+  });
+}
+
+function chargerStatistiques() {
+  var liste = document.getElementById("listeServices");
+  liste.innerHTML = "<p class=\"chargement\">Chargement...</p>";
+  document.getElementById("totalGeneral").textContent = "...";
+
+  var libellesPeriode = { mois: "ce mois-ci", trois_mois: "sur les 3 derniers mois", tout: "depuis le debut" };
+  document.getElementById("labelTotal").textContent = "Chiffre d'affaires encaisse " + libellesPeriode[periodeActive];
+
+  sb.rpc("statistiques_ventes", { p_debut: debutPeriode(periodeActive) }).then(function(reponse) {
+    if (reponse.error) {
+      liste.innerHTML = "<p style=\"color:var(--alerte);\">Erreur : " + escapeHtml(reponse.error.message) + "</p>";
+      document.getElementById("totalGeneral").textContent = "-";
+      return;
+    }
+    var lignes = reponse.data || [];
+    var dansTotal = lignes.filter(function(l) { return l.dans_total; });
+    var horsTotal = lignes.filter(function(l) { return !l.dans_total; });
+    dansTotal.sort(function(a, b) { return Number(b.montant) - Number(a.montant); });
+
+    var total = 0;
+    var maximum = 0;
+    for (var i = 0; i < dansTotal.length; i++) {
+      total += Number(dansTotal[i].montant) || 0;
+      maximum = Math.max(maximum, Number(dansTotal[i].montant) || 0);
+    }
+    document.getElementById("totalGeneral").textContent = fcfa(total);
+
+    var html = "";
+    for (var k = 0; k < dansTotal.length; k++) {
+      html += ligneService(dansTotal[k], maximum, total, false);
+    }
+    for (var h = 0; h < horsTotal.length; h++) {
+      html += ligneService(horsTotal[h], Math.max(maximum, Number(horsTotal[h].montant) || 0), 0, true);
+    }
+    liste.innerHTML = html || "<p class=\"chargement\">Aucune donnee.</p>";
+  });
+}
+
+function ligneService(l, maximum, total, horsTotal) {
+  var montant = Number(l.montant) || 0;
+  var nombre = Number(l.nombre) || 0;
+  var largeur = maximum > 0 ? Math.max(2, Math.round(montant / maximum * 100)) : 0;
+  var part = total > 0 ? Math.round(montant / total * 100) : 0;
+  var classes = "ligne-service" + (montant === 0 ? " zero" : "") + (horsTotal ? " hors-total" : "");
+  return "<div class=\"" + classes + "\">" +
+           "<div class=\"ligne-haut\"><span class=\"nom\">" + escapeHtml(l.service) + "</span><span class=\"montant\">" + fcfa(montant) + "</span></div>" +
+           "<div class=\"ligne-bas\"><span>" + nombre + " vente" + (nombre > 1 ? "s" : "") + "</span><span>" + (horsTotal ? "Non compte dans le total" : part + " % du total") + "</span></div>" +
+           "<div class=\"barre\"><span style=\"width:" + (montant > 0 ? largeur : 0) + "%;\"></span></div>" +
+         "</div>";
+}
+
+verifierEtCharger();
+</script>
+
+</body>
+</html>
