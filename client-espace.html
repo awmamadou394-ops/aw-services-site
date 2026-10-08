@@ -149,7 +149,7 @@ function chargerEspace() {
 
         "<div class=\"onglets\">" +
           "<div class=\"onglet actif\" id=\"ongletAchats\">Achats</div>" +
-          "<div class=\"onglet\" id=\"ongletTransport\">Reservations</div>" +
+          "<div class=\"onglet\" id=\"ongletTransport\">Mini car</div>" +
           "<div class=\"onglet\" id=\"ongletCourses\">Courses moto</div>" +
           "<div class=\"onglet\" id=\"ongletVoyage\">Voyage</div>" +
           "<div class=\"onglet\" id=\"ongletSejours\">Sejours</div>" +
@@ -426,7 +426,7 @@ function chargerReservationsClient() {
     var data = reponse.data;
     var zone = document.getElementById("listeReservations");
     if (!data || data.length === 0) {
-      zone.innerHTML = "<p class=\"vide\">Vous n'avez pas encore reserve de trajet Dakar-Bokidiawe.</p>";
+      zone.innerHTML = "<p class=\"vide\">Vous n'avez pas encore reserve de mini car Dakar-Bokidiawe.</p>";
       return;
     }
 
