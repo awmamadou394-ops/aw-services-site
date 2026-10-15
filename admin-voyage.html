@@ -87,11 +87,26 @@ var STATUTS_DOSSIER = [
   { valeur: "refuse", libelle: "Refuse" }
 ];
 
+var LIBELLES_DOCUMENTS_MAROC = {
+  bac: "Diplome du Bac",
+  releve: "Releve de notes du Bac",
+  passeport: "Passeport",
+  photo: "Photo"
+};
+
 function libelleStatut(valeur) {
   for (var i = 0; i < STATUTS_DOSSIER.length; i++) {
     if (STATUTS_DOSSIER[i].valeur === valeur) return STATUTS_DOSSIER[i].libelle;
   }
   return "Dossier recu";
+}
+
+function libelleDocument(chemin, index, pays) {
+  if (pays === "Maroc") {
+    var trouve = /^doc_\d+_\d+_(bac|releve|passeport|photo)_/.exec(chemin || "");
+    if (trouve) return LIBELLES_DOCUMENTS_MAROC[trouve[1]];
+  }
+  return "Document " + (index + 1);
 }
 
 document.getElementById("btnDeconnexion").addEventListener("click", function() {
@@ -169,7 +184,7 @@ function chargerPreinscriptions() {
       if (p.documents && p.documents.length > 0) {
         htmlDocuments = "<div class=\"liste-documents\">";
         for (var d = 0; d < p.documents.length; d++) {
-          htmlDocuments += "<button type=\"button\" class=\"lien-document btn-doc-voyage\" data-chemin=\"" + escapeHtml(p.documents[d]) + "\">Document " + (d + 1) + "</button>";
+          htmlDocuments += "<button type=\"button\" class=\"lien-document btn-doc-voyage\" data-chemin=\"" + escapeHtml(p.documents[d]) + "\">" + escapeHtml(libelleDocument(p.documents[d], d, p.pays)) + "</button>";
         }
         htmlDocuments += "</div>";
       }
@@ -188,6 +203,7 @@ function chargerPreinscriptions() {
                 "<p>Telephone : " + escapeHtml(p.telephone) + "</p>" +
                 "<p>Niveau : " + escapeHtml(p.niveau) + "</p>" +
                 (p.type_etablissement ? "<p>Etablissement : " + escapeHtml(p.type_etablissement) + "</p>" : "") +
+                (p.formation ? "<p>Diplome : " + escapeHtml(p.formation) + "</p>" : "") +
                 "<div class=\"ligne-badges\">" +
                   "<span class=\"badge-statut badge-pays\">" + escapeHtml(p.pays) + "</span>" +
                   badgePaiement +
