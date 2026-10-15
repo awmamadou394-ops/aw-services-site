@@ -51,6 +51,7 @@ if ('serviceWorker' in navigator) {
   .msg.erreur { background-color: rgba(232,72,58,0.12); color: var(--alerte); }
   .msg.succes { background-color: rgba(63,163,77,0.12); color: var(--succes); }
   .note-paiement { text-align: center; color: var(--texte-discret); font-size: 11px; margin-top: 8px; font-style: italic; }
+  .aide-pdf { color: var(--texte-discret); font-size: 11.5px; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -284,6 +285,22 @@ if ('serviceWorker' in navigator) {
     <h3>&#127474;&#127462; Maroc</h3>
     <p>Pour le Maroc, il ne s'agit pas d'un programme de bourse : ce sont des inscriptions directes aupres de nos universites partenaires marocaines.</p>
 
+    <p style="margin-top:10px;"><strong>Diplomes disponibles :</strong></p>
+    <ul>
+      <li>Technicien Specialise en Financier Comptable</li>
+      <li>Technicien Specialise en Gestion d'Entreprise</li>
+      <li>Technicien Specialise en Developpement informatique</li>
+      <li>Technicien Specialise en Systemes et Reseaux Informatiques</li>
+    </ul>
+
+    <p style="margin-top:10px;"><strong>Documents a fournir (format PDF) :</strong></p>
+    <ul>
+      <li>Diplome du Bac</li>
+      <li>Releve de notes du Bac</li>
+      <li>Passeport</li>
+      <li>Photo</li>
+    </ul>
+
     <div class="prix-box">
       <strong>Inscription :</strong> 200 000 FCFA<br>
       <strong>Mensualite :</strong> 50 000 FCFA<br>
@@ -306,8 +323,23 @@ if ('serviceWorker' in navigator) {
         <option value="Master 1">Master 1</option>
         <option value="Doctorat">Doctorat</option>
       </select>
-      <label class="aw-label">Documents (releves, diplome, piece d'identite)</label>
-      <input type="file" class="p_documents" accept="image/*,.pdf" multiple>
+      <label class="aw-label">Diplome choisi</label>
+      <select class="p_formation" required>
+        <option value="">Choisir...</option>
+        <option value="Technicien Specialise en Financier Comptable">Technicien Specialise en Financier Comptable</option>
+        <option value="Technicien Specialise en Gestion d'Entreprise">Technicien Specialise en Gestion d'Entreprise</option>
+        <option value="Technicien Specialise en Developpement informatique">Technicien Specialise en Developpement informatique</option>
+        <option value="Technicien Specialise en Systemes et Reseaux Informatiques">Technicien Specialise en Systemes et Reseaux Informatiques</option>
+      </select>
+      <label class="aw-label">Diplome du Bac (PDF)</label>
+      <input type="file" class="p_doc_bac" accept="application/pdf,.pdf" required>
+      <label class="aw-label">Releve de notes du Bac (PDF)</label>
+      <input type="file" class="p_doc_releve" accept="application/pdf,.pdf" required>
+      <label class="aw-label">Passeport (PDF)</label>
+      <input type="file" class="p_doc_passeport" accept="application/pdf,.pdf" required>
+      <label class="aw-label">Photo (PDF)</label>
+      <input type="file" class="p_doc_photo" accept="application/pdf,.pdf" required>
+      <p class="aide-pdf">Fichiers PDF uniquement, 10 Mo maximum par document.</p>
       <button type="submit" class="aw-btn aw-btn-primaire btn_preinscription" style="width:100%;margin-top:10px;">Postuler pour le Maroc</button>
       <p class="note-paiement">Paiement du dossier en ligne securise (Wave, Orange Money, carte) a l'etape suivante.</p>
     </form>
@@ -546,6 +578,15 @@ var FRAIS_DOSSIER = {
   "Belgique": 200000
 };
 
+var TAILLE_MAX_DOC = 10 * 1024 * 1024;
+
+var DOCUMENTS_MAROC = [
+  { classe: "p_doc_bac", etiquette: "bac", nom: "Diplome du Bac" },
+  { classe: "p_doc_releve", etiquette: "releve", nom: "Releve de notes du Bac" },
+  { classe: "p_doc_passeport", etiquette: "passeport", nom: "Passeport" },
+  { classe: "p_doc_photo", etiquette: "photo", nom: "Photo" }
+];
+
 var selectTypeEtablissement = document.querySelector(".p_type_etablissement");
 if (selectTypeEtablissement) {
   selectTypeEtablissement.addEventListener("change", function() {
@@ -573,6 +614,39 @@ function calculerFraisDossier(pays, form) {
   return FRAIS_DOSSIER[pays] || null;
 }
 
+function estUnPdf(fichier) {
+  return fichier.type === "application/pdf" || /\.pdf$/i.test(fichier.name);
+}
+
+function collecterDocuments(form, pays) {
+  var liste = [];
+
+  if (pays === "Maroc") {
+    for (var d = 0; d < DOCUMENTS_MAROC.length; d++) {
+      var doc = DOCUMENTS_MAROC[d];
+      var champ = form.querySelector("." + doc.classe);
+      var fichier = champ && champ.files ? champ.files[0] : null;
+      if (!fichier) {
+        return { erreur: "Ajoutez le document : " + doc.nom + " (PDF)." };
+      }
+      if (!estUnPdf(fichier)) {
+        return { erreur: doc.nom + " : le fichier doit etre au format PDF." };
+      }
+      if (fichier.size > TAILLE_MAX_DOC) {
+        return { erreur: doc.nom + " : fichier trop lourd (10 Mo maximum)." };
+      }
+      liste.push({ fichier: fichier, etiquette: doc.etiquette });
+    }
+    return { liste: liste };
+  }
+
+  var fichiers = form.querySelector(".p_documents").files;
+  for (var i = 0; i < fichiers.length; i++) {
+    liste.push({ fichier: fichiers[i], etiquette: "" });
+  }
+  return { liste: liste };
+}
+
 function envoyerPreinscription(event) {
   event.preventDefault();
   var form = event.target;
@@ -585,26 +659,40 @@ function envoyerPreinscription(event) {
     return;
   }
 
-  btn.disabled = true;
-  btn.textContent = "Envoi en cours...";
   zoneMsg.innerHTML = "";
 
   var nom = form.querySelector(".p_nom").value;
   var tel = form.querySelector(".p_tel").value;
   var niveau = form.querySelector(".p_niveau").value;
-  var fichiers = form.querySelector(".p_documents").files;
+
+  var formation = null;
+  if (pays === "Maroc") {
+    formation = form.querySelector(".p_formation").value;
+    if (!formation) {
+      zoneMsg.innerHTML = "<div class=\"msg erreur\">Merci de choisir le diplome.</div>";
+      return;
+    }
+  }
+
+  var collecte = collecterDocuments(form, pays);
+  if (collecte.erreur) {
+    zoneMsg.innerHTML = "<div class=\"msg erreur\">" + collecte.erreur + "</div>";
+    return;
+  }
+  var documentsAEnvoyer = collecte.liste;
 
   var montant = calculerFraisDossier(pays, form);
   if (pays !== "Russie" && !montant) {
     zoneMsg.innerHTML = "<div class=\"msg erreur\">Merci de choisir le type d'etablissement.</div>";
-    btn.disabled = false;
-    btn.textContent = "Postuler pour " + pays;
     return;
   }
 
+  btn.disabled = true;
+  btn.textContent = "Envoi en cours...";
+
   var urls = [];
   var echecsEnvoi = 0;
-  var total = fichiers.length;
+  var total = documentsAEnvoyer.length;
   var compteur = 0;
 
   function finaliser() {
@@ -628,6 +716,10 @@ function envoyerPreinscription(event) {
 
     if (pays === "France") {
       donnees.type_etablissement = form.querySelector(".p_type_etablissement").value;
+    }
+
+    if (pays === "Maroc") {
+      donnees.formation = formation;
     }
 
     if (pays !== "Russie") {
@@ -694,19 +786,21 @@ function envoyerPreinscription(event) {
   }
 
   for (var i = 0; i < total; i++) {
-    (function(fichier, index) {
+    (function(element, index) {
+      var fichier = element.fichier;
       var nomPropre = fichier.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      var nomFichier = "doc_" + Date.now() + "_" + index + "_" + nomPropre;
+      var prefixe = element.etiquette ? element.etiquette + "_" : "";
+      var nomFichier = "doc_" + Date.now() + "_" + index + "_" + prefixe + nomPropre;
       sb.storage.from("documents-voyage").upload(nomFichier, fichier).then(function(reponseUpload) {
         if (!reponseUpload.error) {
-          urls.push(nomFichier);
+          urls[index] = nomFichier;
         } else {
           echecsEnvoi++;
         }
         compteur++;
         if (compteur === total) finaliser();
       });
-    })(fichiers[i], i);
+    })(documentsAEnvoyer[i], i);
   }
 }
 </script>
